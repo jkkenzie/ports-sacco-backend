@@ -1,1 +1,4 @@
 
+[submodule "web/frontend"]
+	path = web/frontend
+	url = jkkenzie:jkkenzie/frontend.git
