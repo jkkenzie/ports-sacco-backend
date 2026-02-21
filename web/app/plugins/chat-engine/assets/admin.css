@@ -1,0 +1,101 @@
+.chat-engine-admin {
+    max-width: 1200px;
+}
+
+.chat-engine-admin-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.chat-engine-form-section,
+.chat-engine-list-section {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.chat-engine-list-section {
+    grid-column: 1 / -1;
+}
+
+.chat-engine-form-section h2,
+.chat-engine-list-section h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.chat-engine-admin .form-table th {
+    width: 150px;
+}
+
+.chat-engine-admin code {
+    background: #f0f0f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.status-bot {
+    color: #2271b1;
+    font-weight: 600;
+}
+
+.status-agent {
+    color: #00a32a;
+    font-weight: 600;
+}
+
+.status-closed {
+    color: #646970;
+}
+
+.chat-messages-view {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+    margin-top: 20px;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    background: #fff;
+    border-left: 3px solid #2271b1;
+}
+
+.message-user {
+    border-left-color: #00a32a;
+    background: #f0f9ff;
+}
+
+.message-bot {
+    border-left-color: #2271b1;
+    background: #fff;
+}
+
+.message strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #1d2327;
+}
+
+.message small {
+    display: block;
+    margin-top: 5px;
+    color: #646970;
+    font-size: 11px;
+}
+
+@media (max-width: 782px) {
+    .chat-engine-admin-container {
+        grid-template-columns: 1fr;
+    }
+}
