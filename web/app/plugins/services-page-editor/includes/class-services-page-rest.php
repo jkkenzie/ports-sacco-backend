@@ -54,14 +54,48 @@ class REST {
         );
 
         $cards = array();
-        $cards_data = isset($data['cards']) && is_array($data['cards']) ? $data['cards'] : array();
-        foreach ($cards_data as $card) {
-            $cards[] = array(
-                'image_url'   => $this->image_url($card['image_id'] ?? 0),
-                'title'       => $card['title'] ?? '',
-                'description' => $card['description'] ?? '',
-                'href'        => !empty($card['href']) ? $card['href'] : '',
-            );
+        // Prefer cards from the custom post type so we use native WordPress logic.
+        $card_posts = get_posts(array(
+            'post_type'      => 'ports_service_card',
+            'post_status'    => 'publish',
+            'numberposts'    => -1,
+            'orderby'        => 'menu_order',
+            'order'          => 'ASC',
+            'suppress_filters' => false,
+        ));
+
+        if (!empty($card_posts)) {
+            foreach ($card_posts as $post) {
+                $image_url = get_the_post_thumbnail_url($post, 'full');
+
+                // Prefer meta link if set; otherwise use the card permalink.
+                $meta_link = get_post_meta($post->ID, 'ports_service_card_link', true);
+                $href      = $meta_link ? $meta_link : get_permalink($post);
+
+                // Prefer the manual excerpt if set; otherwise derive one from content,
+                // and strip HTML tags so frontend sees plain text (no <p> tags).
+                $raw_description = has_excerpt($post) ? $post->post_excerpt : $post->post_content;
+                $html_excerpt    = apply_filters('the_excerpt', $raw_description);
+                $description     = wp_strip_all_tags($html_excerpt);
+
+                $cards[] = array(
+                    'image_url'   => $image_url ?: '',
+                    'title'       => get_the_title($post),
+                    'description' => $description,
+                    'href'        => $href,
+                );
+            }
+        } else {
+            // Fallback: use any cards still stored in options.
+            $cards_data = isset($data['cards']) && is_array($data['cards']) ? $data['cards'] : array();
+            foreach ($cards_data as $card) {
+                $cards[] = array(
+                    'image_url'   => $this->image_url($card['image_id'] ?? 0),
+                    'title'       => $card['title'] ?? '',
+                    'description' => $card['description'] ?? '',
+                    'href'        => !empty($card['href']) ? $card['href'] : '',
+                );
+            }
         }
 
         return rest_ensure_response(array(

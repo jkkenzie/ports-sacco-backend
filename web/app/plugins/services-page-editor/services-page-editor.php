@@ -15,10 +15,12 @@ define('PORTS_SERVICES_EDITOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once __DIR__ . '/includes/class-services-page-admin.php';
 require_once __DIR__ . '/includes/class-services-page-rest.php';
+require_once __DIR__ . '/includes/class-services-card-post-type.php';
 
 function ports_services_editor_init() {
     call_user_func([ 'PortsServices\Admin', 'get_instance' ]);
     call_user_func([ 'PortsServices\REST', 'get_instance' ]);
+    call_user_func([ 'PortsServices\Service_Card_Post_Type', 'init' ]);
 }
 add_action('plugins_loaded', 'ports_services_editor_init');
 

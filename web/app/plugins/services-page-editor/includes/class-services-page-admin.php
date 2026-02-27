@@ -66,6 +66,26 @@ class Admin {
             'dashicons-edit-page',
             32
         );
+
+        // Explicit submenu for the main editor screen so it stays the target when clicking
+        // the top-level menu, even when other submenus (like Service Cards) exist.
+        add_submenu_page(
+            'services-page-editor',
+            __('Services Page Settings', 'services-page-editor'),
+            __('Settings', 'services-page-editor'),
+            'manage_options',
+            'services-page-editor',
+            array($this, 'render_page')
+        );
+
+        // Submenu linking to the Service Cards custom post type list.
+        add_submenu_page(
+            'services-page-editor',
+            __('Service Cards', 'services-page-editor'),
+            __('Service Cards', 'services-page-editor'),
+            'manage_options',
+            'edit.php?post_type=ports_service_card'
+        );
     }
 
     public function enqueue_scripts($hook) {
@@ -260,35 +280,15 @@ class Admin {
                 <!-- Cards -->
                 <div class="ports-section">
                     <h2><?php esc_html_e('Service cards', 'services-page-editor'); ?></h2>
-                    <p class="description"><?php esc_html_e('Each card: image, title, description, and optional link. Use Remove to delete a card.', 'services-page-editor'); ?></p>
-                    <div id="cards-container">
-                        <?php foreach ($data['cards'] as $idx => $card) : ?>
-                            <div class="ports-card-row" data-index="<?php echo $idx; ?>">
-                                <div class="ports-card-fields">
-                                    <div class="ports-card-row-header">
-                                        <span class="ports-card-row-label"><?php esc_html_e('Card', 'services-page-editor'); ?> #<span class="ports-card-num"><?php echo $idx + 1; ?></span></span>
-                                        <button type="button" class="button button-link-delete ports-remove-card" aria-label="<?php esc_attr_e('Remove this card', 'services-page-editor'); ?>"><?php esc_html_e('Remove', 'services-page-editor'); ?></button>
-                                    </div>
-                                    <div class="ports-media-wrap">
-                                        <input type="hidden" name="ports_services_page[cards][<?php echo $idx; ?>][image_id]" class="card-image-id" value="<?php echo esc_attr($card['image_id']); ?>" />
-                                        <button type="button" class="button ports-upload" data-target="<?php echo $idx; ?>"><?php esc_html_e('Image', 'services-page-editor'); ?></button>
-                                        <div class="ports-preview card-preview"><?php
-                                            if (!empty($card['image_id'])) {
-                                                $img = wp_get_attachment_image_url($card['image_id'], 'thumbnail');
-                                                if ($img) {
-                                                    echo '<img src="' . esc_url($img) . '" alt="" />';
-                                                }
-                                            }
-                                        ?></div>
-                                    </div>
-                                    <input type="text" name="ports_services_page[cards][<?php echo $idx; ?>][title]" value="<?php echo esc_attr($card['title']); ?>" placeholder="Card title" class="card-title" />
-                                    <textarea name="ports_services_page[cards][<?php echo $idx; ?>][description]" rows="2" placeholder="Description"><?php echo esc_textarea($card['description']); ?></textarea>
-                                    <input type="text" name="ports_services_page[cards][<?php echo $idx; ?>][href]" value="<?php echo esc_attr($card['href']); ?>" placeholder="Link URL (e.g. /services/mobile-banking)" class="card-href" />
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <p><button type="button" class="button" id="add-card"><?php esc_html_e('Add another card', 'services-page-editor'); ?></button></p>
+                    <p class="description">
+                        <?php
+                        printf(
+                            /* translators: %s: Service Cards menu label */
+                            esc_html__('Service cards are now managed as a custom post type. Go to %s to add, edit, or remove cards. The frontend will automatically use published cards.', 'services-page-editor'),
+                            '<strong>' . esc_html__('Services Page → Service Cards', 'services-page-editor') . '</strong>'
+                        );
+                        ?>
+                    </p>
                 </div>
 
                 <?php submit_button(__('Save changes', 'services-page-editor')); ?>
