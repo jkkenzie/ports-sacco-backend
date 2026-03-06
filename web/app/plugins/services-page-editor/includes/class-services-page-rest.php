@@ -59,8 +59,8 @@ class REST {
             'post_type'      => 'ports_service_card',
             'post_status'    => 'publish',
             'numberposts'    => -1,
-            'orderby'        => 'menu_order',
-            'order'          => 'ASC',
+            'orderby'        => 'date',
+            'order'          => 'DESC',
             'suppress_filters' => false,
         ));
 
