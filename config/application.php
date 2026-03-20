@@ -31,26 +31,49 @@ $root_dir = dirname(__DIR__);
 $webroot_dir = $root_dir . '/web';
 
 /**
- * Use Dotenv to set required environment variables and load .env file in root
- * .env.local will override .env if it exists
+ * Use Dotenv to set required environment variables and load `.env`.
+ *
+ * In some local/server setups, PHP may not be allowed to read the project root
+ * `.env` (e.g. `open_basedir` restrictions). Bedrock's files then end up with
+ * missing `DB_*` vars, which breaks the WP REST endpoints (Elementor editor).
  */
-if (file_exists($root_dir . '/.env')) {
-    $env_files = file_exists($root_dir . '/.env.local')
+$env_root_dirs = [$root_dir, $webroot_dir];
+$loaded_env = false;
+
+$repository = Dotenv\Repository\RepositoryBuilder::createWithNoAdapters()
+    ->addAdapter(Dotenv\Repository\Adapter\EnvConstAdapter::class)
+    ->addAdapter(Dotenv\Repository\Adapter\PutenvAdapter::class)
+    ->make();
+
+foreach ($env_root_dirs as $env_root_dir) {
+    $base = $env_root_dir . '/.env';
+    if (!file_exists($base)) {
+        continue;
+    }
+
+    $env_files = file_exists($env_root_dir . '/.env.local')
         ? ['.env', '.env.local']
         : ['.env'];
 
-    $repository = Dotenv\Repository\RepositoryBuilder::createWithNoAdapters()
-        ->addAdapter(Dotenv\Repository\Adapter\EnvConstAdapter::class)
-        ->addAdapter(Dotenv\Repository\Adapter\PutenvAdapter::class)
-        ->immutable()
-        ->make();
+    try {
+        $dotenv = Dotenv\Dotenv::create($repository, $env_root_dir, $env_files, false);
+        $dotenv->load();
 
-    $dotenv = Dotenv\Dotenv::create($repository, $root_dir, $env_files, false);
-    $dotenv->load();
+        // Validate we actually loaded the expected values.
+        $dotenv->required(['WP_HOME', 'WP_SITEURL']);
+        if (!env('DATABASE_URL')) {
+            $dotenv->required(['DB_NAME', 'DB_USER', 'DB_PASSWORD']);
+        }
 
-    $dotenv->required(['WP_HOME', 'WP_SITEURL']);
-    if (!env('DATABASE_URL')) {
-        $dotenv->required(['DB_NAME', 'DB_USER', 'DB_PASSWORD']);
+        // If values exist but are empty strings, treat it as a failed load and try the next directory.
+        $has_db = !env('DATABASE_URL') && env('DB_NAME') && env('DB_USER') && env('DB_PASSWORD');
+        $has_wp = env('WP_HOME') && env('WP_SITEURL');
+        if ($has_wp && ($has_db || env('DATABASE_URL'))) {
+            $loaded_env = true;
+            break;
+        }
+    } catch (\Throwable $e) {
+        // Ignore and try the next .env directory.
     }
 }
 
@@ -146,7 +169,16 @@ ini_set('display_errors', '0');
  * Allow WordPress to detect HTTPS when used behind a reverse proxy or a load balancer
  * See https://codex.wordpress.org/Function_Reference/is_ssl#Notes
  */
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+// If we're behind a proxy, `HTTP_X_FORWARDED_PROTO` can tell us the original scheme.
+// But on some local setups this header is unreliable and can trick WP into
+// thinking the request is HTTPS, which then sets `Secure` cookies and breaks login.
+// Only trust the forwarded proto when our configured `WP_HOME` is also HTTPS.
+$wp_home_scheme = parse_url((string) env('WP_HOME'), PHP_URL_SCHEME);
+if (
+    isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+    $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' &&
+    $wp_home_scheme === 'https'
+) {
     $_SERVER['HTTPS'] = 'on';
 }
 
