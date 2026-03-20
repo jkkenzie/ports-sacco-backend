@@ -1,0 +1,17 @@
+/* Services Page Editor admin */
+.ports-section { margin: 2em 0; padding: 1em; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); border: 1px solid #c3c4c7; }
+.ports-section h2 { margin-top: 0; border-bottom: 1px solid #c3c4c7; padding-bottom: 0.5em; }
+.ports-section h3 { margin: 1em 0 0.5em; }
+.ports-media-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ports-media-wrap .ports-preview img { display: block; border: 1px solid #ddd; }
+.ports-repeat-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.ports-repeat-row input { min-width: 120px; }
+
+.ports-card-row { border: 1px solid #ddd; padding: 12px; margin-bottom: 12px; background: #f9f9f9; border-radius: 4px; }
+.ports-card-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #ddd; }
+.ports-card-row-label { font-weight: 600; color: #1d2327; }
+.ports-remove-card { color: #b32d2e !important; }
+.ports-remove-card:hover { color: #d63638 !important; }
+.ports-card-row .ports-card-fields { display: grid; gap: 8px; }
+.ports-card-row .ports-card-fields .card-title { font-weight: 600; }
+.ports-card-row .ports-media-wrap { margin-bottom: 0; }
