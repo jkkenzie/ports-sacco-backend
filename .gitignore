@@ -14,6 +14,9 @@ web/app/cache/*
 web/wp
 web/.htaccess
 
+# Ignore local Elementor theme that is not part of the repo
+web/app/themes/hello-elementor/
+
 # Logs
 *.log
 
