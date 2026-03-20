@@ -10,6 +10,7 @@ Unified chat system with Twilio integration for automated FAQs, loan queries, Wh
 2. [Installation](#2-installation)
 3. [Configuration](#3-configuration)
 4. [URL structure & headless setup](#4-url-structure--headless-setup)
+4.5 [Production configuration](#45-production-configuration)
 5. [REST API reference](#5-rest-api-reference)
 6. [Admin pages](#6-admin-pages)
 6.5 [Human agent handoff](#65-human-agent-handoff)
@@ -17,6 +18,7 @@ Unified chat system with Twilio integration for automated FAQs, loan queries, Wh
 8. [Testing](#8-testing)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Architecture & customization](#10-architecture--customization)
+11. [Project deployment plan](#11-project-deployment-plan)
 
 ---
 
@@ -137,6 +139,145 @@ Use the same origin as the site (or ngrok in dev):
 - Local: `http://ports-sacco/wp-json/chat/v1`
 - Production: `https://yourdomain.com/wp-json/chat/v1`
 - ngrok: `https://YOUR_SUBDOMAIN.ngrok-free.dev/wp-json/chat/v1`
+
+---
+
+## 4.5 Production configuration
+
+To enable the Chat Engine REST endpoints in production, configure the following on the server.
+
+### 1. Environment variables (production)
+
+Set these in the **project root** `.env` on the server (do not commit `.env`):
+
+```env
+# App URL (Bedrock)
+APP_URL=https://yourdomain.com
+
+# WordPress URLs (if used by your Bedrock setup)
+WP_HOME=https://yourdomain.com
+WP_SITEURL=https://yourdomain.com/wp
+
+# Twilio (required for WhatsApp and webhook validation)
+TWILIO_ACCOUNT_SID=ACxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxx
+TWILIO_CONVERSATIONS_SERVICE_SID=ISxxxxxxxx
+TWILIO_WHATSAPP_NUMBER=+1234567890
+TWILIO_WEBHOOK_SECRET=your_webhook_signing_secret
+
+# Chat
+CHAT_BUSINESS_HOURS_START=08:00
+CHAT_BUSINESS_HOURS_END=17:00
+CHAT_TIMEZONE=Africa/Nairobi
+```
+
+Frontend build env (e.g. `web/frontend/.env.production` or build-time vars) so the chat widget calls the correct API:
+
+```env
+VITE_PUBLIC_URL=https://yourdomain.com
+VITE_WP_HOME=https://yourdomain.com
+VITE_WP_REST_PATH=/wp-json/chat/v1
+VITE_WHATSAPP_NUMBER=+1234567890
+```
+
+### 2. Apache (enable chat endpoints)
+
+Ensure `mod_rewrite` is enabled and `AllowOverride` allows `.htaccess` in the `web/` (document root) directory.
+
+The following rules must be present in `web/.htaccess` so `/wp-json` is routed to the headless API entry and the chat endpoints are reachable:
+
+```apache
+# REST API (including chat) → wp-api.php (no theme)
+RewriteCond %{REQUEST_URI} ^/(wp-json|wp/wp-json) [NC]
+RewriteRule ^.*$ wp-api.php [L]
+```
+
+Full context: REST rules must run **before** any catch-all to `index.php` or `frontend/index.html`. The Chat Engine endpoints are:
+
+- `GET  /wp-json/chat/v1/test`
+- `POST /wp-json/chat/v1/session`
+- `POST /wp-json/chat/v1/message`
+- `POST /wp-json/chat/v1/twilio-webhook`
+
+### 3. Nginx (if not using Apache)
+
+If the production server uses Nginx, `.htaccess` is ignored. Add a location block so `/wp-json` is handled by `wp-api.php`:
+
+```nginx
+server {
+    server_name yourdomain.com;
+    root /path/to/site/web;
+
+    index index.php frontend/index.html;
+
+    location /wp-json {
+        try_files $uri $uri/ /wp-api.php?$args;
+    }
+    location /wp/wp-json {
+        try_files $uri $uri/ /wp-api.php?$args;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass unix:/run/php/php8.1-fpm.sock;   # adjust to your PHP-FPM
+    }
+
+    location / {
+        try_files $uri $uri/ /frontend/index.html;
+    }
+}
+```
+
+Ensure `wp-api.php` is in the document root (`web/`) and PHP is configured to run it.
+
+### 4. Twilio webhook URL (production)
+
+In **Twilio Console** → your WhatsApp sender / sandbox → **Webhook**:
+
+- **URL:** `https://yourdomain.com/wp-json/chat/v1/twilio-webhook`
+- **Method:** POST
+- Use **HTTPS** only.
+
+### 5. Permalinks
+
+WordPress permalinks must not be “Plain” (default) for the REST API to work. In **WP Admin → Settings → Permalinks**, use any “pretty” structure (e.g. “Post name”) and save. Bedrock typically has this set already.
+
+### 6. Verify endpoints
+
+After deployment:
+
+```bash
+# Health check
+curl -s https://yourdomain.com/wp-json/chat/v1/test
+
+# Create session (optional)
+curl -s -X POST https://yourdomain.com/wp-json/chat/v1/session \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+Expect JSON responses. If you get HTML or 404, the routing (Apache/Nginx) or `wp-api.php` path is wrong.
+
+### 7. Is `wp-api.php` required? (404 on production)
+
+**Yes. The file `web/wp-api.php` is required** for the chat (and all REST) endpoints to work.
+
+- `.htaccess` sends every `/wp-json` request to `wp-api.php`.
+- `wp-api.php` loads WordPress with themes disabled so the API returns JSON.
+- If this file is missing or not in the document root, the API will 404.
+
+**Checklist when you get 404 in production:**
+
+| Check | What to do |
+|-------|------------|
+| **File present** | Ensure `web/wp-api.php` exists on the server (it is in the Bedrock repo). |
+| **Document root** | Apache/Nginx document root must be the directory that contains `wp-api.php` (usually `web/`). |
+| **Apache** | `mod_rewrite` on; `AllowOverride All` (or at least `FileInfo`) for `web/` so `.htaccess` runs. |
+| **Nginx** | `.htaccess` is ignored; use the [Nginx config](#3-nginx-if-not-using-apache) to route `/wp-json` to `wp-api.php`. |
+| **WordPress core** | `web/wp/` must exist (Bedrock: run `composer install` on the server). `wp-api.php` requires `wp/wp-blog-header.php`. |
+
+If the document root is something like `public/` and your app lives in `public/`, then `wp-api.php` and `.htaccess` must be in `public/`, and the `require` path inside `wp-api.php` must still point correctly to `wp/wp-blog-header.php` (e.g. `__DIR__ . '/wp/wp-blog-header.php'` if `wp/` is next to `wp-api.php`).
 
 ---
 
@@ -380,6 +521,40 @@ WhatsApp  →  Twilio  →  POST /wp-json/chat/v1/twilio-webhook
 - Multi-language
 - Agent dashboard and analytics
 - Loan eligibility flow
+
+---
+
+## 11. Project deployment plan
+
+### Future workflow
+
+**Frontend changes → commit & push inside `web/frontend` only**
+
+```bash
+cd web/frontend
+git add .
+git commit -m "Update frontend"
+git push
+```
+
+**Update Bedrock pointer → commit & push in Bedrock repo**
+
+```bash
+cd ../../
+git add web/frontend
+git commit -m "Update frontend submodule reference"
+git push
+```
+
+**Server / production pull**
+
+```bash
+git pull
+git submodule update --init --recursive --remote
+cd web/frontend
+npm install
+npm run build
+```
 
 ---
 
