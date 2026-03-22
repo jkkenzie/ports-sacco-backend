@@ -35,7 +35,7 @@ $webroot_dir = $root_dir . '/web';
  *
  * In some local/server setups, PHP may not be allowed to read the project root
  * `.env` (e.g. `open_basedir` restrictions). Bedrock's files then end up with
- * missing `DB_*` vars, which breaks the WP REST endpoints (Elementor editor).
+ * missing `DB_*` vars, which breaks the WP REST API (including the headless endpoints).
  */
 $env_root_dirs = [$root_dir, $webroot_dir];
 $loaded_env = false;
