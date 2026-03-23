@@ -3,6 +3,7 @@ web/app/plugins/*
 !web/app/plugins/.gitkeep
 !web/app/plugins/chat-engine/
 !web/app/plugins/services-page-editor
+!web/app/plugins/headless-core/
 web/app/mu-plugins/*/
 web/app/themes/twentytwentyfive/
 web/app/themes/hello-elementor
@@ -14,6 +15,9 @@ web/app/cache/*
 # WordPress
 web/wp
 web/.htaccess
+
+# Ignore local Elementor theme that is not part of the repo
+web/app/themes/hello-elementor/
 
 # Logs
 *.log
