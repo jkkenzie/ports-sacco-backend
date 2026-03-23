@@ -462,6 +462,190 @@ function headless_core_about_us_stats_merge_defaults(array $attrs): array
 }
 
 /**
+ * @return array<string, mixed>
+ */
+function headless_core_about_us_awards_default_attrs(): array
+{
+    return [
+        'title' => 'Awards',
+        'items' => [
+            [
+                'heading' => 'ICD AWARDS 2025 - NATIONAL',
+                'content' => '<ul><li>Best Managed Sacco countrywide (Employer based, Asset base over 10B) - <strong>Position 3</strong></li><li>Best in Technology Optimization Country wide (Employer based, Asset base above 10B) - <strong>Position 2</strong></li><li>Best in Capitalization country wide (Employer based, asset base above 10B) - <strong>Position 3</strong></li></ul>',
+            ],
+            [
+                'heading' => 'ICD AWARDS 2025 - MOMBASA COUNTY',
+                'content' => '<ul><li>Best Co-operative Society - <strong>Position 1</strong></li><li>Best Capitalized Co-operative Society - <strong>Position 1</strong></li><li>Highest Returns on Assets - <strong>Position 1</strong></li><li>1st to present Audited Accounts - <strong>Position 1</strong></li><li>Best in Education and Training - <strong>Position 2</strong></li><li>Best Insured Sacco Society - <strong>Position 2</strong></li><li>Most Innovative Sacco Society Position - <strong>Position 2</strong></li></ul>',
+            ],
+            [
+                'heading' => 'ASK NAIROBI INTERNATIONAL SHOW - 2025',
+                'content' => '<ul><li>Best Cooperative Movement stand - <strong>Position 1</strong></li></ul>',
+            ],
+        ],
+    ];
+}
+
+/**
+ * @param array<string, mixed> $attrs
+ * @return array<string, mixed>
+ */
+function headless_core_about_us_awards_merge_defaults(array $attrs): array
+{
+    $defaults = headless_core_about_us_awards_default_attrs();
+    $title = isset($attrs['title']) ? trim((string) $attrs['title']) : '';
+    $attrs['title'] = $title !== '' ? $title : (string) $defaults['title'];
+
+    $saved = $attrs['items'] ?? null;
+    if (! is_array($saved) || $saved === []) {
+        $attrs['items'] = $defaults['items'];
+
+        return $attrs;
+    }
+
+    $out = [];
+    $defaultRows = is_array($defaults['items']) ? $defaults['items'] : [];
+    $count = max(count($defaultRows), count($saved));
+    for ($i = 0; $i < $count; $i++) {
+        $d = isset($defaultRows[$i]) && is_array($defaultRows[$i]) ? $defaultRows[$i] : ['heading' => '', 'content' => ''];
+        $s = isset($saved[$i]) && is_array($saved[$i]) ? $saved[$i] : [];
+        $heading = trim((string) ($s['heading'] ?? ''));
+        $content = (string) ($s['content'] ?? '');
+        if (trim(wp_strip_all_tags($content)) === '') {
+            $content = (string) ($d['content'] ?? '');
+        }
+        $out[] = [
+            'heading' => $heading !== '' ? $heading : (string) ($d['heading'] ?? ''),
+            'content' => wp_kses_post($content),
+        ];
+    }
+    $attrs['items'] = $out;
+
+    return $attrs;
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function headless_core_about_us_help_default_attrs(): array
+{
+    return [
+        'headerText' => 'WE ARE HERE TO HELP YOU',
+        'ctaText' => 'TALK TO US!',
+        'items' => [
+            [
+                'iconId' => 0,
+                'title' => 'APPLY FOR A LOAN',
+                'description' => 'Looking to buy a car, build a home, start a business, pay for education? Apply for a loan now!',
+                'linkMode' => 'text',
+                'linkText' => 'Get an Appointment',
+                'linkUrl' => '',
+                'linkSvgId' => 0,
+            ],
+            [
+                'iconId' => 0,
+                'title' => 'CALL US!',
+                'description' => '+254 111 173 000 info@portsacco.co.ke',
+                'linkMode' => 'text',
+                'linkText' => 'Contact us',
+                'linkUrl' => '',
+                'linkSvgId' => 0,
+            ],
+            [
+                'iconId' => 0,
+                'title' => 'TALK TO AN ADVISOR',
+                'description' => 'Do you need financial planning? Talk to our advisors.',
+                'linkMode' => 'svg',
+                'linkText' => '',
+                'linkUrl' => '',
+                'linkSvgId' => 0,
+            ],
+        ],
+        'iconColor' => '#EE6E2A',
+        'linkSvgColor' => '#22ACB6',
+    ];
+}
+
+/**
+ * @param array<string, mixed> $attrs
+ * @return array<string, mixed>
+ */
+function headless_core_about_us_help_merge_defaults(array $attrs): array
+{
+    $defaults = headless_core_about_us_help_default_attrs();
+    $headerText = isset($attrs['headerText']) ? trim((string) $attrs['headerText']) : '';
+    $ctaText = isset($attrs['ctaText']) ? trim((string) $attrs['ctaText']) : '';
+    $attrs['headerText'] = $headerText !== '' ? $headerText : (string) $defaults['headerText'];
+    $attrs['ctaText'] = $ctaText !== '' ? $ctaText : (string) $defaults['ctaText'];
+    $attrs['linkSvgColor'] = headless_core_sanitize_color_string(
+        isset($attrs['linkSvgColor']) ? (string) $attrs['linkSvgColor'] : '',
+        '#22ACB6'
+    );
+    $saved = $attrs['items'] ?? null;
+    if (! is_array($saved) || $saved === []) {
+        $attrs['items'] = $defaults['items'];
+        $attrs['iconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['iconColor']) ? (string) $attrs['iconColor'] : '',
+            '#EE6E2A'
+        );
+
+        return $attrs;
+    }
+
+    $out = [];
+    $defaultRows = is_array($defaults['items']) ? $defaults['items'] : [];
+    $count = max(count($defaultRows), count($saved));
+    for ($i = 0; $i < $count; $i++) {
+        $d = isset($defaultRows[$i]) && is_array($defaultRows[$i]) ? $defaultRows[$i] : [];
+        $s = isset($saved[$i]) && is_array($saved[$i]) ? $saved[$i] : [];
+        $title = trim((string) ($s['title'] ?? ''));
+        $description = (string) ($s['description'] ?? '');
+        $linkText = (string) ($s['linkText'] ?? '');
+        $linkUrl = trim((string) ($s['linkUrl'] ?? ''));
+        $linkMode = isset($s['linkMode']) ? strtolower(trim((string) $s['linkMode'])) : '';
+        if ($linkMode !== 'svg') {
+            $linkMode = 'text';
+        }
+        $out[] = [
+            'iconId' => isset($s['iconId']) ? (int) $s['iconId'] : (int) ($d['iconId'] ?? 0),
+            'title' => $title !== '' ? $title : (string) ($d['title'] ?? ''),
+            'description' => trim(wp_strip_all_tags($description)) !== '' ? wp_kses_post($description) : (string) ($d['description'] ?? ''),
+            'linkMode' => $linkMode,
+            'linkText' => trim($linkText) !== '' ? $linkText : (string) ($d['linkText'] ?? ''),
+            'linkUrl' => $linkUrl,
+            'linkSvgId' => isset($s['linkSvgId']) ? (int) $s['linkSvgId'] : (int) ($d['linkSvgId'] ?? 0),
+        ];
+    }
+    $attrs['items'] = $out;
+    $attrs['iconColor'] = headless_core_sanitize_color_string(
+        isset($attrs['iconColor']) ? (string) $attrs['iconColor'] : '',
+        '#EE6E2A'
+    );
+
+    return $attrs;
+}
+
+/**
+ * Accepts hex colors and rgb(r, g, b).
+ */
+function headless_core_sanitize_color_string(string $value, string $fallback): string
+{
+    $v = trim($value);
+    $hex = sanitize_hex_color($v);
+    if (is_string($hex) && $hex !== '') {
+        return $hex;
+    }
+    if (preg_match('/^rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)$/i', $v, $m)) {
+        $r = min(255, max(0, (int) $m[1]));
+        $g = min(255, max(0, (int) $m[2]));
+        $b = min(255, max(0, (int) $m[3]));
+
+        return sprintf('rgb(%d, %d, %d)', $r, $g, $b);
+    }
+
+    return $fallback;
+}
+
+/**
  * @return string SVG markup or empty string
  */
 function headless_core_attachment_inline_svg_markup(int $attachmentId): string
@@ -636,6 +820,47 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                     $svgMarkup = headless_core_attachment_inline_svg_markup($iconId);
                     if ($svgMarkup !== '') {
                         $attrs['items'][$idx]['iconSvg'] = $svgMarkup;
+                    }
+                }
+            }
+        }
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/about-us-awards') {
+        $attrs = headless_core_about_us_awards_merge_defaults($attrs);
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/about-us-help') {
+        $attrs = headless_core_about_us_help_merge_defaults($attrs);
+        if (isset($attrs['items']) && is_array($attrs['items'])) {
+            foreach ($attrs['items'] as $idx => $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $iconId = isset($item['iconId']) ? (int) $item['iconId'] : 0;
+                if ($iconId > 0) {
+                    $url = wp_get_attachment_image_url($iconId, 'medium');
+                    if (is_string($url) && $url !== '') {
+                        $attrs['items'][$idx]['iconUrl'] = $url;
+                    }
+                    $svgMarkup = headless_core_attachment_inline_svg_markup($iconId);
+                    if ($svgMarkup !== '') {
+                        $attrs['items'][$idx]['iconSvg'] = $svgMarkup;
+                    }
+                }
+                $linkSvgId = isset($item['linkSvgId']) ? (int) $item['linkSvgId'] : 0;
+                if ($linkSvgId > 0) {
+                    $linkUrl = wp_get_attachment_image_url($linkSvgId, 'medium');
+                    if (is_string($linkUrl) && $linkUrl !== '') {
+                        $attrs['items'][$idx]['linkSvgUrl'] = $linkUrl;
+                    }
+                    $linkSvg = headless_core_attachment_inline_svg_markup($linkSvgId);
+                    if ($linkSvg !== '') {
+                        $attrs['items'][$idx]['linkSvgMarkup'] = $linkSvg;
                     }
                 }
             }

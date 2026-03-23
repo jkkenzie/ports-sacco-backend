@@ -29,6 +29,20 @@ add_action('init', static function (): void {
         HEADLESS_CORE_VERSION,
         true
     );
+    wp_register_script(
+        'headless-custom-about-us-awards-editor',
+        HEADLESS_CORE_URL . 'blocks/about-us-awards/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-about-us-help-editor',
+        HEADLESS_CORE_URL . 'blocks/about-us-help/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
 
     register_block_type('custom/hero', [
         'api_version' => 3,
@@ -133,6 +147,80 @@ add_action('init', static function (): void {
             'iconWidth' => ['type' => 'number', 'default' => 107],
             'iconHeight' => ['type' => 'number', 'default' => 58],
             'iconColor' => ['type' => 'string', 'default' => '#40C9BF'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/about-us-awards', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-about-us-awards-editor',
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Awards'],
+            'items' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'heading' => 'ICD AWARDS 2025 - NATIONAL',
+                        'content' => '<ul><li>Best Managed Sacco countrywide (Employer based, Asset base over 10B) - <strong>Position 3</strong></li><li>Best in Technology Optimization Country wide (Employer based, Asset base above 10B) - <strong>Position 2</strong></li><li>Best in Capitalization country wide (Employer based, asset base above 10B) - <strong>Position 3</strong></li></ul>',
+                    ],
+                    [
+                        'heading' => 'ICD AWARDS 2025 - MOMBASA COUNTY',
+                        'content' => '<ul><li>Best Co-operative Society - <strong>Position 1</strong></li><li>Best Capitalized Co-operative Society - <strong>Position 1</strong></li><li>Highest Returns on Assets - <strong>Position 1</strong></li><li>1st to present Audited Accounts - <strong>Position 1</strong></li><li>Best in Education and Training - <strong>Position 2</strong></li><li>Best Insured Sacco Society - <strong>Position 2</strong></li><li>Most Innovative Sacco Society Position - <strong>Position 2</strong></li></ul>',
+                    ],
+                    [
+                        'heading' => 'ASK NAIROBI INTERNATIONAL SHOW - 2025',
+                        'content' => '<ul><li>Best Cooperative Movement stand - <strong>Position 1</strong></li></ul>',
+                    ],
+                ],
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/about-us-help', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-about-us-help-editor',
+        'attributes' => [
+            'headerText' => ['type' => 'string', 'default' => 'WE ARE HERE TO HELP YOU'],
+            'ctaText' => ['type' => 'string', 'default' => 'TALK TO US!'],
+            'items' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'iconId' => 0,
+                        'title' => 'APPLY FOR A LOAN',
+                        'description' => 'Looking to buy a car, build a home, start a business, pay for education? Apply for a loan now!',
+                        'linkMode' => 'text',
+                        'linkText' => 'Get an Appointment',
+                        'linkUrl' => '',
+                        'linkSvgId' => 0,
+                    ],
+                    [
+                        'iconId' => 0,
+                        'title' => 'CALL US!',
+                        'description' => '+254 111 173 000 info@portsacco.co.ke',
+                        'linkMode' => 'text',
+                        'linkText' => 'Contact us',
+                        'linkUrl' => '',
+                        'linkSvgId' => 0,
+                    ],
+                    [
+                        'iconId' => 0,
+                        'title' => 'TALK TO AN ADVISOR',
+                        'description' => 'Do you need financial planning? Talk to our advisors.',
+                        'linkMode' => 'svg',
+                        'linkText' => '',
+                        'linkUrl' => '',
+                        'linkSvgId' => 0,
+                    ],
+                ],
+            ],
+            'iconColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkSvgColor' => ['type' => 'string', 'default' => '#22ACB6'],
         ],
         'render_callback' => static function (): string {
             return '';
