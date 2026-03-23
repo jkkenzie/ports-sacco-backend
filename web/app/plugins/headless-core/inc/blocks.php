@@ -45,42 +45,65 @@ add_action('init', static function (): void {
         'api_version' => 3,
         'editor_script' => 'headless-custom-mission-vision-editor',
         'attributes' => [
-            'visionTitle' => ['type' => 'string', 'default' => 'Our Vision'],
-            'visionText' => [
-                'type' => 'string',
-                'default' => 'To be a formidable financial institution by providing competitive financial solutions to a happy, healthy and prosperous people.',
-            ],
-            'visionImageId' => ['type' => 'number', 'default' => 0],
-            'missionTitle' => ['type' => 'string', 'default' => 'Our Mission'],
-            'missionText' => [
-                'type' => 'string',
-                'default' => 'To strengthen the socio-economic well-being of our customers through prudent management and innovative products and services.',
-            ],
-            'missionImageId' => ['type' => 'number', 'default' => 0],
-            'purposeTitle' => ['type' => 'string', 'default' => 'Our Purpose'],
-            'purposeText' => [
-                'type' => 'string',
-                'default' => 'Uplifting People. Inspiring happiness, optimism and hope.',
-            ],
-            'purposeImageId' => ['type' => 'number', 'default' => 0],
-            'coreValuesTitle' => ['type' => 'string', 'default' => 'Our Core Values'],
-            'coreValuesImageId' => ['type' => 'number', 'default' => 0],
-            'coreValues' => [
+            'items' => [
                 'type' => 'array',
                 'default' => [
                     [
-                        'label' => 'Caring',
-                        'text' => 'We are truthful, we listen and go extra mile-above and beyond.',
+                        'title' => 'Our Vision',
+                        'description' => 'To be a formidable financial institution by providing competitive financial solutions to a happy, healthy and prosperous people.',
+                        'iconId' => 0,
+                        'values' => [],
                     ],
                     [
-                        'label' => 'Equity',
-                        'text' => 'We are committed to inclusivity, equality, fairness, public good and social justice.',
+                        'title' => 'Our Mission',
+                        'description' => 'To strengthen the socio-economic well-being of our customers through prudent management and innovative products and services.',
+                        'iconId' => 0,
+                        'values' => [],
                     ],
                     [
-                        'label' => 'Consistency',
-                        'text' => 'We are predictable, dependable, and reliable.',
+                        'title' => 'Our Purpose',
+                        'description' => 'Uplifting People. Inspiring happiness, optimism and hope.',
+                        'iconId' => 0,
+                        'values' => [],
+                    ],
+                    [
+                        'title' => 'Our Core Values',
+                        'description' => '',
+                        'iconId' => 0,
+                        'values' => [
+                            [
+                                'title' => 'Caring',
+                                'description' => 'We are truthful, we listen and go extra mile-above and beyond.',
+                            ],
+                            [
+                                'title' => 'Equity',
+                                'description' => 'We are committed to inclusivity, equality, fairness, public good and social justice.',
+                            ],
+                            [
+                                'title' => 'Consistency',
+                                'description' => 'We are predictable, dependable, and reliable.',
+                            ],
+                        ],
                     ],
                 ],
+            ],
+            // Legacy shape kept for backward compatibility and migration.
+            'values' => ['type' => 'array', 'default' => []],
+            'coreValuesTitle' => ['type' => 'string', 'default' => 'Our Core Values'],
+            'coreValuesImageId' => ['type' => 'number', 'default' => 0],
+            // Legacy attributes (kept for backward compatibility with existing serialized blocks).
+            'visionTitle' => ['type' => 'string', 'default' => 'Our Vision'],
+            'visionText' => ['type' => 'string', 'default' => ''],
+            'visionImageId' => ['type' => 'number', 'default' => 0],
+            'missionTitle' => ['type' => 'string', 'default' => 'Our Mission'],
+            'missionText' => ['type' => 'string', 'default' => ''],
+            'missionImageId' => ['type' => 'number', 'default' => 0],
+            'purposeTitle' => ['type' => 'string', 'default' => 'Our Purpose'],
+            'purposeText' => ['type' => 'string', 'default' => ''],
+            'purposeImageId' => ['type' => 'number', 'default' => 0],
+            'coreValues' => [
+                'type' => 'array',
+                'default' => [],
             ],
         ],
         'render_callback' => static function (): string {

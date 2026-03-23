@@ -191,32 +191,52 @@ function headless_core_page_route_slug(WP_Post $post): string
  */
 function headless_core_mission_vision_default_attrs(): array
 {
+    $defaultValues = [
+        [
+            'title' => 'Caring',
+            'description' => 'We are truthful, we listen and go extra mile-above and beyond.',
+        ],
+        [
+            'title' => 'Equity',
+            'description' => 'We are committed to inclusivity, equality, fairness, public good and social justice.',
+        ],
+        [
+            'title' => 'Consistency',
+            'description' => 'We are predictable, dependable, and reliable.',
+        ],
+    ];
+
     return [
-        'visionTitle' => 'Our Vision',
-        'visionText' => 'To be a formidable financial institution by providing competitive financial solutions to a happy, healthy and prosperous people.',
-        'visionImageId' => 0,
-        'missionTitle' => 'Our Mission',
-        'missionText' => 'To strengthen the socio-economic well-being of our customers through prudent management and innovative products and services.',
-        'missionImageId' => 0,
-        'purposeTitle' => 'Our Purpose',
-        'purposeText' => 'Uplifting People. Inspiring happiness, optimism and hope.',
-        'purposeImageId' => 0,
-        'coreValuesTitle' => 'Our Core Values',
-        'coreValuesImageId' => 0,
-        'coreValues' => [
+        'items' => [
             [
-                'label' => 'Caring',
-                'text' => 'We are truthful, we listen and go extra mile-above and beyond.',
+                'title' => 'Our Vision',
+                'description' => 'To be a formidable financial institution by providing competitive financial solutions to a happy, healthy and prosperous people.',
+                'iconId' => 0,
+                'values' => [],
             ],
             [
-                'label' => 'Equity',
-                'text' => 'We are committed to inclusivity, equality, fairness, public good and social justice.',
+                'title' => 'Our Mission',
+                'description' => 'To strengthen the socio-economic well-being of our customers through prudent management and innovative products and services.',
+                'iconId' => 0,
+                'values' => [],
             ],
             [
-                'label' => 'Consistency',
-                'text' => 'We are predictable, dependable, and reliable.',
+                'title' => 'Our Purpose',
+                'description' => 'Uplifting People. Inspiring happiness, optimism and hope.',
+                'iconId' => 0,
+                'values' => [],
+            ],
+            [
+                'title' => 'Our Core Values',
+                'description' => '',
+                'iconId' => 0,
+                'values' => $defaultValues,
             ],
         ],
+        // Legacy keys retained for migration/backward compatibility only.
+        'coreValuesTitle' => 'Our Core Values',
+        'coreValuesImageId' => 0,
+        'values' => $defaultValues,
     ];
 }
 
@@ -228,15 +248,84 @@ function headless_core_mission_vision_merge_defaults(array $attrs): array
 {
     $defaults = headless_core_mission_vision_default_attrs();
 
+    if ((! isset($attrs['items']) || ! is_array($attrs['items']) || $attrs['items'] === [])
+        && isset($attrs['visionTitle'], $attrs['missionTitle'], $attrs['purposeTitle'])) {
+        $attrs['items'] = [
+            [
+                'title' => (string) ($attrs['visionTitle'] ?? ''),
+                'description' => (string) ($attrs['visionText'] ?? ''),
+                'iconId' => (int) ($attrs['visionImageId'] ?? 0),
+            ],
+            [
+                'title' => (string) ($attrs['missionTitle'] ?? ''),
+                'description' => (string) ($attrs['missionText'] ?? ''),
+                'iconId' => (int) ($attrs['missionImageId'] ?? 0),
+            ],
+            [
+                'title' => (string) ($attrs['purposeTitle'] ?? ''),
+                'description' => (string) ($attrs['purposeText'] ?? ''),
+                'iconId' => (int) ($attrs['purposeImageId'] ?? 0),
+            ],
+            [
+                'title' => 'Our Core Values',
+                'description' => '',
+                'iconId' => (int) ($attrs['coreValuesImageId'] ?? 0),
+            ],
+        ];
+    }
+    if ((! isset($attrs['values']) || ! is_array($attrs['values']) || $attrs['values'] === [])
+        && isset($attrs['coreValues']) && is_array($attrs['coreValues'])) {
+        $legacyVals = [];
+        foreach ($attrs['coreValues'] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $legacyVals[] = [
+                'title' => (string) ($row['label'] ?? ''),
+                'description' => (string) ($row['text'] ?? ''),
+            ];
+        }
+        if ($legacyVals !== []) {
+            $attrs['values'] = $legacyVals;
+        }
+    }
+
+    // If legacy top-level values exist, copy to all items (user preference).
+    if (isset($attrs['values']) && is_array($attrs['values']) && $attrs['values'] !== []
+        && isset($attrs['items']) && is_array($attrs['items']) && $attrs['items'] !== []) {
+        foreach ($attrs['items'] as $idx => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            if (! isset($item['values']) || ! is_array($item['values']) || $item['values'] === []) {
+                $attrs['items'][$idx]['values'] = $attrs['values'];
+            }
+        }
+    }
+
     foreach ($defaults as $key => $defaultVal) {
-        if ($key === 'coreValues') {
-            $saved = $attrs['coreValues'] ?? null;
+        if ($key === 'items') {
+            $saved = $attrs['items'] ?? null;
             if (! is_array($saved) || $saved === []) {
-                $attrs['coreValues'] = $defaultVal;
+                $attrs['items'] = $defaultVal;
 
                 continue;
             }
-            $attrs['coreValues'] = headless_core_merge_core_value_rows(
+            $attrs['items'] = headless_core_merge_mission_items(
+                is_array($defaultVal) ? $defaultVal : [],
+                $saved
+            );
+
+            continue;
+        }
+        if ($key === 'values') {
+            $saved = $attrs['values'] ?? null;
+            if (! is_array($saved) || $saved === []) {
+                $attrs['values'] = $defaultVal;
+
+                continue;
+            }
+            $attrs['values'] = headless_core_merge_core_value_rows(
                 is_array($defaultVal) ? $defaultVal : [],
                 $saved
             );
@@ -273,13 +362,43 @@ function headless_core_merge_core_value_rows(array $defaultRows, array $savedRow
     $count = max(count($defaultRows), count($savedRows));
 
     for ($i = 0; $i < $count; $i++) {
-        $d = $defaultRows[$i] ?? ['label' => '', 'text' => ''];
+        $d = $defaultRows[$i] ?? ['title' => '', 'description' => ''];
         $s = isset($savedRows[$i]) && is_array($savedRows[$i]) ? $savedRows[$i] : [];
-        $label = isset($s['label']) ? trim((string) $s['label']) : '';
-        $text = isset($s['text']) ? trim((string) $s['text']) : '';
+        $label = isset($s['title']) ? trim((string) $s['title']) : '';
+        $text = isset($s['description']) ? trim((string) $s['description']) : '';
         $out[] = [
-            'label' => $label !== '' ? $label : (string) ($d['label'] ?? ''),
-            'text' => $text !== '' ? $text : (string) ($d['text'] ?? ''),
+            'title' => $label !== '' ? $label : (string) ($d['title'] ?? ''),
+            'description' => $text !== '' ? $text : (string) ($d['description'] ?? ''),
+        ];
+    }
+
+    return $out;
+}
+
+/**
+ * @param array<int, array<string, mixed>> $defaultRows
+ * @param array<int, mixed>                $savedRows
+ * @return array<int, array<string, mixed>>
+ */
+function headless_core_merge_mission_items(array $defaultRows, array $savedRows): array
+{
+    $out = [];
+    $count = max(count($defaultRows), count($savedRows));
+
+    for ($i = 0; $i < $count; $i++) {
+        $d = $defaultRows[$i] ?? ['title' => '', 'description' => '', 'iconId' => 0, 'values' => []];
+        $s = isset($savedRows[$i]) && is_array($savedRows[$i]) ? $savedRows[$i] : [];
+        $title = isset($s['title']) ? trim((string) $s['title']) : '';
+        $description = isset($s['description']) ? trim((string) $s['description']) : '';
+        $savedValues = isset($s['values']) && is_array($s['values']) ? $s['values'] : [];
+        $defaultValues = isset($d['values']) && is_array($d['values']) ? $d['values'] : [];
+        $out[] = [
+            'title' => $title !== '' ? $title : (string) ($d['title'] ?? ''),
+            'description' => $description !== '' ? $description : (string) ($d['description'] ?? ''),
+            'iconId' => isset($s['iconId']) ? (int) $s['iconId'] : (int) ($d['iconId'] ?? 0),
+            'values' => $savedValues !== []
+                ? headless_core_merge_core_value_rows($defaultValues, $savedValues)
+                : headless_core_merge_core_value_rows($defaultValues, []),
         ];
     }
 
@@ -392,19 +511,26 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
     if ($name === 'custom/mission-vision') {
         $attrs = headless_core_mission_vision_merge_defaults($attrs);
 
-        $imagePairs = [
-            'visionImageId' => 'visionImageUrl',
-            'missionImageId' => 'missionImageUrl',
-            'purposeImageId' => 'purposeImageUrl',
-            'coreValuesImageId' => 'coreValuesImageUrl',
-        ];
-        foreach ($imagePairs as $idKey => $urlKey) {
-            $id = isset($attrs[$idKey]) ? (int) $attrs[$idKey] : 0;
-            if ($id > 0) {
-                $url = wp_get_attachment_image_url($id, 'medium');
-                if (is_string($url) && $url !== '') {
-                    $attrs[$urlKey] = $url;
+        if (isset($attrs['items']) && is_array($attrs['items'])) {
+            foreach ($attrs['items'] as $idx => $item) {
+                if (! is_array($item)) {
+                    continue;
                 }
+                $iconId = isset($item['iconId']) ? (int) $item['iconId'] : 0;
+                if ($iconId > 0) {
+                    $url = wp_get_attachment_image_url($iconId, 'medium');
+                    if (is_string($url) && $url !== '') {
+                        $attrs['items'][$idx]['iconUrl'] = $url;
+                    }
+                }
+            }
+        }
+
+        $coreImageId = isset($attrs['coreValuesImageId']) ? (int) $attrs['coreValuesImageId'] : 0;
+        if ($coreImageId > 0) {
+            $url = wp_get_attachment_image_url($coreImageId, 'medium');
+            if (is_string($url) && $url !== '') {
+                $attrs['coreValuesImageUrl'] = $url;
             }
         }
 
