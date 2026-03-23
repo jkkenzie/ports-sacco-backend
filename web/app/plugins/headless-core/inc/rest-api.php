@@ -406,6 +406,89 @@ function headless_core_merge_mission_items(array $defaultRows, array $savedRows)
 }
 
 /**
+ * @return array<string, mixed>
+ */
+function headless_core_about_us_stats_default_attrs(): array
+{
+    return [
+        'items' => [
+            ['number' => '15', 'title' => 'AWARDS IN 2025', 'subtitle' => 'We are leading by example', 'iconId' => 0],
+            ['number' => '26', 'title' => 'PRODUCTS OFFERED', 'subtitle' => 'Products that fit your needs', 'iconId' => 0],
+            ['number' => '10,000+', 'title' => 'REGISTERED MEMBERS', 'subtitle' => 'A growing membership base.', 'iconId' => 0],
+        ],
+        'iconWidth' => 107,
+        'iconHeight' => 58,
+        'iconColor' => '#40C9BF',
+    ];
+}
+
+/**
+ * @param array<string, mixed> $attrs
+ * @return array<string, mixed>
+ */
+function headless_core_about_us_stats_merge_defaults(array $attrs): array
+{
+    $defaults = headless_core_about_us_stats_default_attrs();
+    $saved = $attrs['items'] ?? null;
+    if (! is_array($saved) || $saved === []) {
+        $attrs['items'] = $defaults['items'];
+    } else {
+        $out = [];
+        $defaultRows = is_array($defaults['items']) ? $defaults['items'] : [];
+        $count = max(count($defaultRows), count($saved));
+        for ($i = 0; $i < $count; $i++) {
+            $d = isset($defaultRows[$i]) && is_array($defaultRows[$i]) ? $defaultRows[$i] : ['number' => '', 'title' => '', 'subtitle' => '', 'iconId' => 0];
+            $s = isset($saved[$i]) && is_array($saved[$i]) ? $saved[$i] : [];
+            $number = trim((string) ($s['number'] ?? ''));
+            $title = trim((string) ($s['title'] ?? ''));
+            $subtitle = trim((string) ($s['subtitle'] ?? ''));
+            $iconId = isset($s['iconId']) ? (int) $s['iconId'] : (int) ($d['iconId'] ?? 0);
+            $out[] = [
+                'number' => $number !== '' ? $number : (string) ($d['number'] ?? ''),
+                'title' => $title !== '' ? $title : (string) ($d['title'] ?? ''),
+                'subtitle' => $subtitle !== '' ? $subtitle : (string) ($d['subtitle'] ?? ''),
+                'iconId' => $iconId,
+            ];
+        }
+        $attrs['items'] = $out;
+    }
+
+    $attrs['iconWidth'] = isset($attrs['iconWidth']) ? max(0, (int) $attrs['iconWidth']) : 107;
+    $attrs['iconHeight'] = isset($attrs['iconHeight']) ? max(0, (int) $attrs['iconHeight']) : 58;
+    $color = isset($attrs['iconColor']) ? sanitize_hex_color((string) $attrs['iconColor']) : '';
+    $attrs['iconColor'] = is_string($color) && $color !== '' ? $color : '#40C9BF';
+
+    return $attrs;
+}
+
+/**
+ * @return string SVG markup or empty string
+ */
+function headless_core_attachment_inline_svg_markup(int $attachmentId): string
+{
+    if ($attachmentId <= 0) {
+        return '';
+    }
+
+    $mime = get_post_mime_type($attachmentId);
+    if (! is_string($mime) || strtolower($mime) !== 'image/svg+xml') {
+        return '';
+    }
+
+    $filePath = get_attached_file($attachmentId);
+    if (! is_string($filePath) || $filePath === '' || ! is_readable($filePath)) {
+        return '';
+    }
+
+    $svg = file_get_contents($filePath);
+    if (! is_string($svg) || trim($svg) === '' || stripos($svg, '<svg') === false) {
+        return '';
+    }
+
+    return $svg;
+}
+
+/**
  * Plain text for core text blocks (no HTML in the API). Uses innerHTML, innerContent, attrs, then render_block.
  *
  * @param array<string, mixed> $block Parsed block from parse_blocks()
@@ -531,6 +614,30 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             $url = wp_get_attachment_image_url($coreImageId, 'medium');
             if (is_string($url) && $url !== '') {
                 $attrs['coreValuesImageUrl'] = $url;
+            }
+        }
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/about-us-stats') {
+        $attrs = headless_core_about_us_stats_merge_defaults($attrs);
+        if (isset($attrs['items']) && is_array($attrs['items'])) {
+            foreach ($attrs['items'] as $idx => $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $iconId = isset($item['iconId']) ? (int) $item['iconId'] : 0;
+                if ($iconId > 0) {
+                    $url = wp_get_attachment_image_url($iconId, 'medium');
+                    if (is_string($url) && $url !== '') {
+                        $attrs['items'][$idx]['iconUrl'] = $url;
+                    }
+                    $svgMarkup = headless_core_attachment_inline_svg_markup($iconId);
+                    if ($svgMarkup !== '') {
+                        $attrs['items'][$idx]['iconSvg'] = $svgMarkup;
+                    }
+                }
             }
         }
 

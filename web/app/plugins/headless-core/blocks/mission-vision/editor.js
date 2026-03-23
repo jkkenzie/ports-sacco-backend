@@ -119,7 +119,12 @@
                     Button,
                     {
                       label: __('Remove image/icon', 'headless-core'),
-                      onClick: onRemove,
+                      onClick: function () {
+                        if (! window.confirm(__('Remove this icon?', 'headless-core'))) {
+                          return;
+                        }
+                        onRemove();
+                      },
                       isDestructive: true,
                       isSmall: true,
                       variant: 'tertiary',
@@ -230,6 +235,9 @@
       }
 
       function removeItem(index) {
+        if (! window.confirm(__('Remove this item?', 'headless-core'))) {
+          return;
+        }
         var next = items.filter(function (_, i) {
           return i !== index;
         });
@@ -377,6 +385,9 @@
                                 icon: trashSvg,
                                 label: __('Remove value', 'headless-core'),
                                 onClick: function () {
+                                  if (! window.confirm(__('Remove this value?', 'headless-core'))) {
+                                    return;
+                                  }
                                   var next = itemValues.filter(function (_, i) { return i !== valueIndex; });
                                   patchValues(index, next);
                                 },

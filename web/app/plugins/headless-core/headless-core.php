@@ -16,7 +16,7 @@ if (! defined('ABSPATH')) {
 
 define('HEADLESS_CORE_PATH', plugin_dir_path(__FILE__));
 define('HEADLESS_CORE_URL', plugin_dir_url(__FILE__));
-define('HEADLESS_CORE_VERSION', '1.0.19');
+define('HEADLESS_CORE_VERSION', '1.0.26');
 
 require_once HEADLESS_CORE_PATH . 'inc/cache.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-api.php';

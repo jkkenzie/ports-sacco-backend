@@ -22,6 +22,13 @@ add_action('init', static function (): void {
         HEADLESS_CORE_VERSION,
         true
     );
+    wp_register_script(
+        'headless-custom-about-us-stats-editor',
+        HEADLESS_CORE_URL . 'blocks/about-us-stats/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
 
     register_block_type('custom/hero', [
         'api_version' => 3,
@@ -105,6 +112,27 @@ add_action('init', static function (): void {
                 'type' => 'array',
                 'default' => [],
             ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/about-us-stats', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-about-us-stats-editor',
+        'attributes' => [
+            'items' => [
+                'type' => 'array',
+                'default' => [
+                    ['number' => '15', 'title' => 'AWARDS IN 2025', 'subtitle' => 'We are leading by example', 'iconId' => 0],
+                    ['number' => '26', 'title' => 'PRODUCTS OFFERED', 'subtitle' => 'Products that fit your needs', 'iconId' => 0],
+                    ['number' => '10,000+', 'title' => 'REGISTERED MEMBERS', 'subtitle' => 'A growing membership base.', 'iconId' => 0],
+                ],
+            ],
+            'iconWidth' => ['type' => 'number', 'default' => 107],
+            'iconHeight' => ['type' => 'number', 'default' => 58],
+            'iconColor' => ['type' => 'string', 'default' => '#40C9BF'],
         ],
         'render_callback' => static function (): string {
             return '';
