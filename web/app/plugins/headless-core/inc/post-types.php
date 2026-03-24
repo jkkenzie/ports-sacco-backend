@@ -25,7 +25,7 @@ add_action('init', static function (): void {
         'show_in_menu' => true,
         'show_in_rest' => true,
         'rest_base' => 'savings-products',
-        'menu_icon' => 'dashicons-piggy-bank',
+        'menu_icon' => 'dashicons-money-alt',
         'has_archive' => false,
         'rewrite' => ['slug' => 'savings-products'],
         'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'revisions'],
