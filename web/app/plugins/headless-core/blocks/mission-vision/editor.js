@@ -2,68 +2,165 @@
   var el = element.createElement;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
-  var InspectorControls = blockEditor.InspectorControls;
+  var RichText = blockEditor.RichText;
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
-  var PanelBody = components.PanelBody;
-  var TextControl = components.TextControl;
-  var TextareaControl = components.TextareaControl;
   var Button = components.Button;
   var __ = i18n.__;
+  var useState = element.useState;
 
-  var defaultCoreValues = [
-    {
-      label: 'Caring',
-      text: 'We are truthful, we listen and go extra mile-above and beyond.',
-    },
-    {
-      label: 'Equity',
-      text: 'We are committed to inclusivity, equality, fairness, public good and social justice.',
-    },
-    {
-      label: 'Consistency',
-      text: 'We are predictable, dependable, and reliable.',
-    },
+  var DEFAULT_VALUES = [
+    { title: 'Caring', description: 'We are truthful, we listen and go extra mile-above and beyond.' },
+    { title: 'Equity', description: 'We are committed to inclusivity, equality, fairness, public good and social justice.' },
+    { title: 'Consistency', description: 'We are predictable, dependable, and reliable.' },
   ];
 
-  function ImagePicker(props) {
-    var label = props.label;
-    var imageId = props.imageId;
-    var onSelect = props.onSelect;
-    var onRemove = props.onRemove;
+  function cloneValues(list) {
+    return list.map(function (row) {
+      return { title: String(row.title || ''), description: String(row.description || '') };
+    });
+  }
+
+  function defaultItem(title, description, values) {
+    return {
+      title: title,
+      description: description,
+      iconId: 0,
+      iconUrl: '',
+      values: cloneValues(Array.isArray(values) ? values : []),
+    };
+  }
+
+  var DEFAULT_ITEMS = [
+    defaultItem('Our Vision', 'To be a formidable financial institution by providing competitive financial solutions to a happy, healthy and prosperous people.', []),
+    defaultItem('Our Mission', 'To strengthen the socio-economic well-being of our customers through prudent management and innovative products and services.', []),
+    defaultItem('Our Purpose', 'Uplifting People. Inspiring happiness, optimism and hope.', []),
+    defaultItem('Our Core Values', '', DEFAULT_VALUES),
+  ];
+
+  function normalizeValues(values) {
+    if (!Array.isArray(values) || !values.length) {
+      return [];
+    }
+    return values.map(function (value) {
+      return {
+        title: String((value && value.title) || ''),
+        description: String((value && value.description) || ''),
+      };
+    });
+  }
+
+  function normalizeItems(items) {
+    if (!Array.isArray(items) || !items.length) {
+      return DEFAULT_ITEMS.map(function (row) {
+        return Object.assign({}, row, { values: cloneValues(row.values) });
+      });
+    }
+    var count = Math.max(DEFAULT_ITEMS.length, items.length);
+    var out = [];
+    for (var i = 0; i < count; i++) {
+      var d = DEFAULT_ITEMS[i] || defaultItem('', '');
+      var item = items[i] && typeof items[i] === 'object' ? items[i] : {};
+      var values = normalizeValues(item.values);
+      out.push({
+        title: String(item.title || d.title || ''),
+        description: String(item.description || d.description || ''),
+        iconId: Number(item.iconId || d.iconId || 0),
+        iconUrl: String(item.iconUrl || ''),
+        values: values.length ? values : cloneValues(d.values || DEFAULT_VALUES),
+      });
+    }
+    return out;
+  }
+
+  function moveRow(list, index, dir) {
+    var to = index + dir;
+    if (to < 0 || to >= list.length) return list;
+    var next = list.slice();
+    var tmp = next[index];
+    next[index] = next[to];
+    next[to] = tmp;
+    return next;
+  }
+
+  function imageChooser(imageId, imageUrl, onSelect, onRemove) {
     return el(
-      MediaUploadCheck,
-      null,
-      el(MediaUpload, {
-        onSelect: onSelect,
-        allowedTypes: ['image'],
-        value: imageId,
-        render: function (obj) {
-          var open = obj.open;
-          return el(
-            'div',
-            { style: { marginBottom: '12px' } },
-            el('p', { style: { fontWeight: 600, marginBottom: '4px' } }, label),
-            el(
-              Button,
-              { variant: 'secondary', onClick: open },
-              imageId ? __('Replace image', 'headless-core') : __('Select image', 'headless-core')
-            ),
-            imageId
-              ? el(
-                  Button,
-                  {
-                    variant: 'link',
-                    isDestructive: true,
-                    onClick: onRemove,
-                    style: { marginLeft: '8px' },
-                  },
-                  __('Remove', 'headless-core')
-                )
-              : null
-          );
-        },
-      })
+      'div',
+      { style: { marginBottom: '10px' } },
+      imageUrl
+        ? el('img', {
+            src: imageUrl,
+            alt: '',
+            style: {
+              width: '44px',
+              height: '44px',
+              objectFit: 'cover',
+              borderRadius: '4px',
+              border: '1px solid #dcdcde',
+              marginBottom: '8px',
+              display: 'block',
+            },
+          })
+        : null,
+      el(
+        MediaUploadCheck,
+        null,
+        el(MediaUpload, {
+          allowedTypes: ['image'],
+          value: imageId,
+          onSelect: onSelect,
+          render: function (obj) {
+            return el(
+              'div',
+              { style: { display: 'flex', alignItems: 'center', gap: '6px' } },
+              el(Button, { variant: 'secondary', onClick: obj.open }, imageId ? __('Replace Image/Icon', 'headless-core') : __('Select Image/Icon', 'headless-core')),
+              imageId
+                ? el(
+                    Button,
+                    {
+                      label: __('Remove image/icon', 'headless-core'),
+                      onClick: function () {
+                        if (! window.confirm(__('Remove this icon?', 'headless-core'))) {
+                          return;
+                        }
+                        onRemove();
+                      },
+                      isDestructive: true,
+                      isSmall: true,
+                      variant: 'tertiary',
+                      showTooltip: true,
+                      tooltipPosition: 'top center',
+                    },
+                    '-'
+                  )
+                : null
+            );
+          },
+        })
+      )
+    );
+  }
+
+  var trashSvg = el(
+    'svg',
+    { viewBox: '0 0 24 24', width: '16', height: '16', style: { display: 'block' }, fill: 'currentColor' },
+    el('path', { d: 'M9 3h6l1 2h4v2H4V5h4l1-2zm0 6h2v12H9V9zm4 0h2v12h-2V9z' })
+  );
+
+  function ActionButton(props) {
+    return el(
+      Button,
+      {
+        label: props.label,
+        onClick: props.onClick,
+        disabled: !!props.disabled,
+        isDestructive: !!props.isDestructive,
+        isSmall: true,
+        variant: 'tertiary',
+        showTooltip: true,
+        tooltipPosition: 'top center',
+      },
+      props.icon ? props.icon : props.symbol
     );
   }
 
@@ -72,220 +169,277 @@
     title: __('Mission, Vision & Values', 'headless-core'),
     icon: 'grid-view',
     category: 'widgets',
-    description: __(
-      'Three columns (Vision, Mission, Purpose) and Core Values — rendered by the React site.',
-      'headless-core'
-    ),
+    description: __('Editable repeater block with nested values per item.', 'headless-core'),
     attributes: {
-      visionTitle: { type: 'string', default: 'Our Vision' },
-      visionText: {
-        type: 'string',
-        default:
-          'To be a formidable financial institution by providing competitive financial solutions to a happy, healthy and prosperous people.',
-      },
-      visionImageId: { type: 'number', default: 0 },
-      missionTitle: { type: 'string', default: 'Our Mission' },
-      missionText: {
-        type: 'string',
-        default:
-          'To strengthen the socio-economic well-being of our customers through prudent management and innovative products and services.',
-      },
-      missionImageId: { type: 'number', default: 0 },
-      purposeTitle: { type: 'string', default: 'Our Purpose' },
-      purposeText: {
-        type: 'string',
-        default: 'Uplifting People. Inspiring happiness, optimism and hope.',
-      },
-      purposeImageId: { type: 'number', default: 0 },
-      coreValuesTitle: { type: 'string', default: 'Our Core Values' },
-      coreValuesImageId: { type: 'number', default: 0 },
-      coreValues: { type: 'array', default: defaultCoreValues },
+      items: { type: 'array', default: DEFAULT_ITEMS },
+      values: { type: 'array', default: [] }, // legacy compatibility
+      coreValuesTitle: { type: 'string', default: 'Our Core Values' }, // legacy compatibility
+      coreValuesImageId: { type: 'number', default: 0 }, // legacy compatibility
     },
     edit: function (props) {
       var attributes = props.attributes;
       var setAttributes = props.setAttributes;
       var blockProps = useBlockProps({ className: 'headless-mission-vision-editor' });
+      var items = normalizeItems(attributes.items);
+      var _useState = useState({});
+      var openValues = _useState[0];
+      var setOpenValues = _useState[1];
 
-      function setCoreValue(index, key, value) {
-        var base =
-          Array.isArray(attributes.coreValues) && attributes.coreValues.length
-            ? attributes.coreValues.slice()
-            : defaultCoreValues.slice();
-        while (base.length < 3) {
-          base.push({ label: '', text: '' });
-        }
-        var next = base.map(function (row, i) {
-          if (i !== index) {
-            return row;
-          }
-          var o = Object.assign({}, row);
-          o[key] = value;
-          return o;
+      var topLegacy = (!Array.isArray(attributes.items) || attributes.items.length === 0) &&
+        (attributes.visionTitle || attributes.missionTitle || attributes.purposeTitle);
+      if (topLegacy) {
+        var legacyRows = normalizeValues(attributes.values).length
+          ? normalizeValues(attributes.values)
+          : normalizeValues(attributes.coreValues && attributes.coreValues.map(function (r) {
+              return { title: r && r.label ? r.label : '', description: r && r.text ? r.text : '' };
+            }));
+        var seeded = [
+          defaultItem(String(attributes.visionTitle || 'Our Vision'), String(attributes.visionText || '')),
+          defaultItem(String(attributes.missionTitle || 'Our Mission'), String(attributes.missionText || '')),
+          defaultItem(String(attributes.purposeTitle || 'Our Purpose'), String(attributes.purposeText || '')),
+          defaultItem('Our Core Values', ''),
+        ].map(function (row, idx) {
+          row.iconId = Number([attributes.visionImageId, attributes.missionImageId, attributes.purposeImageId][idx] || 0);
+          row.values = legacyRows.length ? cloneValues(legacyRows) : cloneValues(DEFAULT_VALUES);
+          return row;
         });
-        setAttributes({ coreValues: next });
+        setAttributes({ items: seeded });
+        items = normalizeItems(seeded);
+      } else if (Array.isArray(attributes.values) && attributes.values.length) {
+        // One-time migration: copy legacy top-level values into all items.
+        var copied = cloneValues(attributes.values);
+        var nextItems = items.map(function (row) {
+          return Object.assign({}, row, {
+            values: row.values && row.values.length ? row.values : cloneValues(copied),
+          });
+        });
+        setAttributes({ items: nextItems, values: [] });
+        items = normalizeItems(nextItems);
       }
 
-      function coreValueRow(i) {
-        var list =
-          Array.isArray(attributes.coreValues) && attributes.coreValues.length
-            ? attributes.coreValues
-            : defaultCoreValues;
-        return list[i] || { label: '', text: '' };
+      function patchItem(index, patch) {
+        var next = items.slice();
+        next[index] = Object.assign({}, next[index], patch);
+        setAttributes({ items: next });
+      }
+
+      function patchValues(itemIndex, values) {
+        var next = items.slice();
+        next[itemIndex] = Object.assign({}, next[itemIndex], { values: values });
+        setAttributes({ items: next });
+      }
+
+      function addItem() {
+        var next = items.concat([defaultItem('', '')]);
+        setAttributes({ items: next });
+      }
+
+      function removeItem(index) {
+        if (! window.confirm(__('Remove this item?', 'headless-core'))) {
+          return;
+        }
+        var next = items.filter(function (_, i) {
+          return i !== index;
+        });
+        setAttributes({
+          items: next.length ? next : DEFAULT_ITEMS.map(function (row) { return Object.assign({}, row, { values: cloneValues(row.values) }); }),
+        });
+      }
+
+      function toggleValues(index) {
+        var next = Object.assign({}, openValues);
+        next[index] = !next[index];
+        setOpenValues(next);
       }
 
       return el(
         'div',
         blockProps,
-        el(
-          InspectorControls,
-          null,
-          el(
-            PanelBody,
-            { title: __('Vision column', 'headless-core'), initialOpen: true },
-            el(TextControl, {
-              label: __('Title', 'headless-core'),
-              value: attributes.visionTitle,
-              onChange: function (v) {
-                setAttributes({ visionTitle: v });
-              },
-            }),
-            el(TextareaControl, {
-              label: __('Text', 'headless-core'),
-              value: attributes.visionText,
-              onChange: function (v) {
-                setAttributes({ visionText: v });
-              },
-              rows: 3,
-            }),
-            el(ImagePicker, {
-              label: __('Icon image', 'headless-core'),
-              imageId: attributes.visionImageId,
-              onSelect: function (media) {
-                setAttributes({ visionImageId: media.id ? media.id : 0 });
-              },
-              onRemove: function () {
-                setAttributes({ visionImageId: 0 });
-              },
-            })
-          ),
-          el(
-            PanelBody,
-            { title: __('Mission column', 'headless-core'), initialOpen: false },
-            el(TextControl, {
-              label: __('Title', 'headless-core'),
-              value: attributes.missionTitle,
-              onChange: function (v) {
-                setAttributes({ missionTitle: v });
-              },
-            }),
-            el(TextareaControl, {
-              label: __('Text', 'headless-core'),
-              value: attributes.missionText,
-              onChange: function (v) {
-                setAttributes({ missionText: v });
-              },
-              rows: 3,
-            }),
-            el(ImagePicker, {
-              label: __('Icon image', 'headless-core'),
-              imageId: attributes.missionImageId,
-              onSelect: function (media) {
-                setAttributes({ missionImageId: media.id ? media.id : 0 });
-              },
-              onRemove: function () {
-                setAttributes({ missionImageId: 0 });
-              },
-            })
-          ),
-          el(
-            PanelBody,
-            { title: __('Purpose column', 'headless-core'), initialOpen: false },
-            el(TextControl, {
-              label: __('Title', 'headless-core'),
-              value: attributes.purposeTitle,
-              onChange: function (v) {
-                setAttributes({ purposeTitle: v });
-              },
-            }),
-            el(TextareaControl, {
-              label: __('Text', 'headless-core'),
-              value: attributes.purposeText,
-              onChange: function (v) {
-                setAttributes({ purposeText: v });
-              },
-              rows: 3,
-            }),
-            el(ImagePicker, {
-              label: __('Icon image', 'headless-core'),
-              imageId: attributes.purposeImageId,
-              onSelect: function (media) {
-                setAttributes({ purposeImageId: media.id ? media.id : 0 });
-              },
-              onRemove: function () {
-                setAttributes({ purposeImageId: 0 });
-              },
-            })
-          ),
-          el(
-            PanelBody,
-            { title: __('Core values', 'headless-core'), initialOpen: false },
-            el(TextControl, {
-              label: __('Section title', 'headless-core'),
-              value: attributes.coreValuesTitle,
-              onChange: function (v) {
-                setAttributes({ coreValuesTitle: v });
-              },
-            }),
-            el(ImagePicker, {
-              label: __('Section icon image', 'headless-core'),
-              imageId: attributes.coreValuesImageId,
-              onSelect: function (media) {
-                setAttributes({ coreValuesImageId: media.id ? media.id : 0 });
-              },
-              onRemove: function () {
-                setAttributes({ coreValuesImageId: 0 });
-              },
-            }),
-            [0, 1, 2].map(function (i) {
-              var row = coreValueRow(i);
-              return el(
-                'div',
-                { key: i, style: { marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #ddd' } },
-                el('strong', null, __('Value', 'headless-core') + ' ' + (i + 1)),
-                el(TextControl, {
-                  label: __('Label', 'headless-core'),
-                  value: row.label,
-                  onChange: function (v) {
-                    setCoreValue(i, 'label', v);
-                  },
-                }),
-                el(TextareaControl, {
-                  label: __('Text', 'headless-core'),
-                  value: row.text,
-                  onChange: function (v) {
-                    setCoreValue(i, 'text', v);
-                  },
-                  rows: 2,
-                })
-              );
-            })
-          )
-        ),
+        el('h3', null, __('Mission / Vision / Purpose', 'headless-core')),
         el(
           'div',
-          {
-            style: {
-              padding: '12px',
-              border: '1px dashed #ccc',
-              borderRadius: '4px',
-              background: '#fafafa',
-            },
-          },
-          el('strong', null, __('Mission, Vision & Values', 'headless-core')),
-          el('p', { style: { fontSize: '12px', color: '#555', marginTop: '8px' } }, attributes.visionTitle),
-          el('p', { style: { fontSize: '12px', color: '#555' } }, attributes.missionTitle),
-          el('p', { style: { fontSize: '12px', color: '#555' } }, attributes.purposeTitle),
-          el('p', { style: { fontSize: '12px', color: '#555', marginTop: '8px' } }, attributes.coreValuesTitle)
+          { style: { display: 'grid', gap: '12px', marginBottom: '16px' } },
+          items.map(function (item, index) {
+            var label = item.title && item.title.trim() ? item.title : __('Item', 'headless-core') + ' ' + (index + 1);
+            var itemValues = normalizeValues(item.values);
+            var valuesOpen = !!openValues[index];
+            return el(
+              'div',
+              {
+                key: 'item-' + index,
+                style: { border: '1px solid #ddd', borderRadius: '6px', padding: '10px', background: '#fff' },
+              },
+              el(
+                'div',
+                { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '10px' } },
+                el('strong', null, label),
+                el(
+                  'div',
+                  { style: { display: 'flex', alignItems: 'center', gap: '2px' } },
+                  el(ActionButton, {
+                    symbol: '˄',
+                    label: __('Move up', 'headless-core'),
+                    onClick: function () {
+                      setAttributes({ items: moveRow(items, index, -1) });
+                    },
+                    disabled: index === 0,
+                  }),
+                  el(ActionButton, {
+                    symbol: '˅',
+                    label: __('Move down', 'headless-core'),
+                    onClick: function () {
+                      setAttributes({ items: moveRow(items, index, 1) });
+                    },
+                    disabled: index === items.length - 1,
+                  }),
+                  el(ActionButton, {
+                    icon: trashSvg,
+                    label: __('Remove item', 'headless-core'),
+                    onClick: function () {
+                      removeItem(index);
+                    },
+                    isDestructive: true,
+                  })
+                )
+              ),
+              imageChooser(
+                item.iconId,
+                item.iconUrl || '',
+                function (media) {
+                  patchItem(index, {
+                    iconId: media && media.id ? media.id : 0,
+                    iconUrl: media && media.url ? media.url : '',
+                  });
+                },
+                function () {
+                  patchItem(index, { iconId: 0, iconUrl: '' });
+                }
+              ),
+              el(RichText, {
+                tagName: 'h4',
+                value: item.title,
+                onChange: function (v) {
+                  patchItem(index, { title: v });
+                },
+                placeholder: __('Enter title...', 'headless-core'),
+                allowedFormats: [],
+              }),
+              el(RichText, {
+                tagName: 'p',
+                value: item.description,
+                onChange: function (v) {
+                  patchItem(index, { description: v });
+                },
+                placeholder: __('Enter description...', 'headless-core'),
+              }),
+              el(
+                'div',
+                { style: { marginTop: '10px', borderTop: '1px solid #eee', paddingTop: '8px' } },
+                el(
+                  'div',
+                  { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                  el('strong', null, __('Values', 'headless-core')),
+                  el(
+                    ActionButton,
+                    {
+                      symbol: valuesOpen ? '-' : '+',
+                      label: valuesOpen ? __('Collapse values', 'headless-core') : __('Expand values', 'headless-core'),
+                      onClick: function () {
+                        toggleValues(index);
+                      },
+                    }
+                  )
+                ),
+                valuesOpen
+                  ? el(
+                      'div',
+                      { style: { marginTop: '8px', display: 'grid', gap: '8px' } },
+                      itemValues.map(function (row, valueIndex) {
+                        return el(
+                          'div',
+                          { key: 'value-' + index + '-' + valueIndex, style: { border: '1px solid #eee', borderRadius: '4px', padding: '8px' } },
+                          el(
+                            'div',
+                            { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                            el('strong', null, row.title || __('Value', 'headless-core') + ' ' + (valueIndex + 1)),
+                            el(
+                              'div',
+                              { style: { display: 'flex', gap: '2px' } },
+                              el(ActionButton, {
+                                symbol: '˄',
+                                label: __('Move value up', 'headless-core'),
+                                onClick: function () {
+                                  patchValues(index, moveRow(itemValues, valueIndex, -1));
+                                },
+                                disabled: valueIndex === 0,
+                              }),
+                              el(ActionButton, {
+                                symbol: '˅',
+                                label: __('Move value down', 'headless-core'),
+                                onClick: function () {
+                                  patchValues(index, moveRow(itemValues, valueIndex, 1));
+                                },
+                                disabled: valueIndex === itemValues.length - 1,
+                              }),
+                              el(ActionButton, {
+                                icon: trashSvg,
+                                label: __('Remove value', 'headless-core'),
+                                onClick: function () {
+                                  if (! window.confirm(__('Remove this value?', 'headless-core'))) {
+                                    return;
+                                  }
+                                  var next = itemValues.filter(function (_, i) { return i !== valueIndex; });
+                                  patchValues(index, next);
+                                },
+                                isDestructive: true,
+                              })
+                            )
+                          ),
+                          el(RichText, {
+                            tagName: 'h5',
+                            value: row.title,
+                            onChange: function (v) {
+                              var next = itemValues.slice();
+                              next[valueIndex] = Object.assign({}, next[valueIndex], { title: v });
+                              patchValues(index, next);
+                            },
+                            placeholder: __('Enter title...', 'headless-core'),
+                            allowedFormats: [],
+                          }),
+                          el(RichText, {
+                            tagName: 'p',
+                            value: row.description,
+                            onChange: function (v) {
+                              var next = itemValues.slice();
+                              next[valueIndex] = Object.assign({}, next[valueIndex], { description: v });
+                              patchValues(index, next);
+                            },
+                            placeholder: __('Enter description...', 'headless-core'),
+                          })
+                        );
+                      }),
+                      el(
+                        Button,
+                        {
+                          variant: 'primary',
+                          onClick: function () {
+                            patchValues(index, itemValues.concat([{ title: '', description: '' }]));
+                          },
+                        },
+                        '+ ',
+                        __('Add Value', 'headless-core')
+                      )
+                    )
+                  : null
+              )
+            );
+          })
+        ),
+        el(
+          Button,
+          { variant: 'primary', onClick: addItem, style: { marginBottom: '12px' } },
+          '+ ',
+          __('Add Item', 'headless-core')
         )
       );
     },
@@ -293,10 +447,4 @@
       return null;
     },
   });
-})(
-  window.wp.blocks,
-  window.wp.blockEditor,
-  window.wp.components,
-  window.wp.element,
-  window.wp.i18n
-);
+})(window.wp.blocks, window.wp.blockEditor, window.wp.components, window.wp.element, window.wp.i18n);
