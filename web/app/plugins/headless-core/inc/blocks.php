@@ -43,6 +43,48 @@ add_action('init', static function (): void {
         HEADLESS_CORE_VERSION,
         true
     );
+    wp_register_script(
+        'headless-custom-footer-contact-editor',
+        HEADLESS_CORE_URL . 'blocks/footer-contact/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-footer-branches-editor',
+        HEADLESS_CORE_URL . 'blocks/footer-branches/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-footer-app-links-editor',
+        HEADLESS_CORE_URL . 'blocks/footer-app-links/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-footer-socials-editor',
+        HEADLESS_CORE_URL . 'blocks/footer-socials/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-footer-hours-editor',
+        HEADLESS_CORE_URL . 'blocks/footer-hours/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-footer-bottom-editor',
+        HEADLESS_CORE_URL . 'blocks/footer-bottom/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
 
     register_block_type('custom/hero', [
         'api_version' => 3,
@@ -221,6 +263,122 @@ add_action('init', static function (): void {
             ],
             'iconColor' => ['type' => 'string', 'default' => '#EE6E2A'],
             'linkSvgColor' => ['type' => 'string', 'default' => '#22ACB6'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/footer-contact', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-footer-contact-editor',
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Branch Network'],
+            'officeName' => ['type' => 'string', 'default' => 'Mombasa - Head Office'],
+            'officeAddress' => ['type' => 'string', 'default' => ''],
+            'phone' => ['type' => 'string', 'default' => ''],
+            'poBox' => ['type' => 'string', 'default' => ''],
+            'email' => ['type' => 'string', 'default' => ''],
+            'tagline' => ['type' => 'string', 'default' => 'UPLIFTING PEOPLE'],
+            'logoId' => ['type' => 'number', 'default' => 0],
+            'addressIconId' => ['type' => 'number', 'default' => 0],
+            'phoneIconId' => ['type' => 'number', 'default' => 0],
+            'poBoxIconId' => ['type' => 'number', 'default' => 0],
+            'emailIconId' => ['type' => 'number', 'default' => 0],
+            'iconColor' => ['type' => 'string', 'default' => '#FFFFFF'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/footer-branches', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-footer-branches-editor',
+        'attributes' => [
+            'branches' => [
+                'type' => 'array',
+                'default' => [],
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/footer-app-links', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-footer-app-links-editor',
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Download Mobile App'],
+            'googlePlayUrl' => ['type' => 'string', 'default' => ''],
+            'appStoreUrl' => ['type' => 'string', 'default' => ''],
+            'googlePlayIconId' => ['type' => 'number', 'default' => 0],
+            'appStoreIconId' => ['type' => 'number', 'default' => 0],
+            'iconColor' => ['type' => 'string', 'default' => '#FFFFFF'],
+            'iconHoverColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'iconWidth' => ['type' => 'number', 'default' => 144],
+            'iconHeight' => ['type' => 'number', 'default' => 48],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/footer-socials', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-footer-socials-editor',
+        'attributes' => [
+            'facebook' => ['type' => 'string', 'default' => ''],
+            'twitter' => ['type' => 'string', 'default' => ''],
+            'instagram' => ['type' => 'string', 'default' => ''],
+            'linkedin' => ['type' => 'string', 'default' => ''],
+            'youtube' => ['type' => 'string', 'default' => ''],
+            'facebookIconId' => ['type' => 'number', 'default' => 0],
+            'twitterIconId' => ['type' => 'number', 'default' => 0],
+            'instagramIconId' => ['type' => 'number', 'default' => 0],
+            'linkedinIconId' => ['type' => 'number', 'default' => 0],
+            'youtubeIconId' => ['type' => 'number', 'default' => 0],
+            'iconColor' => ['type' => 'string', 'default' => '#FFFFFF'],
+            'iconHoverColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'youtubeInternalColor' => ['type' => 'string', 'default' => '#FFFFFF'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/footer-hours', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-footer-hours-editor',
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Banking Hours'],
+            'weekdaysLabel' => ['type' => 'string', 'default' => 'Monday - Friday:'],
+            'weekdaysTime' => ['type' => 'string', 'default' => '08:30 AM - 04:00 PM'],
+            'saturdayLabel' => ['type' => 'string', 'default' => 'Saturday:'],
+            'saturdayTime' => ['type' => 'string', 'default' => '09:00 AM - 12:00 PM'],
+            'sundayLabel' => ['type' => 'string', 'default' => 'Sunday:'],
+            'sundayTime' => ['type' => 'string', 'default' => 'Closed'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/footer-bottom', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-footer-bottom-editor',
+        'attributes' => [
+            'copyright' => ['type' => 'string', 'default' => '© 2026 PORTS SACCO'],
+            'rights' => ['type' => 'string', 'default' => '- ALL RIGHTS RESERVED'],
+            'privacyLabel' => ['type' => 'string', 'default' => 'PRIVACY POLICY'],
+            'privacyUrl' => ['type' => 'string', 'default' => '#'],
+            'termsLabel' => ['type' => 'string', 'default' => 'TERMS AND CONDITIONS'],
+            'termsUrl' => ['type' => 'string', 'default' => '#'],
+            'credit' => ['type' => 'string', 'default' => 'A SMITH CREATIVE DESIGN'],
+            'creditUrl' => ['type' => 'string', 'default' => ''],
+            'linkColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkHoverColor' => ['type' => 'string', 'default' => '#FFFFFF'],
         ],
         'render_callback' => static function (): string {
             return '';

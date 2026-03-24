@@ -13,7 +13,11 @@ add_filter('rest_post_dispatch', static function ($response, $server, $request) 
 
     $route = (string) $request->get_route();
     if (strpos($route, '/custom/v1/') !== false) {
-        $response->header('Cache-Control', 'public, max-age=' . (int) headless_core_cache_ttl());
+        if (headless_core_transients_enabled()) {
+            $response->header('Cache-Control', 'public, max-age=' . (int) headless_core_cache_ttl());
+        } else {
+            $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        }
     }
 
     return $response;

@@ -7,6 +7,14 @@ if (! defined('ABSPATH')) {
 }
 
 /**
+ * Global transient toggle. Enabled by default.
+ */
+function headless_core_transients_enabled(): bool
+{
+    return get_option('headless_core_enable_transients', '1') === '1';
+}
+
+/**
  * @return int Seconds
  */
 function headless_core_cache_ttl(): int
@@ -40,6 +48,10 @@ function headless_core_cache_key(string $group, string $key): string
  */
 function headless_core_cache_get(string $group, string $key)
 {
+    if (! headless_core_transients_enabled()) {
+        return null;
+    }
+
     if (wp_using_ext_object_cache()) {
         return wp_cache_get(headless_core_cache_key($group, $key), $group);
     }
@@ -55,6 +67,10 @@ function headless_core_cache_get(string $group, string $key)
  */
 function headless_core_cache_set(string $group, string $key, $value): void
 {
+    if (! headless_core_transients_enabled()) {
+        return;
+    }
+
     $ttl = headless_core_cache_ttl();
     $full = headless_core_cache_key($group, $key);
 
@@ -83,6 +99,37 @@ function headless_core_cache_delete(string $group, string $key): void
     }
 
     delete_transient($full);
+}
+
+/**
+ * Low-level transient wrappers for direct keys.
+ *
+ * @return mixed|null
+ */
+function headless_core_transient_get_raw(string $key)
+{
+    if (! headless_core_transients_enabled()) {
+        return null;
+    }
+
+    return get_transient($key);
+}
+
+/**
+ * @param mixed $value
+ */
+function headless_core_transient_set_raw(string $key, $value, int $ttl): void
+{
+    if (! headless_core_transients_enabled()) {
+        return;
+    }
+
+    set_transient($key, $value, $ttl);
+}
+
+function headless_core_transient_delete_raw(string $key): void
+{
+    delete_transient($key);
 }
 
 /**
