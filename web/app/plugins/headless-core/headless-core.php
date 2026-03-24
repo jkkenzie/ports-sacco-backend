@@ -24,6 +24,7 @@ require_once HEADLESS_CORE_PATH . 'inc/migration.php';
 require_once HEADLESS_CORE_PATH . 'inc/blocks.php';
 require_once HEADLESS_CORE_PATH . 'inc/footer.php';
 require_once HEADLESS_CORE_PATH . 'inc/admin.php';
+require_once HEADLESS_CORE_PATH . 'inc/post-types.php';
 
 add_action('after_setup_theme', static function (): void {
     register_nav_menus([

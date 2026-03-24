@@ -44,6 +44,27 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-savings-archive-hero-editor',
+        HEADLESS_CORE_URL . 'blocks/savings-archive-hero/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-savings-why-save-editor',
+        HEADLESS_CORE_URL . 'blocks/savings-why-save/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-savings-products-grid-editor',
+        HEADLESS_CORE_URL . 'blocks/savings-products-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-footer-contact-editor',
         HEADLESS_CORE_URL . 'blocks/footer-contact/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
@@ -264,6 +285,76 @@ add_action('init', static function (): void {
             'iconColor' => ['type' => 'string', 'default' => '#EE6E2A'],
             'linkSvgColor' => ['type' => 'string', 'default' => '#22ACB6'],
         ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/savings-archive-hero', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-savings-archive-hero-editor',
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Savings Products'],
+            'intro' => ['type' => 'string', 'default' => ''],
+            'bannerImageId' => ['type' => 'number', 'default' => 0],
+            'bannerImageUrl' => ['type' => 'string', 'default' => ''],
+            'titleColor' => ['type' => 'string', 'default' => '#22ABB5'],
+            'navBackgroundColor' => ['type' => 'string', 'default' => '#eef2f8'],
+            'navBorderColor' => ['type' => 'string', 'default' => '#c8cee3'],
+            'menuTextColor' => ['type' => 'string', 'default' => '#65605f'],
+            'menuHoverTextColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'menuHoverBackgroundColor' => ['type' => 'string', 'default' => '#eef2f8'],
+            'buttons' => [
+                'type' => 'array',
+                'default' => [
+                    ['label' => 'GET A CALL BACK', 'url' => '#', 'textColor' => '#22abb5', 'borderColor' => '#22abb5', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#22abb5', 'hoverBorderColor' => '#22abb5'],
+                    ['label' => 'JOIN PORTS SACCO', 'url' => '/contact-us', 'textColor' => '#ed6e2a', 'borderColor' => '#ed6e2a', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#ed6e2a', 'hoverBorderColor' => '#ed6e2a'],
+                ],
+            ],
+            'menuItems' => [
+                'type' => 'array',
+                'default' => [
+                    ['label' => 'GROUP', 'href' => '#'],
+                    ['label' => 'BIASHARA', 'href' => '#'],
+                    ['label' => 'FIXED DEPOSIT', 'href' => '#'],
+                ],
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/savings-why-save', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-savings-why-save-editor',
+        'attributes' => [
+            'heading' => ['type' => 'string', 'default' => 'Why Save With Us'],
+            'iconId' => ['type' => 'number', 'default' => 0],
+            'iconUrl' => ['type' => 'string', 'default' => ''],
+            'headingColor' => ['type' => 'string', 'default' => '#22ABB5'],
+            'titleColor' => ['type' => 'string', 'default' => '#000000'],
+            'textColor' => ['type' => 'string', 'default' => '#000000'],
+            'iconBgColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'items' => [
+                'type' => 'array',
+                'default' => [
+                    ['heading' => 'High Returns', 'paragraph' => 'Earn market competitive returns on your savings and share capital.'],
+                    ['heading' => 'Access to Credit', 'paragraph' => 'Saving with us makes it easy to access credit. The more you save, the more you can borrow.'],
+                    ['heading' => 'Fallback', 'paragraph' => 'You can always count on your savings with the SACCO for unforeseen occurrences.'],
+                    ['heading' => 'Retirement', 'paragraph' => 'Savings come in handy when you retire from formal employment.'],
+                ],
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/savings-products-grid', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-savings-products-grid-editor',
+        'attributes' => [],
         'render_callback' => static function (): string {
             return '';
         },

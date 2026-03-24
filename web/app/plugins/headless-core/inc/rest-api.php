@@ -53,6 +53,18 @@ add_action('rest_api_init', static function (): void {
             ],
         ],
     ]);
+
+    register_rest_route('custom/v1', '/savings-products/(?P<slug>[a-z0-9\-_]+)', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_savings_product',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'slug' => [
+                'required' => true,
+                'type' => 'string',
+            ],
+        ],
+    ]);
 });
 
 add_filter('rest_pre_serve_request', static function ($served, $result, $request, $server) {
@@ -746,6 +758,192 @@ function headless_core_plain_text_from_parsed_block(array $block, array $attrs):
  */
 function headless_core_block_attributes_for_api(string $name, array $block, array $attrs): array
 {
+    if ($name === 'custom/savings-archive-hero') {
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? (string) $attrs['title']
+            : 'Savings Products';
+        $attrs['intro'] = isset($attrs['intro']) ? (string) $attrs['intro'] : '';
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#22ABB5'
+        );
+        $attrs['navBackgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['navBackgroundColor']) ? (string) $attrs['navBackgroundColor'] : '',
+            '#eef2f8'
+        );
+        $attrs['navBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['navBorderColor']) ? (string) $attrs['navBorderColor'] : '',
+            '#c8cee3'
+        );
+        $attrs['menuTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['menuTextColor']) ? (string) $attrs['menuTextColor'] : '',
+            '#65605f'
+        );
+        $attrs['menuHoverTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['menuHoverTextColor']) ? (string) $attrs['menuHoverTextColor'] : '',
+            '#ED6E2A'
+        );
+        $attrs['menuHoverBackgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['menuHoverBackgroundColor']) ? (string) $attrs['menuHoverBackgroundColor'] : '',
+            '#eef2f8'
+        );
+        $bannerId = isset($attrs['bannerImageId']) ? (int) $attrs['bannerImageId'] : 0;
+        $attrs['bannerImageId'] = $bannerId;
+        if ($bannerId > 0) {
+            $url = wp_get_attachment_image_url($bannerId, 'full');
+            if (is_string($url) && $url !== '') {
+                $attrs['bannerImageUrl'] = $url;
+            }
+        }
+
+        if (! isset($attrs['buttons']) || ! is_array($attrs['buttons']) || $attrs['buttons'] === []) {
+            $legacyButtons = [];
+            $legacyPrimaryText = isset($attrs['primaryCtaText']) ? trim((string) $attrs['primaryCtaText']) : '';
+            $legacyPrimaryUrl = isset($attrs['primaryCtaUrl']) ? trim((string) $attrs['primaryCtaUrl']) : '';
+            $legacySecondaryText = isset($attrs['secondaryCtaText']) ? trim((string) $attrs['secondaryCtaText']) : '';
+            $legacySecondaryUrl = isset($attrs['secondaryCtaUrl']) ? trim((string) $attrs['secondaryCtaUrl']) : '';
+            if ($legacyPrimaryText !== '' || $legacyPrimaryUrl !== '') {
+                $legacyButtons[] = [
+                    'label' => $legacyPrimaryText !== '' ? $legacyPrimaryText : 'GET A CALL BACK',
+                    'url' => $legacyPrimaryUrl !== '' ? $legacyPrimaryUrl : '#',
+                    'textColor' => '#22abb5',
+                    'borderColor' => '#22abb5',
+                    'bgColor' => '#ffffff',
+                    'hoverTextColor' => '#ffffff',
+                    'hoverBgColor' => '#22abb5',
+                    'hoverBorderColor' => '#22abb5',
+                ];
+            }
+            if ($legacySecondaryText !== '' || $legacySecondaryUrl !== '') {
+                $legacyButtons[] = [
+                    'label' => $legacySecondaryText !== '' ? $legacySecondaryText : 'JOIN PORTS SACCO',
+                    'url' => $legacySecondaryUrl !== '' ? $legacySecondaryUrl : '/contact-us',
+                    'textColor' => '#ed6e2a',
+                    'borderColor' => '#ed6e2a',
+                    'bgColor' => '#ffffff',
+                    'hoverTextColor' => '#ffffff',
+                    'hoverBgColor' => '#ed6e2a',
+                    'hoverBorderColor' => '#ed6e2a',
+                ];
+            }
+            $attrs['buttons'] = $legacyButtons !== [] ? $legacyButtons : [
+                ['label' => 'GET A CALL BACK', 'url' => '#', 'textColor' => '#22abb5', 'borderColor' => '#22abb5', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#22abb5', 'hoverBorderColor' => '#22abb5'],
+                ['label' => 'JOIN PORTS SACCO', 'url' => '/contact-us', 'textColor' => '#ed6e2a', 'borderColor' => '#ed6e2a', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#ed6e2a', 'hoverBorderColor' => '#ed6e2a'],
+            ];
+        } else {
+            $normalizedButtons = [];
+            foreach ($attrs['buttons'] as $button) {
+                if (! is_array($button)) {
+                    continue;
+                }
+                $label = trim((string) ($button['label'] ?? ''));
+                $url = trim((string) ($button['url'] ?? ''));
+                if ($label === '' && $url === '') {
+                    continue;
+                }
+                $normalizedButtons[] = [
+                    'label' => $label !== '' ? $label : 'BUTTON',
+                    'url' => $url !== '' ? $url : '#',
+                    'textColor' => headless_core_sanitize_color_string((string) ($button['textColor'] ?? ''), '#22abb5'),
+                    'borderColor' => headless_core_sanitize_color_string((string) ($button['borderColor'] ?? ''), '#22abb5'),
+                    'bgColor' => headless_core_sanitize_color_string((string) ($button['bgColor'] ?? ''), '#ffffff'),
+                    'hoverTextColor' => headless_core_sanitize_color_string((string) ($button['hoverTextColor'] ?? ''), '#ffffff'),
+                    'hoverBgColor' => headless_core_sanitize_color_string((string) ($button['hoverBgColor'] ?? ''), '#22abb5'),
+                    'hoverBorderColor' => headless_core_sanitize_color_string((string) ($button['hoverBorderColor'] ?? ''), '#22abb5'),
+                ];
+            }
+            $attrs['buttons'] = $normalizedButtons;
+        }
+
+        if (! isset($attrs['menuItems']) || ! is_array($attrs['menuItems']) || $attrs['menuItems'] === []) {
+            $attrs['menuItems'] = [
+                ['label' => 'GROUP', 'href' => '#'],
+                ['label' => 'BIASHARA', 'href' => '#'],
+                ['label' => 'FIXED DEPOSIT', 'href' => '#'],
+            ];
+        } else {
+            $normalizedMenuItems = [];
+            foreach ($attrs['menuItems'] as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $label = trim((string) ($item['label'] ?? ''));
+                $href = trim((string) ($item['href'] ?? ''));
+                if ($label === '' && $href === '') {
+                    continue;
+                }
+                $normalizedMenuItems[] = [
+                    'label' => $label !== '' ? $label : 'MENU ITEM',
+                    'href' => $href !== '' ? $href : '#',
+                ];
+            }
+            $attrs['menuItems'] = $normalizedMenuItems;
+        }
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/savings-why-save') {
+        $attrs['heading'] = isset($attrs['heading']) && trim((string) $attrs['heading']) !== ''
+            ? (string) $attrs['heading']
+            : 'Why Save With Us';
+        $attrs['headingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headingColor']) ? (string) $attrs['headingColor'] : '',
+            '#22ABB5'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#000000'
+        );
+        $attrs['textColor'] = headless_core_sanitize_color_string(
+            isset($attrs['textColor']) ? (string) $attrs['textColor'] : '',
+            '#000000'
+        );
+        $attrs['iconBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['iconBgColor']) ? (string) $attrs['iconBgColor'] : '',
+            '#ED6E2A'
+        );
+        $iconId = isset($attrs['iconId']) ? (int) $attrs['iconId'] : 0;
+        $attrs['iconId'] = $iconId;
+        if ($iconId > 0) {
+            $url = wp_get_attachment_image_url($iconId, 'medium');
+            if (is_string($url) && $url !== '') {
+                $attrs['iconUrl'] = $url;
+            }
+            $svgMarkup = headless_core_attachment_inline_svg_markup($iconId);
+            if ($svgMarkup !== '') {
+                $attrs['iconSvg'] = $svgMarkup;
+            }
+        }
+        if (! isset($attrs['items']) || ! is_array($attrs['items']) || $attrs['items'] === []) {
+            $attrs['items'] = [
+                ['heading' => 'High Returns', 'paragraph' => 'Earn market competitive returns on your savings and share capital.'],
+                ['heading' => 'Access to Credit', 'paragraph' => 'Saving with us makes it easy to access credit. The more you save, the more you can borrow.'],
+                ['heading' => 'Fallback', 'paragraph' => 'You can always count on your savings with the SACCO for unforeseen occurrences.'],
+                ['heading' => 'Retirement', 'paragraph' => 'Savings come in handy when you retire from formal employment.'],
+            ];
+        } else {
+            $normalizedItems = [];
+            foreach ($attrs['items'] as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $heading = trim((string) ($item['heading'] ?? $item['label'] ?? ''));
+                $paragraph = trim((string) ($item['paragraph'] ?? $item['text'] ?? ''));
+                if ($heading === '' && $paragraph === '') {
+                    continue;
+                }
+                $normalizedItems[] = [
+                    'heading' => $heading,
+                    'paragraph' => $paragraph,
+                ];
+            }
+            $attrs['items'] = $normalizedItems;
+        }
+
+        return $attrs;
+    }
+
     if ($name === 'core/paragraph') {
         $attrs['content'] = headless_core_plain_text_from_parsed_block($block, $attrs);
 
@@ -1013,6 +1211,123 @@ function headless_core_rest_menu(WP_REST_Request $request)
     headless_core_cache_set('menu', $cacheKey, $tree);
 
     return new WP_REST_Response($tree, 200);
+}
+
+/**
+ * @return WP_REST_Response
+ */
+function headless_core_rest_savings_products(): WP_REST_Response
+{
+    $cacheVersion = (string) get_option('headless_savings_products_cache_ver', '1');
+    $cacheKey = 'list_' . $cacheVersion;
+    $cached = headless_core_cache_get('savings_products', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $posts = get_posts([
+        'post_type' => 'savings_product',
+        'post_status' => 'publish',
+        'orderby' => [
+            'menu_order' => 'ASC',
+            'date' => 'ASC',
+        ],
+        'numberposts' => -1,
+    ]);
+
+    $payload = [];
+    foreach ($posts as $post) {
+        if (! $post instanceof WP_Post) {
+            continue;
+        }
+
+        $imageUrl = '';
+        $thumbId = (int) get_post_thumbnail_id($post);
+        if ($thumbId > 0) {
+            $url = wp_get_attachment_image_url($thumbId, 'large');
+            if (is_string($url) && $url !== '') {
+                $imageUrl = $url;
+            }
+        }
+
+        $excerpt = trim((string) $post->post_excerpt);
+        if ($excerpt === '') {
+            $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
+        }
+
+        $payload[] = [
+            'id' => (int) $post->ID,
+            'slug' => (string) $post->post_name,
+            'title' => get_the_title($post),
+            'description' => $excerpt,
+            'imageUrl' => $imageUrl,
+            'link' => '/savings-products/' . (string) $post->post_name,
+        ];
+    }
+
+    headless_core_cache_set('savings_products', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @param WP_REST_Request $request
+ * @return WP_REST_Response|WP_Error
+ */
+function headless_core_rest_savings_product(WP_REST_Request $request)
+{
+    $slug = sanitize_title((string) $request->get_param('slug'));
+    if ($slug === '') {
+        return new WP_Error('headless_savings_product_invalid', __('Savings product slug is required.', 'headless-core'), ['status' => 400]);
+    }
+
+    $cacheVersion = (string) get_option('headless_savings_products_cache_ver', '1');
+    $cacheKey = 'single_' . $slug . '_' . $cacheVersion;
+    $cached = headless_core_cache_get('savings_products', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $post = get_page_by_path($slug, OBJECT, 'savings_product');
+    if (! $post instanceof WP_Post || $post->post_status !== 'publish') {
+        return new WP_Error('headless_not_found', __('Savings product not found.', 'headless-core'), ['status' => 404]);
+    }
+
+    $hadGlobalPost = array_key_exists('post', $GLOBALS);
+    $previousGlobalPost = $hadGlobalPost ? $GLOBALS['post'] : null;
+    $GLOBALS['post'] = $post;
+
+    try {
+        $parsed = parse_blocks((string) $post->post_content);
+        $blocks = headless_core_normalize_blocks($parsed);
+    } finally {
+        if ($hadGlobalPost) {
+            $GLOBALS['post'] = $previousGlobalPost;
+        } else {
+            unset($GLOBALS['post']);
+        }
+    }
+
+    $imageUrl = '';
+    $thumbId = (int) get_post_thumbnail_id($post);
+    if ($thumbId > 0) {
+        $url = wp_get_attachment_image_url($thumbId, 'large');
+        if (is_string($url) && $url !== '') {
+            $imageUrl = $url;
+        }
+    }
+
+    $payload = [
+        'id' => (int) $post->ID,
+        'slug' => (string) $post->post_name,
+        'title' => get_the_title($post),
+        'imageUrl' => $imageUrl,
+        'blocks' => $blocks,
+    ];
+
+    headless_core_cache_set('savings_products', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
 }
 
 /**
