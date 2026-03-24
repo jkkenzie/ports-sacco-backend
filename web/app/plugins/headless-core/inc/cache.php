@@ -103,6 +103,15 @@ function headless_core_bump_page_cache_version(): void
     update_option('headless_page_cache_ver', $v + 1, false);
 }
 
+/**
+ * @return void
+ */
+function headless_core_bump_savings_products_cache_version(): void
+{
+    $v = (int) get_option('headless_savings_products_cache_ver', 1);
+    update_option('headless_savings_products_cache_ver', $v + 1, false);
+}
+
 add_action('save_post_page', static function (int $postId, WP_Post $post, bool $update): void {
     if (wp_is_post_revision($postId) || $post->post_status === 'auto-draft') {
         return;
@@ -117,3 +126,10 @@ add_action('wp_update_nav_menu', static function (): void {
 add_action('wp_delete_nav_menu', static function (): void {
     headless_core_bump_menu_cache_version();
 });
+
+add_action('save_post_savings_product', static function (int $postId, WP_Post $post): void {
+    if (wp_is_post_revision($postId) || $post->post_status === 'auto-draft') {
+        return;
+    }
+    headless_core_bump_savings_products_cache_version();
+}, 10, 2);
