@@ -58,12 +58,14 @@
     description: __('Why Save With Us section for savings products archive.', 'headless-core'),
     attributes: {
       heading: { type: 'string', default: 'Why Save With Us' },
+      footerText: { type: 'string', default: '' },
       iconId: { type: 'number', default: 0 },
       iconUrl: { type: 'string', default: '' },
       headingColor: { type: 'string', default: '#22ABB5' },
       titleColor: { type: 'string', default: '#000000' },
       textColor: { type: 'string', default: '#000000' },
       iconBgColor: { type: 'string', default: '#ED6E2A' },
+      backgroundColor: { type: 'string', default: '#ffffff' },
       items: {
         type: 'array',
         default: DEFAULT_ITEMS
@@ -76,7 +78,8 @@
       var titleColor = String(props.attributes.titleColor || '#000000');
       var textColor = String(props.attributes.textColor || '#000000');
       var iconBgColor = String(props.attributes.iconBgColor || '#ED6E2A');
-      var colorChoices = ['#22ABB5', '#ED6E2A', '#000000', '#FFFFFF', '#65605f', '#3b4e6b'];
+      var backgroundColor = String(props.attributes.backgroundColor || '#ffffff');
+      var colorChoices = ['#22ABB5', '#ED6E2A', '#000000', '#FFFFFF', '#eef0f3', '#65605f', '#3b4e6b'];
 
       function setItem(index, patch) {
         var next = items.map(function (item, i) {
@@ -112,6 +115,14 @@
               value: props.attributes.heading,
               onChange: function (v) { props.setAttributes({ heading: v }); }
             }),
+            el('div', { style: { marginTop: '8px' } },
+              el(BaseControl, { label: __('Background Color', 'headless-core') }),
+              el(ColorPalette, {
+                value: backgroundColor,
+                colors: colorChoices.map(function (hex) { return { color: hex, name: hex }; }),
+                onChange: function (nextColor) { props.setAttributes({ backgroundColor: nextColor || '#ffffff' }); }
+              })
+            ),
             el('div', null,
               el(BaseControl, { label: __('Section Heading Color', 'headless-core') }),
               el(ColorPalette, {
@@ -248,7 +259,17 @@
                 })
               );
             }),
-            el(Button, { variant: 'primary', onClick: addItem }, '+ ', __('Add Point', 'headless-core'))
+            el(Button, { variant: 'primary', onClick: addItem }, '+ ', __('Add Point', 'headless-core')),
+            el('div', { style: { marginTop: '16px' } },
+              el(BaseControl, { label: __('Footer paragraph (optional)', 'headless-core') }),
+              el(RichText, {
+                tagName: 'p',
+                value: props.attributes.footerText || '',
+                onChange: function (v) { props.setAttributes({ footerText: v }); },
+                placeholder: __('Add a paragraph below the points...', 'headless-core'),
+                allowedFormats: []
+              })
+            )
           )
         ),
         el(

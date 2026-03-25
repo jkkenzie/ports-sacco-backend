@@ -58,9 +58,51 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-membership-content-editor',
+        HEADLESS_CORE_URL . 'blocks/membership-content/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-savings-products-grid-editor',
         HEADLESS_CORE_URL . 'blocks/savings-products-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-asset-finance-whatever-editor',
+        HEADLESS_CORE_URL . 'blocks/asset-finance-whatever/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-asset-finance-faq-editor',
+        HEADLESS_CORE_URL . 'blocks/asset-finance-faq/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-asset-finance-apply-editor',
+        HEADLESS_CORE_URL . 'blocks/asset-finance-apply/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-loan-products-grid-editor',
+        HEADLESS_CORE_URL . 'blocks/loan-products-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-services-grid-editor',
+        HEADLESS_CORE_URL . 'blocks/services-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -328,14 +370,19 @@ add_action('init', static function (): void {
     register_block_type('custom/savings-why-save', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-savings-why-save-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
         'attributes' => [
             'heading' => ['type' => 'string', 'default' => 'Why Save With Us'],
+            'footerText' => ['type' => 'string', 'default' => ''],
             'iconId' => ['type' => 'number', 'default' => 0],
             'iconUrl' => ['type' => 'string', 'default' => ''],
             'headingColor' => ['type' => 'string', 'default' => '#22ABB5'],
             'titleColor' => ['type' => 'string', 'default' => '#000000'],
             'textColor' => ['type' => 'string', 'default' => '#000000'],
             'iconBgColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'backgroundColor' => ['type' => 'string', 'default' => '#ffffff'],
             'items' => [
                 'type' => 'array',
                 'default' => [
@@ -351,10 +398,165 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/membership-content', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-membership-content-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'heading' => ['type' => 'string', 'default' => 'Individual Membership'],
+            'description' => ['type' => 'string', 'default' => 'To join the SACCO as an individual, one needs to:'],
+            'iconId' => ['type' => 'number', 'default' => 0],
+            'iconUrl' => ['type' => 'string', 'default' => ''],
+            'headingColor' => ['type' => 'string', 'default' => '#22ABB5'],
+            'descriptionColor' => ['type' => 'string', 'default' => '#000000'],
+            'titleColor' => ['type' => 'string', 'default' => '#000000'],
+            'textColor' => ['type' => 'string', 'default' => '#000000'],
+            'iconBgColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'backgroundColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'tableHeaderBg' => ['type' => 'string', 'default' => '#e7f0f9'],
+            'tableCellBg' => ['type' => 'string', 'default' => '#f8f9fa'],
+            'tableHeaders' => [
+                'type' => 'array',
+                'default' => [
+                    'Membership Category',
+                    'Registration (KSH)',
+                    'Minimum Monthly Deposits Contribution (KSH)',
+                    'Share Capital',
+                ],
+            ],
+            'tableRows' => [
+                'type' => 'array',
+                'default' => [
+                    ['Individual', '500', '1,000', '40,000'],
+                ],
+            ],
+            'buttonLabel' => ['type' => 'string', 'default' => 'JOIN US!'],
+            'buttonUrl' => ['type' => 'string', 'default' => '/contact-us'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#40C9BF'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'buttonHoverBgColor' => ['type' => 'string', 'default' => '#35b5ad'],
+            'items' => [
+                'type' => 'array',
+                'default' => [
+                    ['heading' => 'Membership Form:', 'paragraph' => 'Complete and submit the membership application form.'],
+                    ['heading' => 'ID or Passport:', 'paragraph' => 'Attach a copy of your Kenyan National Identity Card or a valid Kenyan Passport.'],
+                    ['heading' => 'Passport Photo:', 'paragraph' => 'Attach coloured passport size photograph.'],
+                    ['heading' => 'KRA PIN Certificate:', 'paragraph' => 'Attach a copy of your KRA PIN Certificate.'],
+                ],
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/savings-products-grid', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-savings-products-grid-editor',
         'attributes' => [],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/asset-finance-whatever', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-asset-finance-whatever-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Get financing for whatever you need now'],
+            'backgroundColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'titleColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'buttonLabel' => ['type' => 'string', 'default' => 'ENQUIRE NOW'],
+            'buttonUrl' => ['type' => 'string', 'default' => '#'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#ed6e2a'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'buttonBorderColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonHoverBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'buttonHoverTextColor' => ['type' => 'string', 'default' => '#ed6e2a'],
+            'buttonHoverBorderColor' => ['type' => 'string', 'default' => '#22ACB6'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/asset-finance-faq', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-asset-finance-faq-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Frequently Asked Questions'],
+            'intro' => ['type' => 'string', 'default' => "For each loan product or service offered by Ports DT Sacco, we will need an FAQ's page."],
+            'backgroundColor' => ['type' => 'string', 'default' => '#eef0f3'],
+            'titleColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'textColor' => ['type' => 'string', 'default' => '#000000'],
+            'questionColor' => ['type' => 'string', 'default' => '#000000'],
+            'borderColor' => ['type' => 'string', 'default' => '#e5e7eb'],
+            'hoverBgColor' => ['type' => 'string', 'default' => '#f9fafb'],
+            'iconColor' => ['type' => 'string', 'default' => '#000000'],
+            'items' => [
+                'type' => 'array',
+                'default' => [
+                    ['question' => 'Can I pay off my loan early?', 'answer' => 'Yes, you can pay off your loan early. Please contact us for details on early repayment options.'],
+                    ['question' => 'Can you offer refinancing?', 'answer' => 'Yes, we offer refinancing options. Contact our team to discuss your refinancing needs.'],
+                    ['question' => 'When should I apply?', 'answer' => 'You can apply at any time. Our application process is open throughout the year.'],
+                    ['question' => 'Where are you located?', 'answer' => 'We have multiple branches. Please visit our contact page for branch locations and contact information.'],
+                ],
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/asset-finance-apply', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-asset-finance-apply-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Apply Now!'],
+            'backgroundColor' => ['type' => 'string', 'default' => '#eef0f3'],
+            'titleColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'labelColor' => ['type' => 'string', 'default' => '#000000'],
+            'inputBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'buttonLabel' => ['type' => 'string', 'default' => 'SUBMIT YOUR APPLICATION'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'buttonHoverBgColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonHoverTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'successMessage' => ['type' => 'string', 'default' => 'Thanks — we received your application.'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/loan-products-grid', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-loan-products-grid-editor',
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/services-grid', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-services-grid-editor',
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+        ],
         'render_callback' => static function (): string {
             return '';
         },

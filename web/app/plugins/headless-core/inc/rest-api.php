@@ -54,6 +54,12 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
+    register_rest_route('custom/v1', '/savings-products', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_savings_products',
+        'permission_callback' => '__return_true',
+    ]);
+
     register_rest_route('custom/v1', '/savings-products/(?P<slug>[a-z0-9\-_]+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_savings_product',
@@ -63,6 +69,69 @@ add_action('rest_api_init', static function (): void {
                 'required' => true,
                 'type' => 'string',
             ],
+        ],
+    ]);
+
+    register_rest_route('custom/v1', '/loan-products', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_loan_products',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'category' => [
+                'required' => false,
+                'type' => 'integer',
+            ],
+        ],
+    ]);
+
+    register_rest_route('custom/v1', '/loan-products/(?P<slug>[a-z0-9\-_]+)', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_loan_product',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'slug' => [
+                'required' => true,
+                'type' => 'string',
+            ],
+        ],
+    ]);
+
+    register_rest_route('custom/v1', '/services', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_services',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'category' => [
+                'required' => false,
+                'type' => 'integer',
+            ],
+        ],
+    ]);
+
+    register_rest_route('custom/v1', '/services/(?P<slug>[a-z0-9\-_]+)', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_service',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'slug' => [
+                'required' => true,
+                'type' => 'string',
+            ],
+        ],
+    ]);
+
+    register_rest_route('custom/v1', '/contact', [
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'headless_core_rest_contact_submit',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'name' => ['required' => true, 'type' => 'string'],
+            'email' => ['required' => true, 'type' => 'string'],
+            'phone' => ['required' => true, 'type' => 'string'],
+            'amount' => ['required' => false, 'type' => 'string'],
+            'message' => ['required' => false, 'type' => 'string'],
+            'form' => ['required' => false, 'type' => 'string'],
+            'company' => ['required' => false, 'type' => 'string'], // honeypot
         ],
     ]);
 });
@@ -83,11 +152,22 @@ add_filter('rest_pre_serve_request', static function ($served, $result, $request
     }
 
     header('Access-Control-Allow-Origin: ' . $origin);
-    header('Access-Control-Allow-Methods: GET, OPTIONS');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept');
 
     return $served;
 }, 10, 4);
+
+// Handle CORS preflight for our custom routes when HEADLESS_CORS_ORIGIN is set.
+add_action('rest_api_init', static function (): void {
+    register_rest_route('custom/v1', '/(?P<any>.*)', [
+        'methods' => 'OPTIONS',
+        'callback' => static function (): WP_REST_Response {
+            return new WP_REST_Response(null, 204);
+        },
+        'permission_callback' => '__return_true',
+    ]);
+}, 1);
 
 /**
  * @param WP_REST_Request $request
@@ -884,9 +964,22 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
     }
 
     if ($name === 'custom/savings-why-save') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
         $attrs['heading'] = isset($attrs['heading']) && trim((string) $attrs['heading']) !== ''
             ? (string) $attrs['heading']
             : 'Why Save With Us';
+        $attrs['footerText'] = isset($attrs['footerText']) ? trim((string) $attrs['footerText']) : '';
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#ffffff'
+        );
         $attrs['headingColor'] = headless_core_sanitize_color_string(
             isset($attrs['headingColor']) ? (string) $attrs['headingColor'] : '',
             '#22ABB5'
@@ -944,6 +1037,329 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/membership-content') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+        $attrs['heading'] = isset($attrs['heading']) && trim((string) $attrs['heading']) !== ''
+            ? (string) $attrs['heading']
+            : 'Individual Membership';
+        $attrs['description'] = isset($attrs['description'])
+            ? trim(wp_strip_all_tags((string) $attrs['description']))
+            : '';
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#ffffff'
+        );
+        $attrs['headingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headingColor']) ? (string) $attrs['headingColor'] : '',
+            '#22ABB5'
+        );
+        $attrs['descriptionColor'] = headless_core_sanitize_color_string(
+            isset($attrs['descriptionColor']) ? (string) $attrs['descriptionColor'] : '',
+            '#000000'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#000000'
+        );
+        $attrs['textColor'] = headless_core_sanitize_color_string(
+            isset($attrs['textColor']) ? (string) $attrs['textColor'] : '',
+            '#000000'
+        );
+        $attrs['iconBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['iconBgColor']) ? (string) $attrs['iconBgColor'] : '',
+            '#ED6E2A'
+        );
+        $attrs['tableHeaderBg'] = headless_core_sanitize_color_string(
+            isset($attrs['tableHeaderBg']) ? (string) $attrs['tableHeaderBg'] : '',
+            '#e7f0f9'
+        );
+        $attrs['tableCellBg'] = headless_core_sanitize_color_string(
+            isset($attrs['tableCellBg']) ? (string) $attrs['tableCellBg'] : '',
+            '#f8f9fa'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#40C9BF'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['buttonHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverBgColor']) ? (string) $attrs['buttonHoverBgColor'] : '',
+            '#35b5ad'
+        );
+        $attrs['buttonLabel'] = isset($attrs['buttonLabel']) ? trim((string) $attrs['buttonLabel']) : '';
+        $attrs['buttonUrl'] = isset($attrs['buttonUrl']) ? trim((string) $attrs['buttonUrl']) : '/contact-us';
+
+        $iconId = isset($attrs['iconId']) ? (int) $attrs['iconId'] : 0;
+        $attrs['iconId'] = $iconId;
+        if ($iconId > 0) {
+            $url = wp_get_attachment_image_url($iconId, 'medium');
+            if (is_string($url) && $url !== '') {
+                $attrs['iconUrl'] = $url;
+            }
+            $svgMarkup = headless_core_attachment_inline_svg_markup($iconId);
+            if ($svgMarkup !== '') {
+                $attrs['iconSvg'] = $svgMarkup;
+            }
+        }
+
+        $defaultHeaders = [
+            'Membership Category',
+            'Registration (KSH)',
+            'Minimum Monthly Deposits Contribution (KSH)',
+            'Share Capital',
+        ];
+        $headers = [];
+        if (isset($attrs['tableHeaders']) && is_array($attrs['tableHeaders'])) {
+            for ($i = 0; $i < 4; $i++) {
+                $headers[] = isset($attrs['tableHeaders'][$i])
+                    ? sanitize_text_field((string) $attrs['tableHeaders'][$i])
+                    : $defaultHeaders[$i];
+            }
+        } else {
+            $headers = $defaultHeaders;
+        }
+        $attrs['tableHeaders'] = $headers;
+
+        $normalizedRows = [];
+        if (isset($attrs['tableRows']) && is_array($attrs['tableRows']) && $attrs['tableRows'] !== []) {
+            foreach ($attrs['tableRows'] as $row) {
+                $cells = [];
+                if (is_array($row)) {
+                    for ($i = 0; $i < 4; $i++) {
+                        $cells[] = isset($row[$i]) ? sanitize_text_field((string) $row[$i]) : '';
+                    }
+                }
+                if ($cells !== ['', '', '', '']) {
+                    $normalizedRows[] = $cells;
+                }
+            }
+        }
+        if ($normalizedRows === []) {
+            $normalizedRows = [['Individual', '500', '1,000', '40,000']];
+        }
+        $attrs['tableRows'] = $normalizedRows;
+
+        if (! isset($attrs['items']) || ! is_array($attrs['items']) || $attrs['items'] === []) {
+            $attrs['items'] = [
+                ['heading' => 'Membership Form:', 'paragraph' => 'Complete and submit the membership application form.'],
+                ['heading' => 'ID or Passport:', 'paragraph' => 'Attach a copy of your Kenyan National Identity Card or a valid Kenyan Passport.'],
+                ['heading' => 'Passport Photo:', 'paragraph' => 'Attach coloured passport size photograph.'],
+                ['heading' => 'KRA PIN Certificate:', 'paragraph' => 'Attach a copy of your KRA PIN Certificate.'],
+            ];
+        } else {
+            $normalizedItems = [];
+            foreach ($attrs['items'] as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $heading = trim((string) ($item['heading'] ?? $item['label'] ?? ''));
+                $paragraph = trim((string) ($item['paragraph'] ?? $item['text'] ?? ''));
+                if ($heading === '' && $paragraph === '') {
+                    continue;
+                }
+                $normalizedItems[] = [
+                    'heading' => $heading,
+                    'paragraph' => $paragraph,
+                ];
+            }
+            $attrs['items'] = $normalizedItems;
+        }
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/asset-finance-whatever') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? (string) $attrs['title']
+            : 'Get financing for whatever you need now';
+        $attrs['buttonLabel'] = isset($attrs['buttonLabel']) && trim((string) $attrs['buttonLabel']) !== ''
+            ? (string) $attrs['buttonLabel']
+            : 'ENQUIRE NOW';
+        $attrs['buttonUrl'] = isset($attrs['buttonUrl']) && trim((string) $attrs['buttonUrl']) !== ''
+            ? (string) $attrs['buttonUrl']
+            : '#';
+
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#ffffff'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#ed6e2a'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['buttonBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBorderColor']) ? (string) $attrs['buttonBorderColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['buttonHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverBgColor']) ? (string) $attrs['buttonHoverBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['buttonHoverTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverTextColor']) ? (string) $attrs['buttonHoverTextColor'] : '',
+            '#ed6e2a'
+        );
+        $attrs['buttonHoverBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverBorderColor']) ? (string) $attrs['buttonHoverBorderColor'] : '',
+            '#22ACB6'
+        );
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/asset-finance-faq') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? (string) $attrs['title']
+            : 'Frequently Asked Questions';
+        $attrs['intro'] = isset($attrs['intro']) ? trim((string) $attrs['intro']) : '';
+
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#eef0f3'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['textColor'] = headless_core_sanitize_color_string(
+            isset($attrs['textColor']) ? (string) $attrs['textColor'] : '',
+            '#000000'
+        );
+        $attrs['questionColor'] = headless_core_sanitize_color_string(
+            isset($attrs['questionColor']) ? (string) $attrs['questionColor'] : '',
+            '#000000'
+        );
+        $attrs['borderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['borderColor']) ? (string) $attrs['borderColor'] : '',
+            '#e5e7eb'
+        );
+        $attrs['hoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['hoverBgColor']) ? (string) $attrs['hoverBgColor'] : '',
+            '#f9fafb'
+        );
+        $attrs['iconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['iconColor']) ? (string) $attrs['iconColor'] : '',
+            '#000000'
+        );
+
+        if (! isset($attrs['items']) || ! is_array($attrs['items']) || $attrs['items'] === []) {
+            $attrs['items'] = [
+                ['question' => 'Can I pay off my loan early?', 'answer' => 'Yes, you can pay off your loan early. Please contact us for details on early repayment options.'],
+                ['question' => 'Can you offer refinancing?', 'answer' => 'Yes, we offer refinancing options. Contact our team to discuss your refinancing needs.'],
+                ['question' => 'When should I apply?', 'answer' => 'You can apply at any time. Our application process is open throughout the year.'],
+                ['question' => 'Where are you located?', 'answer' => 'We have multiple branches. Please visit our contact page for branch locations and contact information.'],
+            ];
+        } else {
+            $normalizedItems = [];
+            foreach ($attrs['items'] as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $q = trim((string) ($item['question'] ?? ''));
+                $a = trim((string) ($item['answer'] ?? ''));
+                if ($q === '' && $a === '') {
+                    continue;
+                }
+                $normalizedItems[] = [
+                    'question' => $q,
+                    'answer' => $a,
+                ];
+            }
+            $attrs['items'] = $normalizedItems;
+        }
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/asset-finance-apply') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? (string) $attrs['title']
+            : 'Apply Now!';
+        $attrs['buttonLabel'] = isset($attrs['buttonLabel']) && trim((string) $attrs['buttonLabel']) !== ''
+            ? (string) $attrs['buttonLabel']
+            : 'SUBMIT YOUR APPLICATION';
+        $attrs['successMessage'] = isset($attrs['successMessage']) ? trim((string) $attrs['successMessage']) : '';
+
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#eef0f3'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#ED6E2A'
+        );
+        $attrs['labelColor'] = headless_core_sanitize_color_string(
+            isset($attrs['labelColor']) ? (string) $attrs['labelColor'] : '',
+            '#000000'
+        );
+        $attrs['inputBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['inputBorderColor']) ? (string) $attrs['inputBorderColor'] : '',
+            '#e8e8e8'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#ED6E2A'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['buttonHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverBgColor']) ? (string) $attrs['buttonHoverBgColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['buttonHoverTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverTextColor']) ? (string) $attrs['buttonHoverTextColor'] : '',
+            '#ffffff'
+        );
+
+        return $attrs;
+    }
+
     if ($name === 'core/paragraph') {
         $attrs['content'] = headless_core_plain_text_from_parsed_block($block, $attrs);
 
@@ -958,6 +1374,14 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
 
     if ($name === 'core/heading') {
         $attrs['content'] = headless_core_plain_text_from_parsed_block($block, $attrs);
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
         if (isset($attrs['level'])) {
             $attrs['level'] = (int) $attrs['level'];
         } else {
@@ -1331,6 +1755,252 @@ function headless_core_rest_savings_product(WP_REST_Request $request)
 }
 
 /**
+ * @return WP_REST_Response
+ */
+function headless_core_rest_loan_products(WP_REST_Request $request): WP_REST_Response
+{
+    $categoryId = (int) $request->get_param('category');
+    $categoryId = max(0, $categoryId);
+    $cacheVersion = (string) get_option('headless_loan_products_cache_ver', '1');
+    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId;
+    $cached = headless_core_cache_get('loan_products', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $queryArgs = [
+        'post_type' => 'loan_product',
+        'post_status' => 'publish',
+        'orderby' => [
+            'menu_order' => 'ASC',
+            'date' => 'DESC',
+        ],
+        'numberposts' => -1,
+    ];
+    if ($categoryId > 0) {
+        $queryArgs['category'] = $categoryId;
+    }
+    $posts = get_posts($queryArgs);
+
+    $payload = [];
+    foreach ($posts as $post) {
+        if (! $post instanceof WP_Post) {
+            continue;
+        }
+
+        $imageUrl = '';
+        $thumbId = (int) get_post_thumbnail_id($post);
+        if ($thumbId > 0) {
+            $url = wp_get_attachment_image_url($thumbId, 'large');
+            if (is_string($url) && $url !== '') {
+                $imageUrl = $url;
+            }
+        }
+
+        $excerpt = trim((string) $post->post_excerpt);
+        if ($excerpt === '') {
+            $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
+        }
+
+        $payload[] = [
+            'id' => (int) $post->ID,
+            'slug' => (string) $post->post_name,
+            'title' => get_the_title($post),
+            'description' => $excerpt,
+            'imageUrl' => $imageUrl,
+            'link' => '/loan-products/' . (string) $post->post_name,
+        ];
+    }
+
+    headless_core_cache_set('loan_products', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @param WP_REST_Request $request
+ * @return WP_REST_Response|WP_Error
+ */
+function headless_core_rest_loan_product(WP_REST_Request $request)
+{
+    $slug = sanitize_title((string) $request->get_param('slug'));
+    if ($slug === '') {
+        return new WP_Error('headless_loan_product_invalid', __('Loan product slug is required.', 'headless-core'), ['status' => 400]);
+    }
+
+    $cacheVersion = (string) get_option('headless_loan_products_cache_ver', '1');
+    $cacheKey = 'single_' . $slug . '_' . $cacheVersion;
+    $cached = headless_core_cache_get('loan_products', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $post = get_page_by_path($slug, OBJECT, 'loan_product');
+    if (! $post instanceof WP_Post || $post->post_status !== 'publish') {
+        return new WP_Error('headless_not_found', __('Loan product not found.', 'headless-core'), ['status' => 404]);
+    }
+
+    $hadGlobalPost = array_key_exists('post', $GLOBALS);
+    $previousGlobalPost = $hadGlobalPost ? $GLOBALS['post'] : null;
+    $GLOBALS['post'] = $post;
+
+    try {
+        $parsed = parse_blocks((string) $post->post_content);
+        $blocks = headless_core_normalize_blocks($parsed);
+    } finally {
+        if ($hadGlobalPost) {
+            $GLOBALS['post'] = $previousGlobalPost;
+        } else {
+            unset($GLOBALS['post']);
+        }
+    }
+
+    $imageUrl = '';
+    $thumbId = (int) get_post_thumbnail_id($post);
+    if ($thumbId > 0) {
+        $url = wp_get_attachment_image_url($thumbId, 'large');
+        if (is_string($url) && $url !== '') {
+            $imageUrl = $url;
+        }
+    }
+
+    $payload = [
+        'id' => (int) $post->ID,
+        'slug' => (string) $post->post_name,
+        'title' => get_the_title($post),
+        'imageUrl' => $imageUrl,
+        'blocks' => $blocks,
+    ];
+
+    headless_core_cache_set('loan_products', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @return WP_REST_Response
+ */
+function headless_core_rest_services(WP_REST_Request $request): WP_REST_Response
+{
+    $categoryId = (int) $request->get_param('category');
+    $categoryId = max(0, $categoryId);
+    $cacheVersion = (string) get_option('headless_services_cache_ver', '1');
+    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId;
+    $cached = headless_core_cache_get('services', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $queryArgs = [
+        'post_type' => 'service',
+        'post_status' => 'publish',
+        'orderby' => [
+            'menu_order' => 'ASC',
+            'date' => 'DESC',
+        ],
+        'numberposts' => -1,
+    ];
+    if ($categoryId > 0) {
+        $queryArgs['category'] = $categoryId;
+    }
+    $posts = get_posts($queryArgs);
+
+    $payload = [];
+    foreach ($posts as $post) {
+        if (! $post instanceof WP_Post) {
+            continue;
+        }
+
+        $imageUrl = '';
+        $thumbId = (int) get_post_thumbnail_id($post);
+        if ($thumbId > 0) {
+            $url = wp_get_attachment_image_url($thumbId, 'large');
+            if (is_string($url) && $url !== '') {
+                $imageUrl = $url;
+            }
+        }
+
+        $excerpt = trim((string) $post->post_excerpt);
+        if ($excerpt === '') {
+            $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
+        }
+
+        $payload[] = [
+            'id' => (int) $post->ID,
+            'slug' => (string) $post->post_name,
+            'title' => get_the_title($post),
+            'description' => $excerpt,
+            'imageUrl' => $imageUrl,
+            'link' => '/services/' . (string) $post->post_name,
+        ];
+    }
+
+    headless_core_cache_set('services', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @param WP_REST_Request $request
+ * @return WP_REST_Response|WP_Error
+ */
+function headless_core_rest_service(WP_REST_Request $request)
+{
+    $slug = sanitize_title((string) $request->get_param('slug'));
+    if ($slug === '') {
+        return new WP_Error('headless_service_invalid', __('Service slug is required.', 'headless-core'), ['status' => 400]);
+    }
+
+    $cacheVersion = (string) get_option('headless_services_cache_ver', '1');
+    $cacheKey = 'single_' . $slug . '_' . $cacheVersion;
+    $cached = headless_core_cache_get('services', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $post = get_page_by_path($slug, OBJECT, 'service');
+    if (! $post instanceof WP_Post || $post->post_status !== 'publish') {
+        return new WP_Error('headless_not_found', __('Service not found.', 'headless-core'), ['status' => 404]);
+    }
+
+    $hadGlobalPost = array_key_exists('post', $GLOBALS);
+    $previousGlobalPost = $hadGlobalPost ? $GLOBALS['post'] : null;
+    $GLOBALS['post'] = $post;
+
+    try {
+        $parsed = parse_blocks((string) $post->post_content);
+        $blocks = headless_core_normalize_blocks($parsed);
+    } finally {
+        if ($hadGlobalPost) {
+            $GLOBALS['post'] = $previousGlobalPost;
+        } else {
+            unset($GLOBALS['post']);
+        }
+    }
+
+    $imageUrl = '';
+    $thumbId = (int) get_post_thumbnail_id($post);
+    if ($thumbId > 0) {
+        $url = wp_get_attachment_image_url($thumbId, 'large');
+        if (is_string($url) && $url !== '') {
+            $imageUrl = $url;
+        }
+    }
+
+    $payload = [
+        'id' => (int) $post->ID,
+        'slug' => (string) $post->post_name,
+        'title' => get_the_title($post),
+        'imageUrl' => $imageUrl,
+        'blocks' => $blocks,
+    ];
+
+    headless_core_cache_set('services', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
  * @param array<int, WP_Post> $items
  * @return array<int, array<string, mixed>>
  */
@@ -1407,4 +2077,81 @@ function headless_core_menu_url_to_path(string $url): string
     }
 
     return $url;
+}
+
+/**
+ * @param WP_REST_Request $request
+ * @return WP_REST_Response|WP_Error
+ */
+function headless_core_rest_contact_submit(WP_REST_Request $request)
+{
+    // Basic rate limit (per IP) to reduce abuse on public endpoint.
+    $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+    $ipKey = $ip !== '' ? preg_replace('/[^a-z0-9\.\:]/i', '_', $ip) : 'unknown';
+    $rateKey = 'headless_contact_rl_' . $ipKey;
+    $count = (int) get_transient($rateKey);
+    if ($count >= 10) {
+        return new WP_Error('headless_rate_limited', __('Too many requests. Please try again later.', 'headless-core'), ['status' => 429]);
+    }
+    set_transient($rateKey, $count + 1, HOUR_IN_SECONDS);
+
+    $name = trim((string) $request->get_param('name'));
+    $email = trim((string) $request->get_param('email'));
+    $phone = trim((string) $request->get_param('phone'));
+    $amount = trim((string) $request->get_param('amount'));
+    $message = trim((string) $request->get_param('message'));
+    $form = trim((string) $request->get_param('form'));
+
+    // Honeypot: bots fill hidden fields.
+    $company = trim((string) $request->get_param('company'));
+    if ($company !== '') {
+        return new WP_REST_Response(['ok' => true], 200);
+    }
+
+    if ($name === '' || $email === '' || $phone === '') {
+        return new WP_Error('headless_invalid', __('Missing required fields.', 'headless-core'), ['status' => 400]);
+    }
+    if (! is_email($email)) {
+        return new WP_Error('headless_invalid_email', __('Invalid email.', 'headless-core'), ['status' => 400]);
+    }
+
+    $name = sanitize_text_field($name);
+    $phone = sanitize_text_field($phone);
+    $amount = sanitize_text_field($amount);
+    $message = sanitize_textarea_field($message);
+    $form = sanitize_text_field($form);
+
+    $to = (string) get_option('admin_email');
+    $site = wp_parse_url(home_url(), PHP_URL_HOST);
+    if (! is_string($site) || $site === '') {
+        $site = 'website';
+    }
+
+    $subject = '[' . $site . '] ' . ($form !== '' ? $form : 'Contact form submission');
+    $bodyLines = [
+        'Name: ' . $name,
+        'Email: ' . $email,
+        'Phone: ' . $phone,
+    ];
+    if ($amount !== '' && $amount !== '0.00' && $amount !== '0') {
+        $bodyLines[] = 'Amount: ' . $amount;
+    }
+    if ($message !== '') {
+        $bodyLines[] = '';
+        $bodyLines[] = 'Message:';
+        $bodyLines[] = $message;
+    }
+    $body = implode("\n", $bodyLines);
+
+    $headers = [
+        'Content-Type: text/plain; charset=UTF-8',
+        'Reply-To: ' . $name . ' <' . $email . '>',
+    ];
+
+    $sent = wp_mail($to, $subject, $body, $headers);
+    if (! $sent) {
+        return new WP_Error('headless_mail_failed', __('Failed to send message.', 'headless-core'), ['status' => 500]);
+    }
+
+    return new WP_REST_Response(['ok' => true], 200);
 }
