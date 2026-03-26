@@ -11,6 +11,7 @@
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var TextControl = components.TextControl;
+  var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
   var trashSvg = el(
     'svg',
@@ -19,7 +20,7 @@
   );
 
   var DEFAULT_ITEMS = [
-    { heading: 'Membership Form:', paragraph: 'Complete and submit the membership application form.' },
+    { heading: 'Membership Form:', paragraph: 'Complete and submit the membership application form.', hasLink: true, linkText: '(click here)', linkUrl: '#' },
     { heading: 'ID or Passport:', paragraph: 'Attach a copy of your Kenyan National Identity Card or a valid Kenyan Passport.' },
     { heading: 'Passport Photo:', paragraph: 'Attach coloured passport size photograph.' },
     { heading: 'KRA PIN Certificate:', paragraph: 'Attach a copy of your KRA PIN Certificate.' },
@@ -37,10 +38,13 @@
       return DEFAULT_ITEMS.map(function (row) { return Object.assign({}, row); });
     }
     return items.map(function (row, i) {
-      var d = DEFAULT_ITEMS[i] || { heading: '', paragraph: '' };
+      var d = DEFAULT_ITEMS[i] || { heading: '', paragraph: '', hasLink: false, linkText: '(click here)', linkUrl: '' };
       return {
         heading: String((row && row.heading) || d.heading || ''),
         paragraph: String((row && row.paragraph) || d.paragraph || ''),
+        hasLink: Boolean((row && row.hasLink) || false),
+        linkText: String((row && row.linkText) || d.linkText || '(click here)'),
+        linkUrl: String((row && row.linkUrl) || d.linkUrl || ''),
       };
     });
   }
@@ -123,7 +127,7 @@
       }
 
       function addItem() {
-        props.setAttributes({ items: items.concat([{ heading: '', paragraph: '' }]) });
+        props.setAttributes({ items: items.concat([{ heading: '', paragraph: '', hasLink: false, linkText: '(click here)', linkUrl: '' }]) });
       }
 
       function removeItem(index) {
@@ -160,140 +164,6 @@
         el(
           InspectorControls,
           null,
-          el(
-            PanelBody,
-            { title: __('Section', 'headless-core'), initialOpen: true },
-            el(TextControl, {
-              label: __('Heading', 'headless-core'),
-              value: props.attributes.heading,
-              onChange: function (v) { props.setAttributes({ heading: v }); },
-            }),
-            el(RichText, {
-              tagName: 'p',
-              value: props.attributes.description || '',
-              onChange: function (v) { props.setAttributes({ description: v }); },
-              placeholder: __('Intro under the heading…', 'headless-core'),
-              allowedFormats: [],
-            }),
-            el('div', { style: { marginTop: '12px' } },
-              el(BaseControl, { label: __('Global icon (all points)', 'headless-core') }),
-              props.attributes.iconUrl
-                ? el('img', {
-                    src: props.attributes.iconUrl,
-                    alt: '',
-                    style: { width: '40px', height: '40px', objectFit: 'contain', border: '1px solid #dcdcde', borderRadius: '4px', marginBottom: '6px' },
-                  })
-                : null,
-              el(MediaUploadCheck, null,
-                el(MediaUpload, {
-                  allowedTypes: ['image'],
-                  value: props.attributes.iconId || 0,
-                  onSelect: function (media) {
-                    props.setAttributes({
-                      iconId: media && media.id ? media.id : 0,
-                      iconUrl: media && media.url ? media.url : '',
-                    });
-                  },
-                  render: function (obj) {
-                    return el(
-                      'div',
-                      { style: { display: 'flex', alignItems: 'center', gap: '6px' } },
-                      el(Button, { variant: 'secondary', onClick: obj.open }, props.attributes.iconId ? __('Replace Icon', 'headless-core') : __('Select Icon', 'headless-core')),
-                      props.attributes.iconId
-                        ? el(Button, {
-                            variant: 'tertiary',
-                            isSmall: true,
-                            isDestructive: true,
-                            onClick: function () { props.setAttributes({ iconId: 0, iconUrl: '' }); },
-                          }, trashSvg)
-                        : null
-                    );
-                  },
-                })
-              )
-            )
-          ),
-          el(
-            PanelBody,
-            { title: __('Points', 'headless-core'), initialOpen: true },
-            items.map(function (item, index) {
-              return el(
-                'div',
-                { key: index, style: { marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #eee' } },
-                el(
-                  'div',
-                  { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' } },
-                  el('strong', null, __('Point', 'headless-core') + ' ' + (index + 1)),
-                  el(
-                    'div',
-                    { style: { display: 'flex', gap: '4px' } },
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ items: moveRow(items, index, -1) }); } }, '˄'),
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === items.length - 1, onClick: function () { props.setAttributes({ items: moveRow(items, index, 1) }); } }, '˅'),
-                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeItem(index); } }, trashSvg)
-                  )
-                ),
-                el(RichText, {
-                  tagName: 'p',
-                  value: (item && item.heading) || '',
-                  onChange: function (v) { setItem(index, { heading: v }); },
-                  placeholder: __('Point title…', 'headless-core'),
-                  allowedFormats: [],
-                }),
-                el(RichText, {
-                  tagName: 'p',
-                  value: (item && item.paragraph) || '',
-                  onChange: function (v) { setItem(index, { paragraph: v }); },
-                  placeholder: __('Point text…', 'headless-core'),
-                  allowedFormats: [],
-                })
-              );
-            }),
-            el(Button, { variant: 'primary', onClick: addItem }, '+ ', __('Add Point', 'headless-core'))
-          ),
-          el(
-            PanelBody,
-            { title: __('Table (4 columns)', 'headless-core'), initialOpen: false },
-            [0, 1, 2, 3].map(function (ci) {
-              return el(TextControl, {
-                key: 'th-' + ci,
-                label: __('Column header', 'headless-core') + ' ' + (ci + 1),
-                value: tableHeaders[ci] || '',
-                onChange: function (v) { setHeader(ci, v); },
-              });
-            }),
-            tableRows.map(function (row, ri) {
-              return el(
-                'div',
-                { key: 'row-' + ri, style: { marginTop: '12px', padding: '8px', border: '1px dashed #ccc', borderRadius: '4px' } },
-                el('strong', { style: { display: 'block', marginBottom: '6px' } }, __('Row', 'headless-core') + ' ' + (ri + 1)),
-                [0, 1, 2, 3].map(function (ci) {
-                  return el(TextControl, {
-                    key: 'c-' + ri + '-' + ci,
-                    label: __('Cell', 'headless-core') + ' ' + (ci + 1),
-                    value: row[ci] || '',
-                    onChange: function (v) { setCell(ri, ci, v); },
-                  });
-                }),
-                el(Button, { isDestructive: true, variant: 'tertiary', isSmall: true, onClick: function () { removeTableRow(ri); } }, __('Remove row', 'headless-core'))
-              );
-            }),
-            el(Button, { variant: 'secondary', onClick: addTableRow, style: { marginTop: '8px' } }, '+ ', __('Add row', 'headless-core'))
-          ),
-          el(
-            PanelBody,
-            { title: __('Button', 'headless-core'), initialOpen: false },
-            el(TextControl, {
-              label: __('Label', 'headless-core'),
-              value: props.attributes.buttonLabel,
-              onChange: function (v) { props.setAttributes({ buttonLabel: v }); },
-            }),
-            el(TextControl, {
-              label: __('URL', 'headless-core'),
-              value: props.attributes.buttonUrl,
-              onChange: function (v) { props.setAttributes({ buttonUrl: v }); },
-              help: __('Use a path like /contact-us or #section', 'headless-core'),
-            })
-          ),
           el(
             PanelBody,
             { title: __('Colors', 'headless-core'), initialOpen: false },
@@ -351,7 +221,202 @@
               value: props.attributes.buttonHoverBgColor,
               colors: colorChoices.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (c) { props.setAttributes({ buttonHoverBgColor: c || '#35b5ad' }); },
+            })),
+            el('div', { style: { marginTop: '10px' } },
+              el('strong', null, __('Point link (click here)', 'headless-core'))
+            ),
+            el('div', null, el(BaseControl, { label: __('Link text color', 'headless-core') }), el(ColorPalette, {
+              value: props.attributes.linkTextColor,
+              colors: colorChoices.map(function (hex) { return { color: hex, name: hex }; }),
+              onChange: function (c) { props.setAttributes({ linkTextColor: c || '#22ABB5' }); },
+            })),
+            el('div', null, el(BaseControl, { label: __('Link hover text color', 'headless-core') }), el(ColorPalette, {
+              value: props.attributes.linkHoverTextColor,
+              colors: colorChoices.map(function (hex) { return { color: hex, name: hex }; }),
+              onChange: function (c) { props.setAttributes({ linkHoverTextColor: c || '#ED6E2A' }); },
+            })),
+            el('div', null, el(BaseControl, { label: __('Icon background', 'headless-core') }), el(ColorPalette, {
+              value: props.attributes.linkIconBgColor,
+              colors: colorChoices.map(function (hex) { return { color: hex, name: hex }; }),
+              onChange: function (c) { props.setAttributes({ linkIconBgColor: c || '#22ABB5' }); },
+            })),
+            el('div', null, el(BaseControl, { label: __('Icon hover background', 'headless-core') }), el(ColorPalette, {
+              value: props.attributes.linkIconHoverBgColor,
+              colors: colorChoices.map(function (hex) { return { color: hex, name: hex }; }),
+              onChange: function (c) { props.setAttributes({ linkIconHoverBgColor: c || '#ED6E2A' }); },
             }))
+          )
+        ),
+        // Inline editor UI (in-canvas), so user can compare styling while editing.
+        el(
+          'div',
+          { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', background: props.attributes.backgroundColor || '#ffffff' } },
+          el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
+            el(RichText, {
+              tagName: 'h2',
+              value: props.attributes.heading || '',
+              onChange: function (v) { props.setAttributes({ heading: v }); },
+              placeholder: __('Section heading…', 'headless-core'),
+              allowedFormats: [],
+              style: { fontSize: '28px', fontWeight: 900, color: props.attributes.headingColor || '#22ABB5', marginBottom: '8px' },
+            }),
+            el(RichText, {
+              tagName: 'p',
+              value: props.attributes.description || '',
+              onChange: function (v) { props.setAttributes({ description: v }); },
+              placeholder: __('Intro under the heading…', 'headless-core'),
+              allowedFormats: [],
+              style: { color: props.attributes.descriptionColor || '#000000', marginBottom: '16px' },
+            }),
+
+            el('div', { style: { marginBottom: '16px' } },
+              el('strong', null, __('Global icon (all points)', 'headless-core')),
+              props.attributes.iconUrl
+                ? el('div', { style: { marginTop: '8px' } }, el('img', { src: props.attributes.iconUrl, alt: '', style: { width: '44px', height: '44px', objectFit: 'contain', border: '1px solid #dcdcde', borderRadius: '6px' } }))
+                : null,
+              el('div', { style: { marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' } },
+                el(MediaUploadCheck, null,
+                  el(MediaUpload, {
+                    allowedTypes: ['image'],
+                    value: props.attributes.iconId || 0,
+                    onSelect: function (media) {
+                      props.setAttributes({
+                        iconId: media && media.id ? media.id : 0,
+                        iconUrl: media && media.url ? media.url : '',
+                      });
+                    },
+                    render: function (obj) {
+                      return el(Button, { variant: 'secondary', onClick: obj.open }, props.attributes.iconId ? __('Replace Icon', 'headless-core') : __('Select Icon', 'headless-core'));
+                    },
+                  })
+                ),
+                props.attributes.iconId
+                  ? el(Button, { variant: 'tertiary', isDestructive: true, onClick: function () { props.setAttributes({ iconId: 0, iconUrl: '' }); } }, trashSvg)
+                  : null
+              )
+            ),
+
+            el('hr', { style: { margin: '18px 0' } }),
+
+            el('h3', { style: { margin: 0, marginBottom: '10px', fontSize: '16px' } }, __('Points', 'headless-core')),
+            items.map(function (item, index) {
+              return el(
+                'div',
+                { key: index, style: { padding: '12px', border: '1px solid #eee', borderRadius: '8px', marginBottom: '10px' } },
+                el('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center', marginBottom: '8px' } },
+                  el('strong', null, __('Point', 'headless-core') + ' ' + (index + 1)),
+                  el('div', { style: { display: 'flex', gap: '6px' } },
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ items: moveRow(items, index, -1) }); } }, '˄'),
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === items.length - 1, onClick: function () { props.setAttributes({ items: moveRow(items, index, 1) }); } }, '˅'),
+                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeItem(index); } }, trashSvg)
+                  )
+                ),
+                el(RichText, {
+                  tagName: 'p',
+                  value: (item && item.heading) || '',
+                  onChange: function (v) { setItem(index, { heading: v }); },
+                  placeholder: __('Point title…', 'headless-core'),
+                  allowedFormats: [],
+                  style: { fontWeight: 800, marginBottom: '6px', color: props.attributes.titleColor || '#000000' },
+                }),
+                el(RichText, {
+                  tagName: 'p',
+                  value: (item && item.paragraph) || '',
+                  onChange: function (v) { setItem(index, { paragraph: v }); },
+                  placeholder: __('Point text…', 'headless-core'),
+                  allowedFormats: [],
+                  style: { color: props.attributes.textColor || '#000000' },
+                })
+                ,
+                el('div', { style: { marginTop: '8px' } },
+                  el(ToggleControl, {
+                    label: __('Enable link', 'headless-core'),
+                    checked: Boolean(item && item.hasLink),
+                    onChange: function (v) { setItem(index, { hasLink: !!v }); },
+                  }),
+                  Boolean(item && item.hasLink)
+                    ? el('div', { style: { marginTop: '8px', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' } },
+                        el(TextControl, {
+                          label: __('Link text', 'headless-core'),
+                          value: (item && item.linkText) || '(click here)',
+                          onChange: function (v) { setItem(index, { linkText: v }); },
+                        }),
+                        el(TextControl, {
+                          label: __('Link URL', 'headless-core'),
+                          value: (item && item.linkUrl) || '',
+                          onChange: function (v) { setItem(index, { linkUrl: v }); },
+                          help: __('Use /path, #section, or https://…', 'headless-core'),
+                        })
+                      )
+                    : null
+                )
+              );
+            }),
+            el(Button, { variant: 'primary', onClick: addItem }, '+ ', __('Add Point', 'headless-core')),
+
+            el('hr', { style: { margin: '18px 0' } }),
+
+            el('h3', { style: { margin: 0, marginBottom: '10px', fontSize: '16px' } }, __('Table (4 columns)', 'headless-core')),
+            el('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' } },
+              [0, 1, 2, 3].map(function (ci) {
+                return el(TextControl, {
+                  key: 'th-inline-' + ci,
+                  label: __('Header', 'headless-core') + ' ' + (ci + 1),
+                  value: tableHeaders[ci] || '',
+                  onChange: function (v) { setHeader(ci, v); },
+                });
+              })
+            ),
+            tableRows.map(function (row, ri) {
+              return el(
+                'div',
+                { key: 'row-inline-' + ri, style: { marginTop: '10px', padding: '10px', border: '1px dashed #ccc', borderRadius: '8px' } },
+                el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' } },
+                  el('strong', null, __('Row', 'headless-core') + ' ' + (ri + 1)),
+                  el(Button, { isDestructive: true, variant: 'tertiary', isSmall: true, onClick: function () { removeTableRow(ri); } }, __('Remove row', 'headless-core'))
+                ),
+                el('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' } },
+                  [0, 1, 2, 3].map(function (ci) {
+                    return el(TextControl, {
+                      key: 'cell-inline-' + ri + '-' + ci,
+                      label: __('Cell', 'headless-core') + ' ' + (ci + 1),
+                      value: row[ci] || '',
+                      onChange: function (v) { setCell(ri, ci, v); },
+                    });
+                  })
+                )
+              );
+            }),
+            el(Button, { variant: 'secondary', onClick: addTableRow, style: { marginTop: '8px' } }, '+ ', __('Add row', 'headless-core')),
+
+            el('hr', { style: { margin: '18px 0' } }),
+
+            el('h3', { style: { margin: 0, marginBottom: '10px', fontSize: '16px' } }, __('Button', 'headless-core')),
+            el(TextControl, {
+              label: __('Label', 'headless-core'),
+              value: props.attributes.buttonLabel,
+              onChange: function (v) { props.setAttributes({ buttonLabel: v }); },
+            }),
+            el(TextControl, {
+              label: __('URL', 'headless-core'),
+              value: props.attributes.buttonUrl,
+              onChange: function (v) { props.setAttributes({ buttonUrl: v }); },
+              help: __('Use a path like /contact-us or #section', 'headless-core'),
+            }),
+            el('div', { style: { marginTop: '10px', display: 'flex', justifyContent: 'center' } },
+              el('span', {
+                style: {
+                  display: 'inline-block',
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  background: props.attributes.buttonBgColor || '#40C9BF',
+                  color: props.attributes.buttonTextColor || '#ffffff',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }
+              }, props.attributes.buttonLabel || __('JOIN US!', 'headless-core'))
+            )
           )
         ),
         el(

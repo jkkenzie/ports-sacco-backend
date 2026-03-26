@@ -65,6 +65,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-download-app-editor',
+        HEADLESS_CORE_URL . 'blocks/download-app/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-savings-products-grid-editor',
         HEADLESS_CORE_URL . 'blocks/savings-products-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
@@ -386,10 +393,10 @@ add_action('init', static function (): void {
             'items' => [
                 'type' => 'array',
                 'default' => [
-                    ['heading' => 'High Returns', 'paragraph' => 'Earn market competitive returns on your savings and share capital.'],
-                    ['heading' => 'Access to Credit', 'paragraph' => 'Saving with us makes it easy to access credit. The more you save, the more you can borrow.'],
-                    ['heading' => 'Fallback', 'paragraph' => 'You can always count on your savings with the SACCO for unforeseen occurrences.'],
-                    ['heading' => 'Retirement', 'paragraph' => 'Savings come in handy when you retire from formal employment.'],
+                    ['heading' => 'High Returns', 'paragraph' => 'Earn market competitive returns on your savings and share capital.', 'fullWidth' => false],
+                    ['heading' => 'Access to Credit', 'paragraph' => 'Saving with us makes it easy to access credit. The more you save, the more you can borrow.', 'fullWidth' => false],
+                    ['heading' => 'Fallback', 'paragraph' => 'You can always count on your savings with the SACCO for unforeseen occurrences.', 'fullWidth' => false],
+                    ['heading' => 'Retirement', 'paragraph' => 'Savings come in handy when you retire from formal employment.', 'fullWidth' => false],
                 ],
             ],
         ],
@@ -437,15 +444,41 @@ add_action('init', static function (): void {
             'buttonBgColor' => ['type' => 'string', 'default' => '#40C9BF'],
             'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
             'buttonHoverBgColor' => ['type' => 'string', 'default' => '#35b5ad'],
+            'linkTextColor' => ['type' => 'string', 'default' => '#22ABB5'],
+            'linkHoverTextColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'linkIconBgColor' => ['type' => 'string', 'default' => '#22ABB5'],
+            'linkIconHoverBgColor' => ['type' => 'string', 'default' => '#ED6E2A'],
             'items' => [
                 'type' => 'array',
                 'default' => [
-                    ['heading' => 'Membership Form:', 'paragraph' => 'Complete and submit the membership application form.'],
+                    ['heading' => 'Membership Form:', 'paragraph' => 'Complete and submit the membership application form.', 'hasLink' => true, 'linkText' => '(click here)', 'linkUrl' => '#'],
                     ['heading' => 'ID or Passport:', 'paragraph' => 'Attach a copy of your Kenyan National Identity Card or a valid Kenyan Passport.'],
                     ['heading' => 'Passport Photo:', 'paragraph' => 'Attach coloured passport size photograph.'],
                     ['heading' => 'KRA PIN Certificate:', 'paragraph' => 'Attach a copy of your KRA PIN Certificate.'],
                 ],
             ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/download-app', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-download-app-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'heading' => ['type' => 'string', 'default' => 'Download the App'],
+            'backgroundColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'headingColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'googlePlayImageId' => ['type' => 'number', 'default' => 0],
+            'googlePlayImageUrl' => ['type' => 'string', 'default' => ''],
+            'googlePlayLinkUrl' => ['type' => 'string', 'default' => '#'],
+            'appStoreImageId' => ['type' => 'number', 'default' => 0],
+            'appStoreImageUrl' => ['type' => 'string', 'default' => ''],
+            'appStoreLinkUrl' => ['type' => 'string', 'default' => '#'],
         ],
         'render_callback' => static function (): string {
             return '';

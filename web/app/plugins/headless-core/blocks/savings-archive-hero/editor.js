@@ -135,55 +135,8 @@
           null,
           el(
             PanelBody,
-            { title: __('Content', 'headless-core'), initialOpen: true },
-            el(TextControl, {
-              label: __('Title', 'headless-core'),
-              value: props.attributes.title,
-              onChange: function (v) { props.setAttributes({ title: v }); }
-            }),
-            el(TextareaControl, {
-              label: __('Intro Text', 'headless-core'),
-              value: props.attributes.intro,
-              onChange: function (v) { props.setAttributes({ intro: v }); }
-            }),
-            el('div', { style: { marginTop: '8px' } },
-              el(BaseControl, { label: __('Banner Image', 'headless-core') }),
-              props.attributes.bannerImageUrl
-                ? el('img', {
-                    src: props.attributes.bannerImageUrl,
-                    alt: '',
-                    style: { width: '100%', maxHeight: '120px', objectFit: 'cover', marginBottom: '8px', borderRadius: '4px' }
-                  })
-                : null,
-              el(MediaUploadCheck, null,
-                el(MediaUpload, {
-                  allowedTypes: ['image'],
-                  value: props.attributes.bannerImageId || 0,
-                  onSelect: function (media) {
-                    props.setAttributes({
-                      bannerImageId: media && media.id ? media.id : 0,
-                      bannerImageUrl: media && media.url ? media.url : ''
-                    });
-                  },
-                  render: function (obj) {
-                    return el(
-                      'div',
-                      { style: { display: 'flex', gap: '6px' } },
-                      el(Button, { variant: 'secondary', onClick: obj.open }, props.attributes.bannerImageId ? __('Replace Banner', 'headless-core') : __('Select Banner', 'headless-core')),
-                      props.attributes.bannerImageId
-                        ? el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { props.setAttributes({ bannerImageId: 0, bannerImageUrl: '' }); } }, trashSvg)
-                        : null
-                    );
-                  }
-                })
-              )
-            ),
-            el(TextControl, {
-              label: __('Title Color', 'headless-core'),
-              value: props.attributes.titleColor || '#22ABB5',
-              onChange: function (v) { props.setAttributes({ titleColor: String(v || '').trim() || '#22ABB5' }); }
-            }),
-            el(BaseControl, { label: __('Title Color Picker', 'headless-core') }),
+            { title: __('Colors', 'headless-core'), initialOpen: false },
+            el(BaseControl, { label: __('Title Color', 'headless-core') }),
             el(ColorPalette, {
               value: props.attributes.titleColor || '#22ABB5',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
@@ -218,71 +171,69 @@
               value: props.attributes.menuHoverBackgroundColor || '#eef2f8',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (nextColor) { props.setAttributes({ menuHoverBackgroundColor: nextColor || '#eef2f8' }); }
-            }),
-            el('hr'),
+            })
+          )
+        ),
+        el(
+          'div',
+          { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' } },
+          el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
+            el('h3', { style: { margin: 0, marginBottom: '10px' } }, __('Hero content', 'headless-core')),
+            el(TextControl, { label: __('Title', 'headless-core'), value: props.attributes.title, onChange: function (v) { props.setAttributes({ title: v }); } }),
+            el(TextareaControl, { label: __('Intro Text', 'headless-core'), value: props.attributes.intro, onChange: function (v) { props.setAttributes({ intro: v }); } }),
+            el('div', { style: { marginTop: '8px' } },
+              el('strong', null, __('Banner image', 'headless-core')),
+              props.attributes.bannerImageUrl
+                ? el('img', { src: props.attributes.bannerImageUrl, alt: '', style: { width: '100%', maxHeight: '160px', objectFit: 'cover', marginTop: '8px', borderRadius: '6px' } })
+                : null,
+              el('div', { style: { marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' } },
+                el(MediaUploadCheck, null,
+                  el(MediaUpload, {
+                    allowedTypes: ['image'],
+                    value: props.attributes.bannerImageId || 0,
+                    onSelect: function (media) {
+                      props.setAttributes({ bannerImageId: media && media.id ? media.id : 0, bannerImageUrl: media && media.url ? media.url : '' });
+                    },
+                    render: function (obj) {
+                      return el(Button, { variant: 'secondary', onClick: obj.open }, props.attributes.bannerImageId ? __('Replace Banner', 'headless-core') : __('Select Banner', 'headless-core'));
+                    }
+                  })
+                ),
+                props.attributes.bannerImageId
+                  ? el(Button, { variant: 'tertiary', isDestructive: true, onClick: function () { props.setAttributes({ bannerImageId: 0, bannerImageUrl: '' }); } }, trashSvg)
+                  : null
+              )
+            ),
+
+            el('hr', { style: { margin: '18px 0' } }),
             el('strong', null, __('Buttons', 'headless-core')),
             buttons.map(function (btn, index) {
               return el(
                 'div',
-                { key: 'btn-' + index, style: { border: '1px solid #eee', padding: '8px', margin: '8px 0' } },
+                { key: 'btn-inline-' + index, style: { border: '1px solid #eee', padding: '10px', margin: '10px 0', borderRadius: '8px' } },
                 el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
                   el('span', null, __('Button', 'headless-core') + ' ' + (index + 1)),
-                  el('div', { style: { display: 'flex', gap: '4px' } },
+                  el('div', { style: { display: 'flex', gap: '6px' } },
                     el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
                     el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
                     el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
                   )
                 ),
                 el(RichText, { tagName: 'p', value: btn.label, onChange: function (v) { patchButton(index, { label: v }); }, placeholder: __('Button label...', 'headless-core'), allowedFormats: [] }),
-                el(TextControl, { label: __('Button Link', 'headless-core'), value: btn.url, onChange: function (v) { patchButton(index, { url: v }); } }),
-                el(BaseControl, { label: __('Text Color', 'headless-core') }),
-                el(ColorPalette, {
-                  value: btn.textColor || '#22abb5',
-                  colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-                  onChange: function (nextColor) { patchButton(index, { textColor: nextColor || '#22abb5' }); }
-                }),
-                el(BaseControl, { label: __('Border Color', 'headless-core') }),
-                el(ColorPalette, {
-                  value: btn.borderColor || '#22abb5',
-                  colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-                  onChange: function (nextColor) { patchButton(index, { borderColor: nextColor || '#22abb5' }); }
-                }),
-                el(BaseControl, { label: __('Background Color', 'headless-core') }),
-                el(ColorPalette, {
-                  value: btn.bgColor || '#ffffff',
-                  colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-                  onChange: function (nextColor) { patchButton(index, { bgColor: nextColor || '#ffffff' }); }
-                }),
-                el(BaseControl, { label: __('Hover Text Color', 'headless-core') }),
-                el(ColorPalette, {
-                  value: btn.hoverTextColor || '#ffffff',
-                  colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-                  onChange: function (nextColor) { patchButton(index, { hoverTextColor: nextColor || '#ffffff' }); }
-                }),
-                el(BaseControl, { label: __('Hover Border Color', 'headless-core') }),
-                el(ColorPalette, {
-                  value: btn.hoverBorderColor || '#22abb5',
-                  colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-                  onChange: function (nextColor) { patchButton(index, { hoverBorderColor: nextColor || '#22abb5' }); }
-                }),
-                el(BaseControl, { label: __('Hover Background Color', 'headless-core') }),
-                el(ColorPalette, {
-                  value: btn.hoverBgColor || '#22abb5',
-                  colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-                  onChange: function (nextColor) { patchButton(index, { hoverBgColor: nextColor || '#22abb5' }); }
-                })
+                el(TextControl, { label: __('Button Link', 'headless-core'), value: btn.url, onChange: function (v) { patchButton(index, { url: v }); } })
               );
             }),
             el(Button, { variant: 'primary', onClick: addButton }, '+ ', __('Add Button', 'headless-core')),
-            el('hr'),
+
+            el('hr', { style: { margin: '18px 0' } }),
             el('strong', null, __('Menu Items', 'headless-core')),
             menuItems.map(function (item, index) {
               return el(
                 'div',
-                { key: 'menu-' + index, style: { border: '1px solid #eee', padding: '8px', margin: '8px 0' } },
+                { key: 'menu-inline-' + index, style: { border: '1px solid #eee', padding: '10px', margin: '10px 0', borderRadius: '8px' } },
                 el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
                   el('span', null, __('Menu Item', 'headless-core') + ' ' + (index + 1)),
-                  el('div', { style: { display: 'flex', gap: '4px' } },
+                  el('div', { style: { display: 'flex', gap: '6px' } },
                     el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
                     el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
                     el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)

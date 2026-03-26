@@ -1010,10 +1010,10 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         }
         if (! isset($attrs['items']) || ! is_array($attrs['items']) || $attrs['items'] === []) {
             $attrs['items'] = [
-                ['heading' => 'High Returns', 'paragraph' => 'Earn market competitive returns on your savings and share capital.'],
-                ['heading' => 'Access to Credit', 'paragraph' => 'Saving with us makes it easy to access credit. The more you save, the more you can borrow.'],
-                ['heading' => 'Fallback', 'paragraph' => 'You can always count on your savings with the SACCO for unforeseen occurrences.'],
-                ['heading' => 'Retirement', 'paragraph' => 'Savings come in handy when you retire from formal employment.'],
+                ['heading' => 'High Returns', 'paragraph' => 'Earn market competitive returns on your savings and share capital.', 'fullWidth' => false],
+                ['heading' => 'Access to Credit', 'paragraph' => 'Saving with us makes it easy to access credit. The more you save, the more you can borrow.', 'fullWidth' => false],
+                ['heading' => 'Fallback', 'paragraph' => 'You can always count on your savings with the SACCO for unforeseen occurrences.', 'fullWidth' => false],
+                ['heading' => 'Retirement', 'paragraph' => 'Savings come in handy when you retire from formal employment.', 'fullWidth' => false],
             ];
         } else {
             $normalizedItems = [];
@@ -1022,13 +1022,26 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                     continue;
                 }
                 $heading = trim((string) ($item['heading'] ?? $item['label'] ?? ''));
-                $paragraph = trim((string) ($item['paragraph'] ?? $item['text'] ?? ''));
+                $paragraph = (string) ($item['paragraph'] ?? $item['text'] ?? '');
+                $allowed = [
+                    'strong' => [],
+                    'b' => [],
+                    'em' => [],
+                    'i' => [],
+                    'br' => [],
+                    'span' => [
+                        'style' => true,
+                    ],
+                ];
+                $paragraph = trim((string) wp_kses($paragraph, $allowed));
+                $fullWidth = (bool) ($item['fullWidth'] ?? false);
                 if ($heading === '' && $paragraph === '') {
                     continue;
                 }
                 $normalizedItems[] = [
                     'heading' => $heading,
                     'paragraph' => $paragraph,
+                    'fullWidth' => $fullWidth,
                 ];
             }
             $attrs['items'] = $normalizedItems;
@@ -1096,8 +1109,26 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             isset($attrs['buttonHoverBgColor']) ? (string) $attrs['buttonHoverBgColor'] : '',
             '#35b5ad'
         );
-        $attrs['buttonLabel'] = isset($attrs['buttonLabel']) ? trim((string) $attrs['buttonLabel']) : '';
-        $attrs['buttonUrl'] = isset($attrs['buttonUrl']) ? trim((string) $attrs['buttonUrl']) : '/contact-us';
+        $attrs['linkTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkTextColor']) ? (string) $attrs['linkTextColor'] : '',
+            '#22ABB5'
+        );
+        $attrs['linkHoverTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkHoverTextColor']) ? (string) $attrs['linkHoverTextColor'] : '',
+            '#ED6E2A'
+        );
+        $attrs['linkIconBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkIconBgColor']) ? (string) $attrs['linkIconBgColor'] : '',
+            '#22ABB5'
+        );
+        $attrs['linkIconHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkIconHoverBgColor']) ? (string) $attrs['linkIconHoverBgColor'] : '',
+            '#ED6E2A'
+        );
+        $buttonLabel = isset($attrs['buttonLabel']) ? trim((string) $attrs['buttonLabel']) : '';
+        $attrs['buttonLabel'] = $buttonLabel !== '' ? $buttonLabel : 'JOIN US!';
+        $buttonUrl = isset($attrs['buttonUrl']) ? trim((string) $attrs['buttonUrl']) : '';
+        $attrs['buttonUrl'] = $buttonUrl !== '' ? $buttonUrl : '/contact-us';
 
         $iconId = isset($attrs['iconId']) ? (int) $attrs['iconId'] : 0;
         $attrs['iconId'] = $iconId;
@@ -1151,7 +1182,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
 
         if (! isset($attrs['items']) || ! is_array($attrs['items']) || $attrs['items'] === []) {
             $attrs['items'] = [
-                ['heading' => 'Membership Form:', 'paragraph' => 'Complete and submit the membership application form.'],
+                ['heading' => 'Membership Form:', 'paragraph' => 'Complete and submit the membership application form.', 'hasLink' => true, 'linkText' => '(click here)', 'linkUrl' => '#'],
                 ['heading' => 'ID or Passport:', 'paragraph' => 'Attach a copy of your Kenyan National Identity Card or a valid Kenyan Passport.'],
                 ['heading' => 'Passport Photo:', 'paragraph' => 'Attach coloured passport size photograph.'],
                 ['heading' => 'KRA PIN Certificate:', 'paragraph' => 'Attach a copy of your KRA PIN Certificate.'],
@@ -1164,16 +1195,71 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                 }
                 $heading = trim((string) ($item['heading'] ?? $item['label'] ?? ''));
                 $paragraph = trim((string) ($item['paragraph'] ?? $item['text'] ?? ''));
+                $hasLink = (bool) ($item['hasLink'] ?? false);
+                $linkText = trim((string) ($item['linkText'] ?? '(click here)'));
+                $linkUrl = trim((string) ($item['linkUrl'] ?? ''));
                 if ($heading === '' && $paragraph === '') {
                     continue;
                 }
                 $normalizedItems[] = [
                     'heading' => $heading,
                     'paragraph' => $paragraph,
+                    'hasLink' => $hasLink,
+                    'linkText' => $linkText !== '' ? $linkText : '(click here)',
+                    'linkUrl' => $linkUrl,
                 ];
             }
             $attrs['items'] = $normalizedItems;
         }
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/download-app') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['heading'] = isset($attrs['heading']) && trim((string) $attrs['heading']) !== ''
+            ? (string) $attrs['heading']
+            : 'Download the App';
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['headingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headingColor']) ? (string) $attrs['headingColor'] : '',
+            '#ffffff'
+        );
+
+        $gpId = isset($attrs['googlePlayImageId']) ? (int) $attrs['googlePlayImageId'] : 0;
+        $attrs['googlePlayImageId'] = $gpId;
+        if ($gpId > 0) {
+            $url = wp_get_attachment_image_url($gpId, 'large');
+            if (is_string($url) && $url !== '') {
+                $attrs['googlePlayImageUrl'] = $url;
+            }
+        }
+        $attrs['googlePlayLinkUrl'] = isset($attrs['googlePlayLinkUrl']) && trim((string) $attrs['googlePlayLinkUrl']) !== ''
+            ? trim((string) $attrs['googlePlayLinkUrl'])
+            : '#';
+
+        $asId = isset($attrs['appStoreImageId']) ? (int) $attrs['appStoreImageId'] : 0;
+        $attrs['appStoreImageId'] = $asId;
+        if ($asId > 0) {
+            $url = wp_get_attachment_image_url($asId, 'large');
+            if (is_string($url) && $url !== '') {
+                $attrs['appStoreImageUrl'] = $url;
+            }
+        }
+        $attrs['appStoreLinkUrl'] = isset($attrs['appStoreLinkUrl']) && trim((string) $attrs['appStoreLinkUrl']) !== ''
+            ? trim((string) $attrs['appStoreLinkUrl'])
+            : '#';
 
         return $attrs;
     }

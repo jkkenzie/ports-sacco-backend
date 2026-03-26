@@ -43,25 +43,6 @@
           null,
           el(
             PanelBody,
-            { title: __('Content', 'headless-core'), initialOpen: true },
-            el(TextControl, {
-              label: __('Title', 'headless-core'),
-              value: props.attributes.title,
-              onChange: function (v) { props.setAttributes({ title: v }); },
-            }),
-            el(TextControl, {
-              label: __('Button label', 'headless-core'),
-              value: props.attributes.buttonLabel,
-              onChange: function (v) { props.setAttributes({ buttonLabel: v }); },
-            }),
-            el(TextControl, {
-              label: __('Success message', 'headless-core'),
-              value: props.attributes.successMessage,
-              onChange: function (v) { props.setAttributes({ successMessage: v }); },
-            })
-          ),
-          el(
-            PanelBody,
             { title: __('Colors', 'headless-core'), initialOpen: false },
             el('div', null,
               el(BaseControl, { label: __('Background', 'headless-core') }),
@@ -126,6 +107,61 @@
                 colors: palette(),
                 onChange: function (c) { props.setAttributes({ buttonHoverTextColor: c || '#ffffff' }); },
               })
+            )
+          )
+        ),
+        el(
+          'div',
+          { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', background: props.attributes.backgroundColor || '#eef0f3' } },
+          el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
+            el(TextControl, {
+              label: __('Title', 'headless-core'),
+              value: props.attributes.title,
+              onChange: function (v) { props.setAttributes({ title: v }); },
+            }),
+            el('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px', marginTop: '10px' } },
+              el('div', null,
+                el('strong', null, __('Name', 'headless-core')),
+                el('div', { style: { height: '40px', border: '1px solid ' + (props.attributes.inputBorderColor || '#e8e8e8'), background: '#fff' } })
+              ),
+              el('div', null,
+                el('strong', null, __('Email', 'headless-core')),
+                el('div', { style: { height: '40px', border: '1px solid ' + (props.attributes.inputBorderColor || '#e8e8e8'), background: '#fff' } })
+              ),
+              el('div', null,
+                el('strong', null, __('Phone', 'headless-core')),
+                el('div', { style: { height: '40px', border: '1px solid ' + (props.attributes.inputBorderColor || '#e8e8e8'), background: '#fff' } })
+              )
+            ),
+            el('div', { style: { marginTop: '12px' } },
+              el('strong', null, __('Amount', 'headless-core')),
+              el('div', { style: { height: '40px', border: '1px solid ' + (props.attributes.inputBorderColor || '#e8e8e8'), background: '#fff' } })
+            ),
+            el('div', { style: { marginTop: '14px' } },
+              el(TextControl, {
+                label: __('Button label', 'headless-core'),
+                value: props.attributes.buttonLabel,
+                onChange: function (v) { props.setAttributes({ buttonLabel: v }); },
+              }),
+              el(TextControl, {
+                label: __('Success message', 'headless-core'),
+                value: props.attributes.successMessage,
+                onChange: function (v) { props.setAttributes({ successMessage: v }); },
+              }),
+              el('div', { style: { marginTop: '10px' } },
+                el('span', {
+                  style: {
+                    display: 'block',
+                    textAlign: 'center',
+                    padding: '14px 16px',
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    background: props.attributes.buttonBgColor || '#ED6E2A',
+                    color: props.attributes.buttonTextColor || '#ffffff',
+                  }
+                }, props.attributes.buttonLabel || __('SUBMIT YOUR APPLICATION', 'headless-core'))
+              )
             )
           )
         ),

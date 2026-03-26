@@ -94,71 +94,6 @@
           null,
           el(
             PanelBody,
-            { title: __('Content', 'headless-core'), initialOpen: true },
-            el(TextControl, {
-              label: __('Title', 'headless-core'),
-              value: props.attributes.title,
-              onChange: function (v) { props.setAttributes({ title: v }); },
-            }),
-            el(TextControl, {
-              label: __('Intro paragraph', 'headless-core'),
-              value: props.attributes.intro,
-              onChange: function (v) { props.setAttributes({ intro: v }); },
-            }),
-            items.map(function (item, index) {
-              return el(
-                'div',
-                { key: index, style: { marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' } },
-                el(
-                  'div',
-                  { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' } },
-                  el('strong', null, __('FAQ', 'headless-core') + ' ' + (index + 1)),
-                  el(
-                    'div',
-                    { style: { display: 'flex', gap: '4px' } },
-                    el(Button, {
-                      variant: 'tertiary',
-                      isSmall: true,
-                      label: __('Move up', 'headless-core'),
-                      disabled: index === 0,
-                      onClick: function () { props.setAttributes({ items: moveRow(items, index, -1) }); },
-                    }, '˄'),
-                    el(Button, {
-                      variant: 'tertiary',
-                      isSmall: true,
-                      label: __('Move down', 'headless-core'),
-                      disabled: index === items.length - 1,
-                      onClick: function () { props.setAttributes({ items: moveRow(items, index, 1) }); },
-                    }, '˅'),
-                    el(Button, {
-                      variant: 'tertiary',
-                      isSmall: true,
-                      isDestructive: true,
-                      onClick: function () { removeItem(index); },
-                      label: __('Remove FAQ', 'headless-core'),
-                    }, '×')
-                  )
-                ),
-                el(RichText, {
-                  tagName: 'p',
-                  value: (item && item.question) || '',
-                  onChange: function (v) { setItem(index, { question: v }); },
-                  placeholder: __('Question...', 'headless-core'),
-                  allowedFormats: [],
-                }),
-                el(RichText, {
-                  tagName: 'p',
-                  value: (item && item.answer) || '',
-                  onChange: function (v) { setItem(index, { answer: v }); },
-                  placeholder: __('Answer...', 'headless-core'),
-                  allowedFormats: [],
-                })
-              );
-            }),
-            el(Button, { variant: 'primary', onClick: addItem, style: { marginTop: '12px' } }, '+ ', __('Add FAQ', 'headless-core'))
-          ),
-          el(
-            PanelBody,
             { title: __('Colors', 'headless-core'), initialOpen: false },
             el('div', null,
               el(BaseControl, { label: __('Background', 'headless-core') }),
@@ -216,6 +151,58 @@
                 onChange: function (c) { props.setAttributes({ iconColor: c || '#000000' }); },
               })
             )
+          )
+        ),
+        el(
+          'div',
+          { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', background: props.attributes.backgroundColor || '#eef0f3' } },
+          el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
+            el(TextControl, {
+              label: __('Title', 'headless-core'),
+              value: props.attributes.title,
+              onChange: function (v) { props.setAttributes({ title: v }); },
+            }),
+            el(TextControl, {
+              label: __('Intro paragraph', 'headless-core'),
+              value: props.attributes.intro,
+              onChange: function (v) { props.setAttributes({ intro: v }); },
+            }),
+            el('h3', { style: { margin: '12px 0 8px', fontSize: '16px' } }, __('FAQs', 'headless-core')),
+            items.map(function (item, index) {
+              return el(
+                'div',
+                { key: index, style: { padding: '12px', border: '1px solid #eee', borderRadius: '8px', marginBottom: '10px', background: '#fff' } },
+                el(
+                  'div',
+                  { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' } },
+                  el('strong', null, __('FAQ', 'headless-core') + ' ' + (index + 1)),
+                  el(
+                    'div',
+                    { style: { display: 'flex', gap: '6px' } },
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ items: moveRow(items, index, -1) }); } }, '˄'),
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === items.length - 1, onClick: function () { props.setAttributes({ items: moveRow(items, index, 1) }); } }, '˅'),
+                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeItem(index); } }, '×')
+                  )
+                ),
+                el(RichText, {
+                  tagName: 'p',
+                  value: (item && item.question) || '',
+                  onChange: function (v) { setItem(index, { question: v }); },
+                  placeholder: __('Question...', 'headless-core'),
+                  allowedFormats: [],
+                  style: { fontWeight: 800, marginBottom: '8px', color: props.attributes.questionColor || '#000000' },
+                }),
+                el(RichText, {
+                  tagName: 'p',
+                  value: (item && item.answer) || '',
+                  onChange: function (v) { setItem(index, { answer: v }); },
+                  placeholder: __('Answer...', 'headless-core'),
+                  allowedFormats: [],
+                  style: { color: props.attributes.textColor || '#000000' },
+                })
+              );
+            }),
+            el(Button, { variant: 'primary', onClick: addItem }, '+ ', __('Add FAQ', 'headless-core'))
           )
         ),
         el(
