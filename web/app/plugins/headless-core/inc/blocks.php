@@ -100,6 +100,20 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-contact-form-editor',
+        HEADLESS_CORE_URL . 'blocks/contact-form/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-contact-map-editor',
+        HEADLESS_CORE_URL . 'blocks/contact-map/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-loan-products-grid-editor',
         HEADLESS_CORE_URL . 'blocks/loan-products-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
@@ -567,6 +581,54 @@ add_action('init', static function (): void {
             'buttonHoverBgColor' => ['type' => 'string', 'default' => '#22ACB6'],
             'buttonHoverTextColor' => ['type' => 'string', 'default' => '#ffffff'],
             'successMessage' => ['type' => 'string', 'default' => 'Thanks — we received your application.'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/contact-form', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-contact-form-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Get in touch.'],
+            'subtitle' => ['type' => 'string', 'default' => 'Reach out to us and we will respond as soon as we can.'],
+            'formName' => ['type' => 'string', 'default' => 'Contact Form'],
+            'backgroundColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'titleColor' => ['type' => 'string', 'default' => '#22ABB5'],
+            'textColor' => ['type' => 'string', 'default' => '#333333'],
+            'labelColor' => ['type' => 'string', 'default' => '#333333'],
+            'inputBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'buttonLabel' => ['type' => 'string', 'default' => 'SUBMIT'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'buttonHoverBgColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonHoverTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'successMessage' => ['type' => 'string', 'default' => 'Thanks — we have received your message.'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/contact-map', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-contact-map-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Our Location'],
+            'address' => ['type' => 'string', 'default' => 'Mombasa, Kenya'],
+            'embedUrl' => ['type' => 'string', 'default' => ''],
+            'directionsUrl' => ['type' => 'string', 'default' => ''],
+            'backgroundColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'titleColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'textColor' => ['type' => 'string', 'default' => '#000000'],
+            'cardBgColor' => ['type' => 'string', 'default' => '#ffffff'],
         ],
         'render_callback' => static function (): string {
             return '';

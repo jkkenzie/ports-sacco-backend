@@ -38,10 +38,6 @@ function headless_core_run_migration(): void
     $loansId = headless_core_ensure_page(__('Loan Products', 'headless-core'), 'loan-products', 0);
     if ($loansId > 0) {
         headless_core_ensure_page(__('Asset Finance', 'headless-core'), 'asset-finance', $loansId);
-        headless_core_ensure_page(__('Fanikisha Loan', 'headless-core'), 'fanikisha-loan', $loansId);
-        headless_core_ensure_page(__('Jiendeleze Loan', 'headless-core'), 'jiendeleze-loan', $loansId);
-        headless_core_ensure_page(__('Emergency Loan', 'headless-core'), 'emergency-loan', $loansId);
-        headless_core_ensure_page(__('Masaa Loan', 'headless-core'), 'masaa-loan', $loansId);
     }
 
     headless_core_ensure_primary_menu();

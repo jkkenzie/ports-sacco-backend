@@ -1264,6 +1264,107 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/contact-form') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? (string) $attrs['title']
+            : 'Get in touch.';
+        $attrs['subtitle'] = isset($attrs['subtitle']) ? trim((string) $attrs['subtitle']) : '';
+        $attrs['formName'] = isset($attrs['formName']) && trim((string) $attrs['formName']) !== ''
+            ? trim((string) $attrs['formName'])
+            : 'Contact Form';
+        $attrs['buttonLabel'] = isset($attrs['buttonLabel']) && trim((string) $attrs['buttonLabel']) !== ''
+            ? trim((string) $attrs['buttonLabel'])
+            : 'SUBMIT';
+        $attrs['successMessage'] = isset($attrs['successMessage']) && trim((string) $attrs['successMessage']) !== ''
+            ? trim((string) $attrs['successMessage'])
+            : 'Thanks — we have received your message.';
+
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#ffffff'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#22ABB5'
+        );
+        $attrs['textColor'] = headless_core_sanitize_color_string(
+            isset($attrs['textColor']) ? (string) $attrs['textColor'] : '',
+            '#333333'
+        );
+        $attrs['labelColor'] = headless_core_sanitize_color_string(
+            isset($attrs['labelColor']) ? (string) $attrs['labelColor'] : '',
+            '#333333'
+        );
+        $attrs['inputBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['inputBorderColor']) ? (string) $attrs['inputBorderColor'] : '',
+            '#e8e8e8'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#ED6E2A'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['buttonHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverBgColor']) ? (string) $attrs['buttonHoverBgColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['buttonHoverTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverTextColor']) ? (string) $attrs['buttonHoverTextColor'] : '',
+            '#ffffff'
+        );
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/contact-map') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? (string) $attrs['title']
+            : 'Our Location';
+        $attrs['address'] = isset($attrs['address']) ? trim((string) $attrs['address']) : '';
+        $attrs['embedUrl'] = isset($attrs['embedUrl']) ? trim((string) $attrs['embedUrl']) : '';
+        $attrs['directionsUrl'] = isset($attrs['directionsUrl']) ? trim((string) $attrs['directionsUrl']) : '';
+
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#ffffff'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['textColor'] = headless_core_sanitize_color_string(
+            isset($attrs['textColor']) ? (string) $attrs['textColor'] : '',
+            '#000000'
+        );
+        $attrs['cardBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardBgColor']) ? (string) $attrs['cardBgColor'] : '',
+            '#ffffff'
+        );
+
+        return $attrs;
+    }
+
     if ($name === 'custom/asset-finance-whatever') {
         if (isset($attrs['anchor'])) {
             $anchor = sanitize_title((string) $attrs['anchor']);
