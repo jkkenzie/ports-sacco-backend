@@ -1683,6 +1683,304 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/home-about') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionId'] = isset($attrs['sectionId']) && trim((string) $attrs['sectionId']) !== ''
+            ? trim((string) $attrs['sectionId'])
+            : 'about';
+        $attrs['badgeText'] = isset($attrs['badgeText']) && trim((string) $attrs['badgeText']) !== ''
+            ? trim((string) $attrs['badgeText'])
+            : 'ABOUT US';
+        $attrs['bodyText'] = isset($attrs['bodyText']) ? trim((string) $attrs['bodyText']) : '';
+        $attrs['readMoreLabel'] = isset($attrs['readMoreLabel']) && trim((string) $attrs['readMoreLabel']) !== ''
+            ? trim((string) $attrs['readMoreLabel'])
+            : 'READ MORE';
+        $attrs['readMoreUrl'] = isset($attrs['readMoreUrl']) && trim((string) $attrs['readMoreUrl']) !== ''
+            ? trim((string) $attrs['readMoreUrl'])
+            : '/about-us';
+
+        $attrs['barBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['barBgColor']) ? (string) $attrs['barBgColor'] : '',
+            '#22acb6'
+        );
+        $attrs['curvedRectColor'] = headless_core_sanitize_color_string(
+            isset($attrs['curvedRectColor']) ? (string) $attrs['curvedRectColor'] : '',
+            '#ffffff'
+        );
+        $attrs['scrollButtonBg'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollButtonBg']) ? (string) $attrs['scrollButtonBg'] : '',
+            '#22ACB6'
+        );
+        $attrs['scrollButtonArrow'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollButtonArrow']) ? (string) $attrs['scrollButtonArrow'] : '',
+            '#ffffff'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['bodyTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['bodyTextColor']) ? (string) $attrs['bodyTextColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['readMoreTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['readMoreTextColor']) ? (string) $attrs['readMoreTextColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['readMoreHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['readMoreHoverColor']) ? (string) $attrs['readMoreHoverColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['readMoreCircleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['readMoreCircleColor']) ? (string) $attrs['readMoreCircleColor'] : '',
+            '#22ACB6'
+        );
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/home-product-cards') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionId'] = isset($attrs['sectionId']) && trim((string) $attrs['sectionId']) !== ''
+            ? trim((string) $attrs['sectionId'])
+            : 'products';
+        $attrs['badgeText'] = isset($attrs['badgeText']) && trim((string) $attrs['badgeText']) !== ''
+            ? trim((string) $attrs['badgeText'])
+            : 'EXPLORE';
+        // parse_blocks() often omits keys equal to block registration defaults.
+        $attrs['kickerText'] = isset($attrs['kickerText'])
+            ? trim((string) $attrs['kickerText'])
+            : 'EXPLORE OUR WIDE RANGE OF PRODUCTS AND SERVICES.';
+
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#F5F4EE'
+        );
+        $attrs['topCurveBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['topCurveBgColor']) ? (string) $attrs['topCurveBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['topCurveCutoutColor'] = headless_core_sanitize_color_string(
+            isset($attrs['topCurveCutoutColor']) ? (string) $attrs['topCurveCutoutColor'] : '',
+            '#F5F4EE'
+        );
+        $attrs['badgeBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['badgeBgColor']) ? (string) $attrs['badgeBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['badgeTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['badgeTextColor']) ? (string) $attrs['badgeTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['kickerColor'] = headless_core_sanitize_color_string(
+            isset($attrs['kickerColor']) ? (string) $attrs['kickerColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['cardTagBarColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardTagBarColor']) ? (string) $attrs['cardTagBarColor'] : '',
+            '#F06E2A'
+        );
+        $attrs['cardTagTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardTagTextColor']) ? (string) $attrs['cardTagTextColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['cardTitleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardTitleColor']) ? (string) $attrs['cardTitleColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['cardTitleHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardTitleHoverColor']) ? (string) $attrs['cardTitleHoverColor'] : '',
+            '#ee6e2a'
+        );
+        $attrs['cardTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardTextColor']) ? (string) $attrs['cardTextColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['arrowBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['arrowBgColor']) ? (string) $attrs['arrowBgColor'] : '',
+            '#82cdcb'
+        );
+        $attrs['arrowHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['arrowHoverBgColor']) ? (string) $attrs['arrowHoverBgColor'] : '',
+            '#ee6e2a'
+        );
+        $attrs['arrowColor'] = headless_core_sanitize_color_string(
+            isset($attrs['arrowColor']) ? (string) $attrs['arrowColor'] : '',
+            '#ffffff'
+        );
+        $attrs['cardBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardBorderColor']) ? (string) $attrs['cardBorderColor'] : '',
+            '#e8e8e8'
+        );
+        $attrs['cardHoverBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardHoverBorderColor']) ? (string) $attrs['cardHoverBorderColor'] : '',
+            '#cfeeed'
+        );
+        $attrs['imageBgFrom'] = headless_core_sanitize_color_string(
+            isset($attrs['imageBgFrom']) ? (string) $attrs['imageBgFrom'] : '',
+            '#00B2E0'
+        );
+        $attrs['imageBgTo'] = headless_core_sanitize_color_string(
+            isset($attrs['imageBgTo']) ? (string) $attrs['imageBgTo'] : '',
+            '#00AB81'
+        );
+
+        $cards = isset($attrs['cards']) && is_array($attrs['cards']) ? $attrs['cards'] : [];
+        $out = [];
+        foreach ($cards as $card) {
+            if (! is_array($card)) {
+                continue;
+            }
+            $imageId = isset($card['imageId']) ? (int) $card['imageId'] : 0;
+            $imageUrl = isset($card['imageUrl']) ? trim((string) $card['imageUrl']) : '';
+            if ($imageId > 0) {
+                $url = wp_get_attachment_image_url($imageId, 'large');
+                if (is_string($url) && $url !== '') {
+                    $imageUrl = $url;
+                }
+            }
+            $title = isset($card['title']) ? trim((string) $card['title']) : '';
+            $description = isset($card['description']) ? trim((string) $card['description']) : '';
+            $tag = isset($card['tag']) ? trim((string) $card['tag']) : '';
+            $href = isset($card['href']) ? trim((string) $card['href']) : '#';
+            $cardImageBgFrom = headless_core_sanitize_color_string(
+                isset($card['imageBgFrom']) ? (string) $card['imageBgFrom'] : '',
+                ''
+            );
+            $cardImageBgTo = headless_core_sanitize_color_string(
+                isset($card['imageBgTo']) ? (string) $card['imageBgTo'] : '',
+                ''
+            );
+            if ($title === '' && $description === '' && $imageUrl === '') {
+                continue;
+            }
+            $out[] = [
+                'imageId' => $imageId,
+                'imageUrl' => $imageUrl,
+                'imageBgFrom' => $cardImageBgFrom,
+                'imageBgTo' => $cardImageBgTo,
+                'title' => $title,
+                'description' => $description,
+                'tag' => $tag,
+                'href' => $href,
+            ];
+        }
+        $attrs['cards'] = $out;
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/loans-carousel') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['categoryId'] = isset($attrs['categoryId']) ? (int) $attrs['categoryId'] : 0;
+        $attrs['sectionHeader'] = isset($attrs['sectionHeader']) && trim((string) $attrs['sectionHeader']) !== ''
+            ? trim((string) $attrs['sectionHeader'])
+            : 'ACHIEVE YOUR GOALS WITH OUR FLEXIBLE LENDING OPTIONS';
+        $attrs['buttonText'] = isset($attrs['buttonText']) && trim((string) $attrs['buttonText']) !== ''
+            ? trim((string) $attrs['buttonText'])
+            : 'LOANS';
+        $attrs['linkText'] = isset($attrs['linkText']) && trim((string) $attrs['linkText']) !== ''
+            ? trim((string) $attrs['linkText'])
+            : 'ALL LOAN PRODUCTS';
+        $attrs['linkUrl'] = isset($attrs['linkUrl']) && trim((string) $attrs['linkUrl']) !== ''
+            ? trim((string) $attrs['linkUrl'])
+            : '/loan-products';
+        $attrs['maxItems'] = isset($attrs['maxItems']) ? max(3, (int) $attrs['maxItems']) : 9;
+        $attrs['autoplayDelayMs'] = isset($attrs['autoplayDelayMs'])
+            ? max(800, (int) $attrs['autoplayDelayMs'])
+            : 3500;
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#F5F4EE'
+        );
+        $attrs['topBarColor'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarColor']) ? (string) $attrs['topBarColor'] : '',
+            '#ffffff'
+        );
+        $attrs['headerTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headerTextColor']) ? (string) $attrs['headerTextColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkTextColor']) ? (string) $attrs['linkTextColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['linkTextHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkTextHoverColor']) ? (string) $attrs['linkTextHoverColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['linkBadgeBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkBadgeBgColor']) ? (string) $attrs['linkBadgeBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkBadgeHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkBadgeHoverBgColor']) ? (string) $attrs['linkBadgeHoverBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkArrowBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowBgColor']) ? (string) $attrs['linkArrowBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkArrowHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowHoverBgColor']) ? (string) $attrs['linkArrowHoverBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['linkArrowColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowColor']) ? (string) $attrs['linkArrowColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['linkArrowHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowHoverColor']) ? (string) $attrs['linkArrowHoverColor'] : '',
+            '#ffffff'
+        );
+        $attrs['arrowButtonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['arrowButtonBgColor']) ? (string) $attrs['arrowButtonBgColor'] : '',
+            '#00AFBB'
+        );
+        $attrs['arrowButtonIconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['arrowButtonIconColor']) ? (string) $attrs['arrowButtonIconColor'] : '',
+            '#ffffff'
+        );
+
+        return $attrs;
+    }
+
     return $attrs;
 }
 

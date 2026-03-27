@@ -44,6 +44,20 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-home-about-editor',
+        HEADLESS_CORE_URL . 'blocks/home-about/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-home-product-cards-editor',
+        HEADLESS_CORE_URL . 'blocks/home-product-cards/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-savings-archive-hero-editor',
         HEADLESS_CORE_URL . 'blocks/savings-archive-hero/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
@@ -116,6 +130,13 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-loan-products-grid-editor',
         HEADLESS_CORE_URL . 'blocks/loan-products-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-loans-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/loans-carousel/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
         HEADLESS_CORE_VERSION,
         true
@@ -347,6 +368,103 @@ add_action('init', static function (): void {
             ],
             'iconColor' => ['type' => 'string', 'default' => '#EE6E2A'],
             'linkSvgColor' => ['type' => 'string', 'default' => '#22ACB6'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/home-about', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-home-about-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'about'],
+            'barBgColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'badgeText' => ['type' => 'string', 'default' => 'ABOUT US'],
+            'bodyText' => ['type' => 'string', 'default' => 'Ports DT Sacco, your trusted financial partner since 1966, is a Tier 1 licensed deposit-taking Sacco regulated by the Sacco Society Regulatory Authority (SASRA)...'],
+            'bodyTextColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'readMoreLabel' => ['type' => 'string', 'default' => 'READ MORE'],
+            'readMoreUrl' => ['type' => 'string', 'default' => '/about-us'],
+            'readMoreTextColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'readMoreHoverColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'readMoreCircleColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'scrollButtonBg' => ['type' => 'string', 'default' => '#22ACB6'],
+            'scrollButtonArrow' => ['type' => 'string', 'default' => '#ffffff'],
+            'curvedRectColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/home-product-cards', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-home-product-cards-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'products'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topCurveBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'topCurveCutoutColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'badgeText' => ['type' => 'string', 'default' => 'EXPLORE'],
+            'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'kickerText' => ['type' => 'string', 'default' => 'EXPLORE OUR WIDE RANGE OF PRODUCTS AND SERVICES.'],
+            'kickerColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'cardTagBarColor' => ['type' => 'string', 'default' => '#F06E2A'],
+            'cardTagTextColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'cardTitleColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'cardTitleHoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'cardTextColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'arrowBgColor' => ['type' => 'string', 'default' => '#82cdcb'],
+            'arrowHoverBgColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'arrowColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'cardHoverBorderColor' => ['type' => 'string', 'default' => '#cfeeed'],
+            'imageBgFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'imageBgTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'cards' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'imageId' => 0,
+                        'imageUrl' => '',
+                        'imageBgFrom' => '',
+                        'imageBgTo' => '',
+                        'title' => 'Join Us',
+                        'description' => 'Join Ports Sacco today and get all your financial needs under one roof!',
+                        'tag' => 'BECOME A MEMBER TODAY',
+                        'href' => '#',
+                    ],
+                    [
+                        'imageId' => 0,
+                        'imageUrl' => '',
+                        'imageBgFrom' => '',
+                        'imageBgTo' => '',
+                        'title' => 'SecureYour Future',
+                        'description' => 'Maximize your savings with attractive interest rates and peace of mind.',
+                        'tag' => 'SAVE & INVEST WITH US',
+                        'href' => '#',
+                    ],
+                    [
+                        'imageId' => 0,
+                        'imageUrl' => '',
+                        'imageBgFrom' => '',
+                        'imageBgTo' => '',
+                        'title' => 'Flexible Loan Options',
+                        'description' => 'Get flexible loan options tailored to your needs and goals.',
+                        'tag' => 'GET A LOAN FROM US',
+                        'href' => '#',
+                    ],
+                ],
+            ],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -652,6 +770,41 @@ add_action('init', static function (): void {
         'editor_script' => 'headless-custom-services-grid-editor',
         'attributes' => [
             'categoryId' => ['type' => 'number', 'default' => 0],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/loans-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-loans-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+            'sectionHeader' => ['type' => 'string', 'default' => 'ACHIEVE YOUR GOALS WITH OUR FLEXIBLE LENDING OPTIONS'],
+            'buttonText' => ['type' => 'string', 'default' => 'LOANS'],
+            'linkText' => ['type' => 'string', 'default' => 'ALL LOAN PRODUCTS'],
+            'linkUrl' => ['type' => 'string', 'default' => '/loan-products'],
+            'maxItems' => ['type' => 'number', 'default' => 9],
+            'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'headerTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkTextHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkBadgeBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkBadgeHoverBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowHoverBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkArrowColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'arrowButtonBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'arrowButtonIconColor' => ['type' => 'string', 'default' => '#ffffff'],
         ],
         'render_callback' => static function (): string {
             return '';
