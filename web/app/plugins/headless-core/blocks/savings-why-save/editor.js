@@ -99,6 +99,7 @@
     description: __('Why Save With Us section for savings products archive.', 'headless-core'),
     attributes: {
       heading: { type: 'string', default: 'Why Save With Us' },
+      description: { type: 'string', default: '' },
       footerText: { type: 'string', default: '' },
       iconId: { type: 'number', default: 0 },
       iconUrl: { type: 'string', default: '' },
@@ -206,6 +207,14 @@
               placeholder: __('Section heading…', 'headless-core'),
               allowedFormats: [],
               style: { fontSize: '28px', fontWeight: 900, color: headingColor, marginBottom: '12px' }
+            }),
+            el(RichText, {
+              tagName: 'p',
+              value: props.attributes.description || '',
+              onChange: function (v) { props.setAttributes({ description: v }); },
+              placeholder: __('Section description…', 'headless-core'),
+              allowedFormats: [],
+              style: { marginTop: '0', marginBottom: '14px', color: textColor }
             }),
             el('div', { style: { marginBottom: '16px' } },
               el('strong', null, __('Global Icon (applies to all points)', 'headless-core')),

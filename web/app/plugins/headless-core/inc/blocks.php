@@ -396,6 +396,7 @@ add_action('init', static function (): void {
         ],
         'attributes' => [
             'heading' => ['type' => 'string', 'default' => 'Why Save With Us'],
+            'description' => ['type' => 'string', 'default' => ''],
             'footerText' => ['type' => 'string', 'default' => ''],
             'iconId' => ['type' => 'number', 'default' => 0],
             'iconUrl' => ['type' => 'string', 'default' => ''],

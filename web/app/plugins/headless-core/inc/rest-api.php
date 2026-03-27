@@ -975,6 +975,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         $attrs['heading'] = isset($attrs['heading']) && trim((string) $attrs['heading']) !== ''
             ? (string) $attrs['heading']
             : 'Why Save With Us';
+        $attrs['description'] = isset($attrs['description']) ? trim((string) $attrs['description']) : '';
         $attrs['footerText'] = isset($attrs['footerText']) ? trim((string) $attrs['footerText']) : '';
         $attrs['backgroundColor'] = headless_core_sanitize_color_string(
             isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
