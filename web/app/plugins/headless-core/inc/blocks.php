@@ -114,6 +114,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-member-reviews-editor',
+        HEADLESS_CORE_URL . 'blocks/member-reviews/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-savings-products-grid-editor',
         HEADLESS_CORE_URL . 'blocks/savings-products-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
@@ -821,6 +828,67 @@ add_action('init', static function (): void {
             'venueTitle' => ['type' => 'string', 'default' => 'Venue'],
             'timeLine' => ['type' => 'string', 'default' => '09.00 HOURS'],
             'bannerTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/member-reviews', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-member-reviews-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'member-reviews'],
+            'useGradient' => ['type' => 'boolean', 'default' => false],
+            'gradientFrom' => ['type' => 'string', 'default' => '#FF8C00'],
+            'gradientVia' => ['type' => 'string', 'default' => '#FF6347'],
+            'gradientTo' => ['type' => 'string', 'default' => '#800080'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'topCurveFillColor' => ['type' => 'string', 'default' => ''],
+            'wavePathFill' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarBg' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarUseGradient' => ['type' => 'boolean', 'default' => false],
+            'topBarGradientFrom' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarGradientVia' => ['type' => 'string', 'default' => '#FF6347'],
+            'topBarGradientTo' => ['type' => 'string', 'default' => '#ff6346'],
+            'patternImageId' => ['type' => 'number', 'default' => 0],
+            'patternImageUrl' => ['type' => 'string', 'default' => ''],
+            'patternOpacity' => ['type' => 'number', 'default' => 0.3],
+            'orchidTintColor' => ['type' => 'string', 'default' => '#ff7bac'],
+            'topBarScrollIconOuterColor' => ['type' => 'string', 'default' => ''],
+            'scrollArrowBg' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollIconColor' => ['type' => 'string', 'default' => ''],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => ''],
+            'badgeLabelHtml' => ['type' => 'string', 'default' => 'MEMBER REVIEWS'],
+            'subtitleHtml' => ['type' => 'string', 'default' => 'WHAT OUR MEMBERS SAY!'],
+            'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'subtitleColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'showAllReviewsRow' => ['type' => 'boolean', 'default' => true],
+            'allReviewsLabel' => ['type' => 'string', 'default' => 'ALL REVIEWS'],
+            'allReviewsUrl' => ['type' => 'string', 'default' => ''],
+            'secondaryButtonBorderColor' => ['type' => 'string', 'default' => '#d1d5db'],
+            'secondaryButtonTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'quoteTextColor' => ['type' => 'string', 'default' => '#6b7280'],
+            'nameColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'cardBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'starFilledColor' => ['type' => 'string', 'default' => '#EAB308'],
+            'starEmptyColor' => ['type' => 'string', 'default' => '#D1D5DB'],
+            'carouselArrowBg' => ['type' => 'string', 'default' => '#22ACB6'],
+            'carouselArrowIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'dotActiveColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'dotInactiveColor' => ['type' => 'string', 'default' => '#d1d5db'],
+            'maxItems' => ['type' => 'number', 'default' => 0],
+            'slidesToScroll' => ['type' => 'number', 'default' => 1],
+            'visibleMobile' => ['type' => 'number', 'default' => 1],
+            'visibleTablet' => ['type' => 'number', 'default' => 2],
+            'visibleDesktop' => ['type' => 'number', 'default' => 3],
+            'carouselLoop' => ['type' => 'boolean', 'default' => false],
+            'reviews' => ['type' => 'array', 'default' => []],
         ],
         'render_callback' => static function (): string {
             return '';

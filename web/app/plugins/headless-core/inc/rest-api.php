@@ -2657,6 +2657,205 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/member-reviews') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionId'] = isset($attrs['sectionId']) ? trim((string) $attrs['sectionId']) : 'member-reviews';
+        $attrs['useGradient'] = isset($attrs['useGradient']) ? (bool) $attrs['useGradient'] : false;
+        $attrs['gradientFrom'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientFrom']) ? (string) $attrs['gradientFrom'] : '',
+            '#FF8C00'
+        );
+        $attrs['gradientVia'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientVia']) ? (string) $attrs['gradientVia'] : '',
+            '#FF6347'
+        );
+        $attrs['gradientTo'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientTo']) ? (string) $attrs['gradientTo'] : '',
+            '#800080'
+        );
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['topCurveFillColor'] = headless_core_sanitize_color_string(
+            isset($attrs['topCurveFillColor']) ? (string) $attrs['topCurveFillColor'] : '',
+            ''
+        );
+        $attrs['wavePathFill'] = headless_core_sanitize_color_string(
+            isset($attrs['wavePathFill']) ? (string) $attrs['wavePathFill'] : '',
+            '#ff6346'
+        );
+        $attrs['topBarBg'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarBg']) ? (string) $attrs['topBarBg'] : '',
+            '#ff6346'
+        );
+        $attrs['topBarUseGradient'] = isset($attrs['topBarUseGradient']) ? (bool) $attrs['topBarUseGradient'] : false;
+        $attrs['topBarGradientFrom'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientFrom']) ? (string) $attrs['topBarGradientFrom'] : '',
+            '#ff6346'
+        );
+        $attrs['topBarGradientVia'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientVia']) ? (string) $attrs['topBarGradientVia'] : '',
+            '#FF6347'
+        );
+        $attrs['topBarGradientTo'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientTo']) ? (string) $attrs['topBarGradientTo'] : '',
+            '#ff6346'
+        );
+        $attrs['orchidTintColor'] = headless_core_sanitize_color_string(
+            isset($attrs['orchidTintColor']) ? (string) $attrs['orchidTintColor'] : '',
+            '#ff7bac'
+        );
+
+        $mrPo = isset($attrs['patternOpacity']) ? (float) $attrs['patternOpacity'] : 0.3;
+        if ($mrPo < 0.0) {
+            $mrPo = 0.0;
+        }
+        if ($mrPo > 1.0) {
+            $mrPo = 1.0;
+        }
+        $attrs['patternOpacity'] = $mrPo;
+
+        $mrPatternId = isset($attrs['patternImageId']) ? (int) $attrs['patternImageId'] : 0;
+        $attrs['patternImageId'] = $mrPatternId;
+        $attrs['patternImageUrl'] = '';
+        if ($mrPatternId > 0) {
+            $mrPurl = wp_get_attachment_image_url($mrPatternId, 'full');
+            if (! is_string($mrPurl) || $mrPurl === '') {
+                $mrPurl = wp_get_attachment_image_url($mrPatternId, 'large');
+            }
+            if (is_string($mrPurl) && $mrPurl !== '') {
+                $attrs['patternImageUrl'] = $mrPurl;
+            }
+        }
+        $mrScrollOuter = isset($attrs['topBarScrollIconOuterColor']) ? trim((string) $attrs['topBarScrollIconOuterColor']) : '';
+        $attrs['topBarScrollIconOuterColor'] = $mrScrollOuter === ''
+            ? ''
+            : headless_core_sanitize_color_string($mrScrollOuter, '#ffffff');
+        $attrs['scrollButtonOuter'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollButtonOuter']) ? (string) $attrs['scrollButtonOuter'] : '',
+            '#ffffff'
+        );
+        $attrs['scrollArrowBg'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollArrowBg']) ? (string) $attrs['scrollArrowBg'] : '',
+            '#ffffff'
+        );
+        $attrs['scrollIconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollIconColor']) ? (string) $attrs['scrollIconColor'] : '',
+            ''
+        );
+        $innerMrScroll = isset($attrs['scrollButtonInner']) ? trim((string) $attrs['scrollButtonInner']) : '';
+        $attrs['scrollButtonInner'] = $innerMrScroll;
+
+        $attrs['badgeBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['badgeBgColor']) ? (string) $attrs['badgeBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['badgeTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['badgeTextColor']) ? (string) $attrs['badgeTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['subtitleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['subtitleColor']) ? (string) $attrs['subtitleColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['secondaryButtonBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['secondaryButtonBorderColor']) ? (string) $attrs['secondaryButtonBorderColor'] : '',
+            '#d1d5db'
+        );
+        $attrs['secondaryButtonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['secondaryButtonTextColor']) ? (string) $attrs['secondaryButtonTextColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['quoteTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['quoteTextColor']) ? (string) $attrs['quoteTextColor'] : '',
+            '#6b7280'
+        );
+        $attrs['nameColor'] = headless_core_sanitize_color_string(
+            isset($attrs['nameColor']) ? (string) $attrs['nameColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['cardBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardBgColor']) ? (string) $attrs['cardBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['starFilledColor'] = headless_core_sanitize_color_string(
+            isset($attrs['starFilledColor']) ? (string) $attrs['starFilledColor'] : '',
+            '#EAB308'
+        );
+        $attrs['starEmptyColor'] = headless_core_sanitize_color_string(
+            isset($attrs['starEmptyColor']) ? (string) $attrs['starEmptyColor'] : '',
+            '#D1D5DB'
+        );
+        $attrs['carouselArrowBg'] = headless_core_sanitize_color_string(
+            isset($attrs['carouselArrowBg']) ? (string) $attrs['carouselArrowBg'] : '',
+            '#22ACB6'
+        );
+        $attrs['carouselArrowIconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['carouselArrowIconColor']) ? (string) $attrs['carouselArrowIconColor'] : '',
+            '#ffffff'
+        );
+        $attrs['dotActiveColor'] = headless_core_sanitize_color_string(
+            isset($attrs['dotActiveColor']) ? (string) $attrs['dotActiveColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['dotInactiveColor'] = headless_core_sanitize_color_string(
+            isset($attrs['dotInactiveColor']) ? (string) $attrs['dotInactiveColor'] : '',
+            '#d1d5db'
+        );
+
+        $attrs['badgeLabelHtml'] = isset($attrs['badgeLabelHtml']) ? wp_kses_post((string) $attrs['badgeLabelHtml']) : '';
+        $attrs['subtitleHtml'] = isset($attrs['subtitleHtml']) ? wp_kses_post((string) $attrs['subtitleHtml']) : '';
+        $attrs['allReviewsLabel'] = isset($attrs['allReviewsLabel']) ? sanitize_text_field((string) $attrs['allReviewsLabel']) : '';
+        $allUrl = isset($attrs['allReviewsUrl']) ? trim((string) $attrs['allReviewsUrl']) : '';
+        $attrs['allReviewsUrl'] = $allUrl !== '' ? esc_url_raw($allUrl) : '';
+        $attrs['showAllReviewsRow'] = isset($attrs['showAllReviewsRow']) ? (bool) $attrs['showAllReviewsRow'] : true;
+        $attrs['maxItems'] = isset($attrs['maxItems']) ? max(0, (int) $attrs['maxItems']) : 0;
+        $attrs['slidesToScroll'] = isset($attrs['slidesToScroll']) ? max(1, (int) $attrs['slidesToScroll']) : 1;
+        $attrs['visibleMobile'] = isset($attrs['visibleMobile']) ? max(1, (int) $attrs['visibleMobile']) : 1;
+        $attrs['visibleTablet'] = isset($attrs['visibleTablet']) ? max(1, (int) $attrs['visibleTablet']) : 2;
+        $attrs['visibleDesktop'] = isset($attrs['visibleDesktop']) ? max(1, (int) $attrs['visibleDesktop']) : 3;
+        $attrs['carouselLoop'] = isset($attrs['carouselLoop']) ? (bool) $attrs['carouselLoop'] : false;
+
+        $reviewsIn = isset($attrs['reviews']) && is_array($attrs['reviews']) ? $attrs['reviews'] : [];
+        $reviewsOut = [];
+        foreach ($reviewsIn as $r) {
+            if (! is_array($r)) {
+                continue;
+            }
+            $quote = isset($r['quote']) ? sanitize_textarea_field((string) $r['quote']) : '';
+            $rating = isset($r['rating']) ? (float) $r['rating'] : 0.0;
+            if ($rating < 0.0) {
+                $rating = 0.0;
+            }
+            if ($rating > 5.0) {
+                $rating = 5.0;
+            }
+            $revName = isset($r['name']) ? sanitize_text_field((string) $r['name']) : '';
+            $revTitle = isset($r['title']) ? sanitize_text_field((string) $r['title']) : '';
+            if ($quote === '' && $revName === '') {
+                continue;
+            }
+            $reviewsOut[] = [
+                'quote' => $quote,
+                'rating' => $rating,
+                'name' => $revName,
+                'title' => $revTitle,
+            ];
+        }
+        $attrs['reviews'] = $reviewsOut;
+
+        return $attrs;
+    }
+
     return $attrs;
 }
 
