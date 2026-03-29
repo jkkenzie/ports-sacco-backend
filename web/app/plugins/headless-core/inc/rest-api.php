@@ -2572,23 +2572,44 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             isset($attrs['topCurveFillColor']) ? (string) $attrs['topCurveFillColor'] : '',
             ''
         );
+        $attrs['topBarBg'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarBg']) ? (string) $attrs['topBarBg'] : '',
+            '#ff6346'
+        );
+        $attrs['topBarUseGradient'] = isset($attrs['topBarUseGradient']) ? (bool) $attrs['topBarUseGradient'] : false;
+        $attrs['topBarGradientFrom'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientFrom']) ? (string) $attrs['topBarGradientFrom'] : '',
+            '#ff6346'
+        );
+        $attrs['topBarGradientVia'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientVia']) ? (string) $attrs['topBarGradientVia'] : '',
+            '#FF6347'
+        );
+        $attrs['topBarGradientTo'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientTo']) ? (string) $attrs['topBarGradientTo'] : '',
+            '#ff6346'
+        );
+        $tbEvScroll = isset($attrs['topBarScrollIconOuterColor']) ? trim((string) $attrs['topBarScrollIconOuterColor']) : '';
+        $attrs['topBarScrollIconOuterColor'] = $tbEvScroll === ''
+            ? ''
+            : headless_core_sanitize_color_string($tbEvScroll, '#ffffff');
         $attrs['scrollButtonOuter'] = headless_core_sanitize_color_string(
             isset($attrs['scrollButtonOuter']) ? (string) $attrs['scrollButtonOuter'] : '',
-            ''
+            '#ffffff'
         );
         $innerScroll = isset($attrs['scrollButtonInner']) ? trim((string) $attrs['scrollButtonInner']) : '';
         $attrs['scrollButtonInner'] = $innerScroll;
 
         $attrs['orchidTintColor'] = headless_core_sanitize_color_string(
             isset($attrs['orchidTintColor']) ? (string) $attrs['orchidTintColor'] : '',
-            ''
+            '#ff7bac'
         );
         $attrs['bannerTextColor'] = headless_core_sanitize_color_string(
             isset($attrs['bannerTextColor']) ? (string) $attrs['bannerTextColor'] : '',
-            ''
+            '#ffffff'
         );
 
-        $po = isset($attrs['patternOpacity']) ? (float) $attrs['patternOpacity'] : 0.0;
+        $po = isset($attrs['patternOpacity']) ? (float) $attrs['patternOpacity'] : 0.3;
         if ($po < 0.0) {
             $po = 0.0;
         }
