@@ -2001,6 +2001,253 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/savings-carousel') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionHeader'] = isset($attrs['sectionHeader']) && trim((string) $attrs['sectionHeader']) !== ''
+            ? trim((string) $attrs['sectionHeader'])
+            : 'DISCOVER OUR SAVINGS SOLUTIONS';
+        $attrs['buttonText'] = isset($attrs['buttonText']) && trim((string) $attrs['buttonText']) !== ''
+            ? trim((string) $attrs['buttonText'])
+            : 'SAVINGS';
+        $attrs['linkText'] = isset($attrs['linkText']) && trim((string) $attrs['linkText']) !== ''
+            ? trim((string) $attrs['linkText'])
+            : 'ALL SAVINGS PRODUCTS';
+        $attrs['linkUrl'] = isset($attrs['linkUrl']) && trim((string) $attrs['linkUrl']) !== ''
+            ? trim((string) $attrs['linkUrl'])
+            : '/savings-products';
+        $attrs['maxItems'] = isset($attrs['maxItems']) ? max(3, (int) $attrs['maxItems']) : 9;
+        $attrs['autoplayDelayMs'] = isset($attrs['autoplayDelayMs'])
+            ? max(800, (int) $attrs['autoplayDelayMs'])
+            : 3500;
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#F5F4EE'
+        );
+        $attrs['headerTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headerTextColor']) ? (string) $attrs['headerTextColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkTextColor']) ? (string) $attrs['linkTextColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['linkTextHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkTextHoverColor']) ? (string) $attrs['linkTextHoverColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['linkBadgeBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkBadgeBgColor']) ? (string) $attrs['linkBadgeBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkBadgeHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkBadgeHoverBgColor']) ? (string) $attrs['linkBadgeHoverBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkArrowBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowBgColor']) ? (string) $attrs['linkArrowBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkArrowHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowHoverBgColor']) ? (string) $attrs['linkArrowHoverBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['linkArrowColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowColor']) ? (string) $attrs['linkArrowColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['linkArrowHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowHoverColor']) ? (string) $attrs['linkArrowHoverColor'] : '',
+            '#ffffff'
+        );
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/services-carousel') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['categoryId'] = isset($attrs['categoryId']) ? (int) $attrs['categoryId'] : 0;
+        $attrs['sectionHeader'] = isset($attrs['sectionHeader']) && trim((string) $attrs['sectionHeader']) !== ''
+            ? trim((string) $attrs['sectionHeader'])
+            : 'EXPLORE OUR SERVICES';
+        $attrs['buttonText'] = isset($attrs['buttonText']) && trim((string) $attrs['buttonText']) !== ''
+            ? trim((string) $attrs['buttonText'])
+            : 'SERVICES';
+        $attrs['linkText'] = isset($attrs['linkText']) && trim((string) $attrs['linkText']) !== ''
+            ? trim((string) $attrs['linkText'])
+            : 'ALL SERVICES';
+        $attrs['linkUrl'] = isset($attrs['linkUrl']) && trim((string) $attrs['linkUrl']) !== ''
+            ? trim((string) $attrs['linkUrl'])
+            : '/services';
+        $attrs['maxItems'] = isset($attrs['maxItems']) ? max(3, (int) $attrs['maxItems']) : 9;
+        $attrs['autoplayDelayMs'] = isset($attrs['autoplayDelayMs'])
+            ? max(800, (int) $attrs['autoplayDelayMs'])
+            : 3500;
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#F5F4EE'
+        );
+        $attrs['headerTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headerTextColor']) ? (string) $attrs['headerTextColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkTextColor']) ? (string) $attrs['linkTextColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['linkTextHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkTextHoverColor']) ? (string) $attrs['linkTextHoverColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['linkBadgeBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkBadgeBgColor']) ? (string) $attrs['linkBadgeBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkBadgeHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkBadgeHoverBgColor']) ? (string) $attrs['linkBadgeHoverBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkArrowBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowBgColor']) ? (string) $attrs['linkArrowBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['linkArrowHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowHoverBgColor']) ? (string) $attrs['linkArrowHoverBgColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['linkArrowColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowColor']) ? (string) $attrs['linkArrowColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['linkArrowHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['linkArrowHoverColor']) ? (string) $attrs['linkArrowHoverColor'] : '',
+            '#ffffff'
+        );
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/mobile-app-section') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionId'] = isset($attrs['sectionId']) ? trim((string) $attrs['sectionId']) : '';
+
+        $attrs['gradientFrom'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientFrom']) ? (string) $attrs['gradientFrom'] : '',
+            '#00B2E0'
+        );
+        $attrs['gradientVia'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientVia']) ? (string) $attrs['gradientVia'] : '',
+            '#00AFBB'
+        );
+        $attrs['gradientTo'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientTo']) ? (string) $attrs['gradientTo'] : '',
+            '#00AB81'
+        );
+        $attrs['topBarBg'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarBg']) ? (string) $attrs['topBarBg'] : '',
+            '#F5F4EE'
+        );
+        $attrs['curveAccentColor'] = headless_core_sanitize_color_string(
+            isset($attrs['curveAccentColor']) ? (string) $attrs['curveAccentColor'] : '',
+            '#00AFBB'
+        );
+        $attrs['scrollButtonOuter'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollButtonOuter']) ? (string) $attrs['scrollButtonOuter'] : '',
+            '#ffffff'
+        );
+        $attrs['scrollButtonInner'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollButtonInner']) ? (string) $attrs['scrollButtonInner'] : '',
+            '#22ACB6'
+        );
+
+        $kickerRaw = isset($attrs['kickerText']) ? trim((string) $attrs['kickerText']) : '';
+        $attrs['kickerText'] = $kickerRaw !== '' ? wp_kses_post($kickerRaw) : '';
+        $titleRaw = isset($attrs['titleText']) ? trim((string) $attrs['titleText']) : '';
+        $attrs['titleText'] = $titleRaw !== '' ? wp_kses_post($titleRaw) : '';
+        $bodyRaw = isset($attrs['bodyHtml']) ? trim((string) $attrs['bodyHtml']) : '';
+        $attrs['bodyHtml'] = $bodyRaw !== '' ? wp_kses_post($bodyRaw) : '';
+        $downloadRaw = isset($attrs['downloadHeading']) ? trim((string) $attrs['downloadHeading']) : '';
+        $attrs['downloadHeading'] = $downloadRaw !== '' ? wp_kses_post($downloadRaw) : '';
+        $badgeRaw = isset($attrs['badgeText']) ? trim((string) $attrs['badgeText']) : '';
+        $attrs['badgeText'] = $badgeRaw !== '' ? wp_kses_post($badgeRaw) : '';
+
+        $gpId = isset($attrs['googlePlayImageId']) ? (int) $attrs['googlePlayImageId'] : 0;
+        $attrs['googlePlayImageId'] = $gpId;
+        $attrs['googlePlayImageUrl'] = '';
+        if ($gpId > 0) {
+            $url = wp_get_attachment_image_url($gpId, 'large');
+            if (is_string($url) && $url !== '') {
+                $attrs['googlePlayImageUrl'] = $url;
+            }
+        }
+        $attrs['googlePlayLinkUrl'] = isset($attrs['googlePlayLinkUrl']) ? trim((string) $attrs['googlePlayLinkUrl']) : '';
+
+        $asId = isset($attrs['appStoreImageId']) ? (int) $attrs['appStoreImageId'] : 0;
+        $attrs['appStoreImageId'] = $asId;
+        $attrs['appStoreImageUrl'] = '';
+        if ($asId > 0) {
+            $url = wp_get_attachment_image_url($asId, 'large');
+            if (is_string($url) && $url !== '') {
+                $attrs['appStoreImageUrl'] = $url;
+            }
+        }
+        $attrs['appStoreLinkUrl'] = isset($attrs['appStoreLinkUrl']) ? trim((string) $attrs['appStoreLinkUrl']) : '';
+
+        $ussdId = isset($attrs['ussdImageId']) ? (int) $attrs['ussdImageId'] : 0;
+        $attrs['ussdImageId'] = $ussdId;
+        $attrs['ussdImageUrl'] = '';
+        if ($ussdId > 0) {
+            $url = wp_get_attachment_image_url($ussdId, 'large');
+            if (! is_string($url) || $url === '') {
+                $url = wp_get_attachment_image_url($ussdId, 'full');
+            }
+            if (is_string($url) && $url !== '') {
+                $attrs['ussdImageUrl'] = $url;
+            }
+        }
+
+        return $attrs;
+    }
+
     return $attrs;
 }
 

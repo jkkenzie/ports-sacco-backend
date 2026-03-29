@@ -86,6 +86,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-mobile-app-section-editor',
+        HEADLESS_CORE_URL . 'blocks/mobile-app-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-savings-products-grid-editor',
         HEADLESS_CORE_URL . 'blocks/savings-products-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
@@ -137,6 +144,20 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-loans-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/loans-carousel/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-savings-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/savings-carousel/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-services-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/services-carousel/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
         HEADLESS_CORE_VERSION,
         true
@@ -618,6 +639,40 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/mobile-app-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-mobile-app-section-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'mobile-app'],
+            'gradientFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'gradientVia' => ['type' => 'string', 'default' => '#00AFBB'],
+            'gradientTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'topBarBg' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'curveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => '#22ACB6'],
+            'kickerText' => ['type' => 'string', 'default' => ''],
+            'titleText' => ['type' => 'string', 'default' => ''],
+            'bodyHtml' => ['type' => 'string', 'default' => ''],
+            'downloadHeading' => ['type' => 'string', 'default' => ''],
+            'badgeText' => ['type' => 'string', 'default' => ''],
+            'googlePlayImageId' => ['type' => 'number', 'default' => 0],
+            'googlePlayImageUrl' => ['type' => 'string', 'default' => ''],
+            'googlePlayLinkUrl' => ['type' => 'string', 'default' => ''],
+            'appStoreImageId' => ['type' => 'number', 'default' => 0],
+            'appStoreImageUrl' => ['type' => 'string', 'default' => ''],
+            'appStoreLinkUrl' => ['type' => 'string', 'default' => ''],
+            'ussdImageId' => ['type' => 'number', 'default' => 0],
+            'ussdImageUrl' => ['type' => 'string', 'default' => ''],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/savings-products-grid', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-savings-products-grid-editor',
@@ -805,6 +860,69 @@ add_action('init', static function (): void {
             'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
             'arrowButtonBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
             'arrowButtonIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/savings-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-savings-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionHeader' => ['type' => 'string', 'default' => 'DISCOVER OUR SAVINGS SOLUTIONS'],
+            'buttonText' => ['type' => 'string', 'default' => 'SAVINGS'],
+            'linkText' => ['type' => 'string', 'default' => 'ALL SAVINGS PRODUCTS'],
+            'linkUrl' => ['type' => 'string', 'default' => '/savings-products'],
+            'maxItems' => ['type' => 'number', 'default' => 9],
+            'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'headerTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkTextHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkBadgeBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkBadgeHoverBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowHoverBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkArrowColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/services-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-services-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+            'sectionHeader' => ['type' => 'string', 'default' => 'EXPLORE OUR SERVICES'],
+            'buttonText' => ['type' => 'string', 'default' => 'SERVICES'],
+            'linkText' => ['type' => 'string', 'default' => 'ALL SERVICES'],
+            'linkUrl' => ['type' => 'string', 'default' => '/services'],
+            'maxItems' => ['type' => 'number', 'default' => 9],
+            'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'headerTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkTextHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkBadgeBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkBadgeHoverBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowHoverBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkArrowColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
         ],
         'render_callback' => static function (): string {
             return '';
