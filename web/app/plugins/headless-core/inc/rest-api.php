@@ -1812,6 +1812,173 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/help-section') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionId'] = isset($attrs['sectionId']) && trim((string) $attrs['sectionId']) !== ''
+            ? trim((string) $attrs['sectionId'])
+            : 'help';
+
+        $attrs['kickerHtml'] = isset($attrs['kickerHtml']) ? wp_kses_post((string) $attrs['kickerHtml']) : '<p>WE ARE HERE TO HELP YOU</p>';
+        $attrs['talkButtonHtml'] = isset($attrs['talkButtonHtml']) ? wp_kses_post((string) $attrs['talkButtonHtml']) : 'TALK TO US!';
+        $attrs['kickerColor'] = headless_core_sanitize_color_string(
+            isset($attrs['kickerColor']) ? (string) $attrs['kickerColor'] : '',
+            '#ffffff'
+        );
+
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#00AFBB'
+        );
+        $attrs['topBarBg'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarBg']) ? (string) $attrs['topBarBg'] : '',
+            '#FFFFFF'
+        );
+        $attrs['waveAccentColor'] = headless_core_sanitize_color_string(
+            isset($attrs['waveAccentColor']) ? (string) $attrs['waveAccentColor'] : '',
+            '#00AFBB'
+        );
+        $attrs['scrollOuterColor'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollOuterColor']) ? (string) $attrs['scrollOuterColor'] : '',
+            '#ffffff'
+        );
+        $attrs['scrollInnerColor'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollInnerColor']) ? (string) $attrs['scrollInnerColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['talkButtonBg'] = headless_core_sanitize_color_string(
+            isset($attrs['talkButtonBg']) ? (string) $attrs['talkButtonBg'] : '',
+            '#EE6E2A'
+        );
+        $attrs['talkButtonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['talkButtonTextColor']) ? (string) $attrs['talkButtonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['cardIconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardIconColor']) ? (string) $attrs['cardIconColor'] : '',
+            '#22acb6'
+        );
+        $attrs['cardIconHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardIconHoverColor']) ? (string) $attrs['cardIconHoverColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['cardBgHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardBgHoverColor']) ? (string) $attrs['cardBgHoverColor'] : '',
+            '#f0fdfa'
+        );
+        $attrs['titleHeadingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleHeadingColor']) ? (string) $attrs['titleHeadingColor'] : '',
+            '#808080'
+        );
+        $attrs['bodyTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['bodyTextColor']) ? (string) $attrs['bodyTextColor'] : '',
+            '#000000'
+        );
+        $attrs['metaTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['metaTextColor']) ? (string) $attrs['metaTextColor'] : '',
+            '#808080'
+        );
+        $attrs['ctaTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['ctaTextColor']) ? (string) $attrs['ctaTextColor'] : '',
+            '#808080'
+        );
+        $attrs['cardChevronBg'] = headless_core_sanitize_color_string(
+            isset($attrs['cardChevronBg']) ? (string) $attrs['cardChevronBg'] : '',
+            '#ffffff'
+        );
+        $attrs['cardChevronBgHover'] = headless_core_sanitize_color_string(
+            isset($attrs['cardChevronBgHover']) ? (string) $attrs['cardChevronBgHover'] : '',
+            '#ffffff'
+        );
+        $attrs['cardChevronIconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardChevronIconColor']) ? (string) $attrs['cardChevronIconColor'] : '',
+            '#22acb6'
+        );
+        $attrs['cardChevronIconHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardChevronIconHoverColor']) ? (string) $attrs['cardChevronIconHoverColor'] : '',
+            '#ee6e2a'
+        );
+
+        $default_cards = [
+            [
+                'iconKey' => 'apply',
+                'titleHtml' => 'APPLY FOR A LOAN',
+                'bodyHtml' => '<p>Looking to buy a car, build a home, start a business, pay for education? Apply for a loan now!</p>',
+                'ctaMode' => 'link',
+                'ctaLabelHtml' => 'Get an Appointment',
+                'ctaUrl' => '',
+                'whatsappUrl' => '',
+                'phone' => '',
+                'email' => '',
+            ],
+            [
+                'iconKey' => 'call',
+                'titleHtml' => 'CALL US!',
+                'bodyHtml' => '',
+                'ctaMode' => 'link',
+                'ctaLabelHtml' => 'Contact us',
+                'ctaUrl' => '',
+                'whatsappUrl' => '',
+                'phone' => '+254 111 173 000',
+                'email' => 'info@portsacco.co.ke',
+            ],
+            [
+                'iconKey' => 'advisor',
+                'titleHtml' => 'TALK TO AN ADVISOR',
+                'bodyHtml' => '<p>Do you need financial planning? Talk to our advisors.</p>',
+                'ctaMode' => 'whatsapp',
+                'ctaLabelHtml' => '',
+                'ctaUrl' => '',
+                'whatsappUrl' => '',
+                'phone' => '',
+                'email' => '',
+            ],
+        ];
+
+        $cards_in = isset($attrs['cards']) && is_array($attrs['cards']) ? array_slice($attrs['cards'], 0, 3) : [];
+        $cards_out = [];
+        for ($i = 0; $i < 3; $i++) {
+            $row = $cards_in[$i] ?? null;
+            $d = $default_cards[$i];
+            if (! is_array($row)) {
+                $cards_out[] = $d;
+                continue;
+            }
+            $icon_key = isset($row['iconKey']) ? (string) $row['iconKey'] : '';
+            if (! in_array($icon_key, ['apply', 'call', 'advisor'], true)) {
+                $icon_key = $d['iconKey'];
+            }
+            $cta_mode = isset($row['ctaMode']) ? (string) $row['ctaMode'] : '';
+            if (! in_array($cta_mode, ['link', 'whatsapp', 'none'], true)) {
+                $cta_mode = $d['ctaMode'];
+            }
+            $wa_raw = isset($row['whatsappUrl']) ? trim((string) $row['whatsappUrl']) : '';
+            $wa_out = $wa_raw !== '' ? esc_url_raw($wa_raw) : '';
+
+            $cards_out[] = [
+                'iconKey' => $icon_key,
+                'titleHtml' => isset($row['titleHtml']) ? wp_kses_post((string) $row['titleHtml']) : $d['titleHtml'],
+                'bodyHtml' => isset($row['bodyHtml']) ? wp_kses_post((string) $row['bodyHtml']) : $d['bodyHtml'],
+                'ctaMode' => $cta_mode,
+                'ctaLabelHtml' => isset($row['ctaLabelHtml']) ? wp_kses_post((string) $row['ctaLabelHtml']) : $d['ctaLabelHtml'],
+                'ctaUrl' => isset($row['ctaUrl']) ? trim((string) $row['ctaUrl']) : $d['ctaUrl'],
+                'whatsappUrl' => $wa_out,
+                'phone' => isset($row['phone']) ? sanitize_text_field((string) $row['phone']) : $d['phone'],
+                'email' => isset($row['email']) ? sanitize_email((string) $row['email']) : $d['email'],
+            ];
+        }
+        $attrs['cards'] = $cards_out;
+
+        return $attrs;
+    }
+
     if ($name === 'custom/home-product-cards') {
         if (isset($attrs['anchor'])) {
             $anchor = sanitize_title((string) $attrs['anchor']);

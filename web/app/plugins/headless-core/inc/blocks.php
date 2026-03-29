@@ -51,6 +51,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-help-section-editor',
+        HEADLESS_CORE_URL . 'blocks/help-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-home-product-cards-editor',
         HEADLESS_CORE_URL . 'blocks/home-product-cards/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
@@ -445,6 +452,79 @@ add_action('init', static function (): void {
             'scrollButtonBg' => ['type' => 'string', 'default' => '#22ACB6'],
             'scrollButtonArrow' => ['type' => 'string', 'default' => '#ffffff'],
             'curvedRectColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/help-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-help-section-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'help'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'topBarBg' => ['type' => 'string', 'default' => '#FFFFFF'],
+            'waveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'scrollOuterColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollInnerColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'kickerHtml' => ['type' => 'string', 'default' => '<p>WE ARE HERE TO HELP YOU</p>'],
+            'kickerColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'talkButtonHtml' => ['type' => 'string', 'default' => 'TALK TO US!'],
+            'talkButtonBg' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'talkButtonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardIconColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'cardIconHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'cardBgHoverColor' => ['type' => 'string', 'default' => '#f0fdfa'],
+            'titleHeadingColor' => ['type' => 'string', 'default' => '#808080'],
+            'bodyTextColor' => ['type' => 'string', 'default' => '#000000'],
+            'metaTextColor' => ['type' => 'string', 'default' => '#808080'],
+            'ctaTextColor' => ['type' => 'string', 'default' => '#808080'],
+            'cardChevronBg' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardChevronBgHover' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardChevronIconColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'cardChevronIconHoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'cards' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'iconKey' => 'apply',
+                        'titleHtml' => 'APPLY FOR A LOAN',
+                        'bodyHtml' => '<p>Looking to buy a car, build a home, start a business, pay for education? Apply for a loan now!</p>',
+                        'ctaMode' => 'link',
+                        'ctaLabelHtml' => 'Get an Appointment',
+                        'ctaUrl' => '',
+                        'whatsappUrl' => '',
+                        'phone' => '',
+                        'email' => '',
+                    ],
+                    [
+                        'iconKey' => 'call',
+                        'titleHtml' => 'CALL US!',
+                        'bodyHtml' => '',
+                        'ctaMode' => 'link',
+                        'ctaLabelHtml' => 'Contact us',
+                        'ctaUrl' => '',
+                        'whatsappUrl' => '',
+                        'phone' => '+254 111 173 000',
+                        'email' => 'info@portsacco.co.ke',
+                    ],
+                    [
+                        'iconKey' => 'advisor',
+                        'titleHtml' => 'TALK TO AN ADVISOR',
+                        'bodyHtml' => '<p>Do you need financial planning? Talk to our advisors.</p>',
+                        'ctaMode' => 'whatsapp',
+                        'ctaLabelHtml' => '',
+                        'ctaUrl' => '',
+                        'whatsappUrl' => '',
+                        'phone' => '',
+                        'email' => '',
+                    ],
+                ],
+            ],
         ],
         'render_callback' => static function (): string {
             return '';
