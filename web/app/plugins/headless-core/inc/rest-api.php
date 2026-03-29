@@ -2118,6 +2118,71 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/home-banner-slider') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionId'] = isset($attrs['sectionId']) && trim((string) $attrs['sectionId']) !== ''
+            ? trim((string) $attrs['sectionId'])
+            : 'hero';
+
+        $attrs['heroBg'] = headless_core_sanitize_color_string(
+            isset($attrs['heroBg']) ? (string) $attrs['heroBg'] : '',
+            '#1BB5B5'
+        );
+        $attrs['dotBarBg'] = headless_core_sanitize_color_string(
+            isset($attrs['dotBarBg']) ? (string) $attrs['dotBarBg'] : '',
+            '#22acb6'
+        );
+        $attrs['arrowBg'] = headless_core_sanitize_color_string(
+            isset($attrs['arrowBg']) ? (string) $attrs['arrowBg'] : '',
+            'rgba(255,255,255,0.8)'
+        );
+        $attrs['arrowIconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['arrowIconColor']) ? (string) $attrs['arrowIconColor'] : '',
+            '#1BB5B5'
+        );
+        $attrs['transitionMs'] = isset($attrs['transitionMs'])
+            ? max(200, min(2000, (int) $attrs['transitionMs']))
+            : 700;
+
+        $slides = isset($attrs['slides']) && is_array($attrs['slides']) ? $attrs['slides'] : [];
+        $slides_out = [];
+        foreach ($slides as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $imageId = isset($row['imageId']) ? (int) $row['imageId'] : 0;
+            $imageUrl = isset($row['imageUrl']) ? trim((string) $row['imageUrl']) : '';
+            if ($imageId > 0) {
+                $url = wp_get_attachment_image_url($imageId, 'full');
+                if (is_string($url) && $url !== '') {
+                    $imageUrl = $url;
+                }
+            }
+            $alt = isset($row['alt']) ? sanitize_text_field((string) $row['alt']) : '';
+            $embedHtml = isset($row['embedHtml']) ? wp_kses_post((string) $row['embedHtml']) : '';
+            if ($imageUrl === '' && $imageId <= 0) {
+                continue;
+            }
+            $slides_out[] = [
+                'imageId' => $imageId,
+                'imageUrl' => $imageUrl,
+                'alt' => $alt,
+                'embedHtml' => $embedHtml,
+            ];
+        }
+        $attrs['slides'] = $slides_out;
+
+        return $attrs;
+    }
+
     if ($name === 'custom/loans-carousel') {
         if (isset($attrs['anchor'])) {
             $anchor = sanitize_title((string) $attrs['anchor']);

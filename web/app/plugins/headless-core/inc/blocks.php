@@ -16,6 +16,14 @@ add_action('init', static function (): void {
     );
 
     wp_register_script(
+        'headless-custom-home-banner-slider-editor',
+        HEADLESS_CORE_URL . 'blocks/home-banner-slider/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
         'headless-custom-mission-vision-editor',
         HEADLESS_CORE_URL . 'blocks/mission-vision/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
@@ -258,6 +266,41 @@ add_action('init', static function (): void {
             'subtitle' => [
                 'type' => 'string',
                 'default' => '',
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/home-banner-slider', [
+        'api_version' => 3,
+        'title' => __('Home banner slider', 'headless-core'),
+        'category' => 'widgets',
+        'icon' => 'slides',
+        'description' => __('Full-width image hero with slides, dots, and arrows.', 'headless-core'),
+        'keywords' => ['banner', 'hero', 'slider', 'carousel', 'home', 'image'],
+        'editor_script' => 'headless-custom-home-banner-slider-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'hero'],
+            'heroBg' => ['type' => 'string', 'default' => '#1BB5B5'],
+            'dotBarBg' => ['type' => 'string', 'default' => '#22acb6'],
+            'arrowBg' => ['type' => 'string', 'default' => 'rgba(255,255,255,0.8)'],
+            'arrowIconColor' => ['type' => 'string', 'default' => '#1BB5B5'],
+            'transitionMs' => ['type' => 'number', 'default' => 700],
+            'slides' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'imageId' => 0,
+                        'imageUrl' => '',
+                        'alt' => '',
+                        'embedHtml' => '',
+                    ],
+                ],
             ],
         ],
         'render_callback' => static function (): string {
