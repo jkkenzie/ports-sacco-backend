@@ -93,6 +93,27 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-newsletter-section-editor',
+        HEADLESS_CORE_URL . 'blocks/newsletter-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-partners-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/partners-carousel/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-events-section-editor',
+        HEADLESS_CORE_URL . 'blocks/events-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-savings-products-grid-editor',
         HEADLESS_CORE_URL . 'blocks/savings-products-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
@@ -667,6 +688,133 @@ add_action('init', static function (): void {
             'appStoreLinkUrl' => ['type' => 'string', 'default' => ''],
             'ussdImageId' => ['type' => 'number', 'default' => 0],
             'ussdImageUrl' => ['type' => 'string', 'default' => ''],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/newsletter-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-newsletter-section-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'newsletter'],
+            'gradientFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'gradientVia' => ['type' => 'string', 'default' => '#00AFBB'],
+            'gradientTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'topBarBg' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'curveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => '#22ACB6'],
+            'kickerText' => ['type' => 'string', 'default' => ''],
+            'badgeText' => ['type' => 'string', 'default' => ''],
+            'titleText' => ['type' => 'string', 'default' => ''],
+            'headlineColor' => ['type' => 'string', 'default' => '#000000'],
+            'kickerColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'imageId' => ['type' => 'number', 'default' => 0],
+            'imageUrl' => ['type' => 'string', 'default' => ''],
+            'imageAlt' => ['type' => 'string', 'default' => ''],
+            'emailPlaceholder' => ['type' => 'string', 'default' => 'Enter Your Email Address'],
+            'submitButtonText' => ['type' => 'string', 'default' => 'SUBSCRIBE'],
+            'submitButtonWidth' => ['type' => 'string', 'default' => '300px'],
+            'inputBgColor' => ['type' => 'string', 'default' => '#38f0ba'],
+            'inputTextColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'inputPlaceholderColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'submitBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'submitTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'submitArrowColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'mailchimpFormActionUrl' => ['type' => 'string', 'default' => ''],
+            'mailchimpEmailFieldName' => ['type' => 'string', 'default' => 'EMAIL'],
+            'mailchimpBotFieldName' => ['type' => 'string', 'default' => ''],
+            'mailchimpFormTarget' => ['type' => 'string', 'default' => '_self'],
+            'mailchimpHiddenFieldsJson' => ['type' => 'string', 'default' => '[]'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/partners-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-partners-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'partners'],
+            'useGradient' => ['type' => 'boolean', 'default' => true],
+            'gradientFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'gradientVia' => ['type' => 'string', 'default' => '#00AFBB'],
+            'gradientTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'topBarBg' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarUseGradient' => ['type' => 'boolean', 'default' => false],
+            'topBarGradientFrom' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarGradientVia' => ['type' => 'string', 'default' => '#E8E6E0'],
+            'topBarGradientTo' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarScrollIconOuterColor' => ['type' => 'string', 'default' => ''],
+            'curveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => '#22ACB6'],
+            'kickerText' => ['type' => 'string', 'default' => ''],
+            'badgeText' => ['type' => 'string', 'default' => ''],
+            'kickerColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'carouselArrowBg' => ['type' => 'string', 'default' => '#00AFBB'],
+            'carouselArrowIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'dotActiveColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'dotInactiveColor' => ['type' => 'string', 'default' => '#d1d5db'],
+            'maxItems' => ['type' => 'number', 'default' => 0],
+            'slidesToScroll' => ['type' => 'number', 'default' => 1],
+            'visibleMobile' => ['type' => 'number', 'default' => 1],
+            'visibleTablet' => ['type' => 'number', 'default' => 2],
+            'visibleDesktop' => ['type' => 'number', 'default' => 4],
+            'carouselLoop' => ['type' => 'boolean', 'default' => true],
+            'showPartnerCount' => ['type' => 'boolean', 'default' => true],
+            'partnerCountSuffix' => ['type' => 'string', 'default' => 'partners'],
+            'partners' => ['type' => 'array', 'default' => []],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/events-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-events-section-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => ''],
+            'gradientFrom' => ['type' => 'string', 'default' => ''],
+            'gradientVia' => ['type' => 'string', 'default' => ''],
+            'gradientTo' => ['type' => 'string', 'default' => ''],
+            'topCurveFillColor' => ['type' => 'string', 'default' => ''],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => ''],
+            'scrollButtonInner' => ['type' => 'string', 'default' => ''],
+            'patternImageId' => ['type' => 'number', 'default' => 0],
+            'patternImageUrl' => ['type' => 'string', 'default' => ''],
+            'patternOpacity' => ['type' => 'number', 'default' => 0],
+            'orchidTintColor' => ['type' => 'string', 'default' => ''],
+            'logoImageId' => ['type' => 'number', 'default' => 0],
+            'logoImageUrl' => ['type' => 'string', 'default' => ''],
+            'logoAlt' => ['type' => 'string', 'default' => ''],
+            'eventTitle' => ['type' => 'string', 'default' => ''],
+            'eventSubtitle' => ['type' => 'string', 'default' => ''],
+            'dayName' => ['type' => 'string', 'default' => ''],
+            'dayNumber' => ['type' => 'string', 'default' => ''],
+            'monthName' => ['type' => 'string', 'default' => ''],
+            'year' => ['type' => 'string', 'default' => ''],
+            'venueTitle' => ['type' => 'string', 'default' => ''],
+            'timeLine' => ['type' => 'string', 'default' => ''],
+            'bannerTextColor' => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => static function (): string {
             return '';
