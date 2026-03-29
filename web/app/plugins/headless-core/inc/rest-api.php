@@ -58,6 +58,14 @@ add_action('rest_api_init', static function (): void {
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_savings_products',
         'permission_callback' => '__return_true',
+        'args' => [
+            'per_page' => [
+                'required' => false,
+                'type' => 'integer',
+                'minimum' => 0,
+                'maximum' => 100,
+            ],
+        ],
     ]);
 
     register_rest_route('custom/v1', '/savings-products/(?P<slug>[a-z0-9\-_]+)', [
@@ -80,6 +88,12 @@ add_action('rest_api_init', static function (): void {
             'category' => [
                 'required' => false,
                 'type' => 'integer',
+            ],
+            'per_page' => [
+                'required' => false,
+                'type' => 'integer',
+                'minimum' => 0,
+                'maximum' => 100,
             ],
         ],
     ]);
@@ -104,6 +118,12 @@ add_action('rest_api_init', static function (): void {
             'category' => [
                 'required' => false,
                 'type' => 'integer',
+            ],
+            'per_page' => [
+                'required' => false,
+                'type' => 'integer',
+                'minimum' => 0,
+                'maximum' => 100,
             ],
         ],
     ]);
@@ -2126,10 +2146,13 @@ function headless_core_rest_menu(WP_REST_Request $request)
 /**
  * @return WP_REST_Response
  */
-function headless_core_rest_savings_products(): WP_REST_Response
+function headless_core_rest_savings_products(WP_REST_Request $request): WP_REST_Response
 {
+    $perPage = (int) $request->get_param('per_page');
+    $perPage = max(0, min(100, $perPage));
     $cacheVersion = (string) get_option('headless_savings_products_cache_ver', '1');
-    $cacheKey = 'list_' . $cacheVersion;
+    $limitKey = $perPage > 0 ? (string) $perPage : 'all';
+    $cacheKey = 'list_' . $cacheVersion . '_pp_' . $limitKey;
     $cached = headless_core_cache_get('savings_products', $cacheKey);
     if (is_array($cached)) {
         return new WP_REST_Response($cached, 200);
@@ -2142,7 +2165,7 @@ function headless_core_rest_savings_products(): WP_REST_Response
             'menu_order' => 'ASC',
             'date' => 'ASC',
         ],
-        'numberposts' => -1,
+        'numberposts' => $perPage > 0 ? $perPage : -1,
     ]);
 
     $payload = [];
@@ -2247,8 +2270,11 @@ function headless_core_rest_loan_products(WP_REST_Request $request): WP_REST_Res
 {
     $categoryId = (int) $request->get_param('category');
     $categoryId = max(0, $categoryId);
+    $perPage = (int) $request->get_param('per_page');
+    $perPage = max(0, min(100, $perPage));
     $cacheVersion = (string) get_option('headless_loan_products_cache_ver', '1');
-    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId;
+    $limitKey = $perPage > 0 ? (string) $perPage : 'all';
+    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId . '_pp_' . $limitKey;
     $cached = headless_core_cache_get('loan_products', $cacheKey);
     if (is_array($cached)) {
         return new WP_REST_Response($cached, 200);
@@ -2261,7 +2287,7 @@ function headless_core_rest_loan_products(WP_REST_Request $request): WP_REST_Res
             'menu_order' => 'ASC',
             'date' => 'DESC',
         ],
-        'numberposts' => -1,
+        'numberposts' => $perPage > 0 ? $perPage : -1,
     ];
     if ($categoryId > 0) {
         $queryArgs['category'] = $categoryId;
@@ -2370,8 +2396,11 @@ function headless_core_rest_services(WP_REST_Request $request): WP_REST_Response
 {
     $categoryId = (int) $request->get_param('category');
     $categoryId = max(0, $categoryId);
+    $perPage = (int) $request->get_param('per_page');
+    $perPage = max(0, min(100, $perPage));
     $cacheVersion = (string) get_option('headless_services_cache_ver', '1');
-    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId;
+    $limitKey = $perPage > 0 ? (string) $perPage : 'all';
+    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId . '_pp_' . $limitKey;
     $cached = headless_core_cache_get('services', $cacheKey);
     if (is_array($cached)) {
         return new WP_REST_Response($cached, 200);
@@ -2384,7 +2413,7 @@ function headless_core_rest_services(WP_REST_Request $request): WP_REST_Response
             'menu_order' => 'ASC',
             'date' => 'DESC',
         ],
-        'numberposts' => -1,
+        'numberposts' => $perPage > 0 ? $perPage : -1,
     ];
     if ($categoryId > 0) {
         $queryArgs['category'] = $categoryId;
