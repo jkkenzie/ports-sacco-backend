@@ -38,6 +38,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-home-stats-editor',
+        HEADLESS_CORE_URL . 'blocks/home-stats/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-about-us-awards-editor',
         HEADLESS_CORE_URL . 'blocks/about-us-awards/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
@@ -192,6 +199,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-events-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/events-carousel/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-savings-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/savings-carousel/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
@@ -208,6 +222,13 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-services-grid-editor',
         HEADLESS_CORE_URL . 'blocks/services-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-events-grid-editor',
+        HEADLESS_CORE_URL . 'blocks/events-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
         HEADLESS_CORE_VERSION,
         true
@@ -393,6 +414,62 @@ add_action('init', static function (): void {
             'iconWidth' => ['type' => 'number', 'default' => 107],
             'iconHeight' => ['type' => 'number', 'default' => 58],
             'iconColor' => ['type' => 'string', 'default' => '#40C9BF'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/home-stats', [
+        'api_version' => 3,
+        'title' => __('Home stats', 'headless-core'),
+        'category' => 'widgets',
+        'icon' => 'chart-area',
+        'description' => __('Animated stat counters with optional icons (runs when visible).', 'headless-core'),
+        'keywords' => ['stats', 'counter', 'numbers', 'home', 'metrics'],
+        'editor_script' => 'headless-custom-home-stats-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'stats'],
+            'animationDurationSec' => ['type' => 'number', 'default' => 2.5],
+            'sectionBg' => ['type' => 'string', 'default' => '#22acb6'],
+            'numberColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'titleColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'subtitleColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'iconColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'iconWidth' => ['type' => 'number', 'default' => 107],
+            'iconHeight' => ['type' => 'number', 'default' => 58],
+            'items' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'valueStart' => 0,
+                        'valueEnd' => 15,
+                        'showPlus' => false,
+                        'title' => 'AWARDS IN 2025',
+                        'subtitle' => 'We are leading by example',
+                        'iconId' => 0,
+                    ],
+                    [
+                        'valueStart' => 0,
+                        'valueEnd' => 26,
+                        'showPlus' => false,
+                        'title' => 'PRODUCTS OFFERED',
+                        'subtitle' => 'Products that fit your needs',
+                        'iconId' => 0,
+                    ],
+                    [
+                        'valueStart' => 0,
+                        'valueEnd' => 10000,
+                        'showPlus' => true,
+                        'title' => 'REGISTERED MEMBERS',
+                        'subtitle' => 'A growing membership base.',
+                        'iconId' => 0,
+                    ],
+                ],
+            ],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -1176,6 +1253,17 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/events-grid', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-events-grid-editor',
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/loans-carousel', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-loans-carousel-editor',
@@ -1205,6 +1293,52 @@ add_action('init', static function (): void {
             'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
             'arrowButtonBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
             'arrowButtonIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/events-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-events-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+            'sectionHeader' => ['type' => 'string', 'default' => 'CELEBRATE, EXPLORE AND SHARE OUR INCREDIBLE JOURNEYS OF PROSPERITY.'],
+            'buttonText' => ['type' => 'string', 'default' => 'LATEST EVENTS'],
+            'linkText' => ['type' => 'string', 'default' => 'ALL EVENTS'],
+            'linkUrl' => ['type' => 'string', 'default' => '/events'],
+            'readMoreLabel' => ['type' => 'string', 'default' => 'READ MORE'],
+            'maxItems' => ['type' => 'number', 'default' => 9],
+            'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'headerTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkTextHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkBadgeBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkBadgeHoverBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowHoverBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkArrowColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'arrowButtonBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'arrowButtonIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'metaTextColor' => ['type' => 'string', 'default' => '#808080'],
+            'cardTitleColor' => ['type' => 'string', 'default' => '#808080'],
+            'cardTitleHoverColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'readMoreTextColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'readMoreHoverColor' => ['type' => 'string', 'default' => '#22aab7'],
+            'readMoreArrowBg' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'readMoreArrowHoverBg' => ['type' => 'string', 'default' => '#22aab7'],
+            'carouselNavArrowColor' => ['type' => 'string', 'default' => '#82cdcb'],
+            'dotActiveColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'dotInactiveColor' => ['type' => 'string', 'default' => 'rgba(255,255,255,0.6)'],
         ],
         'render_callback' => static function (): string {
             return '';

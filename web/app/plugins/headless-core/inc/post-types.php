@@ -80,6 +80,31 @@ add_action('init', static function (): void {
         'taxonomies' => ['category'],
         'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'revisions'],
     ]);
+
+    register_post_type('event', [
+        'labels' => [
+            'name' => __('Events', 'headless-core'),
+            'singular_name' => __('Event', 'headless-core'),
+            'add_new_item' => __('Add New Event', 'headless-core'),
+            'edit_item' => __('Edit Event', 'headless-core'),
+            'new_item' => __('New Event', 'headless-core'),
+            'view_item' => __('View Event', 'headless-core'),
+            'search_items' => __('Search Events', 'headless-core'),
+            'not_found' => __('No events found.', 'headless-core'),
+            'not_found_in_trash' => __('No events found in Trash.', 'headless-core'),
+            'menu_name' => __('Events', 'headless-core'),
+        ],
+        'public' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'show_in_rest' => true,
+        'rest_base' => 'events',
+        'menu_icon' => 'dashicons-calendar-alt',
+        'has_archive' => false,
+        'rewrite' => ['slug' => 'events'],
+        'taxonomies' => ['category'],
+        'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'revisions'],
+    ]);
 });
 
 add_filter('use_block_editor_for_post_type', static function (bool $useBlockEditor, string $postType): bool {
@@ -92,6 +117,10 @@ add_filter('use_block_editor_for_post_type', static function (bool $useBlockEdit
     }
 
     if ($postType === 'service') {
+        return true;
+    }
+
+    if ($postType === 'event') {
         return true;
     }
 

@@ -40,6 +40,8 @@ function headless_core_run_migration(): void
         headless_core_ensure_page(__('Asset Finance', 'headless-core'), 'asset-finance', $loansId);
     }
 
+    headless_core_ensure_page(__('Events', 'headless-core'), 'events', 0);
+
     headless_core_ensure_primary_menu();
 }
 
@@ -184,6 +186,7 @@ function headless_core_seed_menu_items(int $menuId): void
         [
             [__('Savings Products', 'headless-core'), '/savings-products'],
             [__('Loan Products', 'headless-core'), '/loan-products'],
+            [__('Events', 'headless-core'), '/events'],
         ] as [$label, $path]
     ) {
         wp_update_nav_menu_item($menuId, 0, [
