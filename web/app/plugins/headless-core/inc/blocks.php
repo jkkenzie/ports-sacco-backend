@@ -80,6 +80,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-product-services-editor',
+        HEADLESS_CORE_URL . 'blocks/product-services/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-savings-archive-hero-editor',
         HEADLESS_CORE_URL . 'blocks/savings-archive-hero/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
@@ -720,6 +727,58 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/product-services', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-product-services-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'services'],
+            'gradientAngle' => ['type' => 'number', 'default' => 90],
+            'gradientFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'gradientVia' => ['type' => 'string', 'default' => '#00AFBB'],
+            'gradientTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'topBarBg' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topCurveRectFill' => ['type' => 'string', 'default' => '#00AFBB'],
+            'topCurvePathFill' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'kickerText' => ['type' => 'string', 'default' => 'YOUR JOURNEY OF PROSPERITY START HERE!'],
+            'kickerColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'centerPillText' => ['type' => 'string', 'default' => 'HOW CAN WE UPLIFT YOU TODAY?'],
+            'centerPillBg' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'centerPillHoverBg' => ['type' => 'string', 'default' => '#d96525'],
+            'centerPillTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollArrowOuterFill' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollArrowInnerFill' => ['type' => 'string', 'default' => '#22ACB6'],
+            'boxBg' => ['type' => 'string', 'default' => '#ffffff'],
+            'boxTitle' => ['type' => 'string', 'default' => 'PRODUCTS & SERVICES THAT UPLIFT YOUR FINANCIAL SUCCESS!'],
+            'boxSubtitle' => ['type' => 'string', 'default' => 'SELECT THE PRODUCT OR SERVICE YOU NEED'],
+            'boxTitleColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'boxSubtitleColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'dropdownPlaceholder' => ['type' => 'string', 'default' => 'How can we uplift you today?'],
+            'dropdownItems' => ['type' => 'array', 'default' => []],
+            'dropdownBg' => ['type' => 'string', 'default' => '#38f0ba'],
+            'dropdownBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'dropdownTextColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'dropdownChevronColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'goButtonBg' => ['type' => 'string', 'default' => '#38f0ba'],
+            'goButtonBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'goButtonIconColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'goButtonHoverOpacity' => ['type' => 'number', 'default' => 0.85],
+            'dividerColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'productButtons' => ['type' => 'array', 'default' => []],
+            'pillBg' => ['type' => 'string', 'default' => '#00ada0'],
+            'pillBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'pillTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'pillHoverBg' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'pillHoverBorderColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'pillHoverTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/savings-archive-hero', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-savings-archive-hero-editor',
@@ -1280,6 +1339,10 @@ add_action('init', static function (): void {
             'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
             'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
             'topBarColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'topBarGradientAngle' => ['type' => 'number', 'default' => 90],
+            'topBarGradientFrom' => ['type' => 'string', 'default' => '#ffffff'],
+            'topBarGradientVia' => ['type' => 'string', 'default' => '#ffffff'],
+            'topBarGradientTo' => ['type' => 'string', 'default' => '#ffffff'],
             'headerTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
             'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
             'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],

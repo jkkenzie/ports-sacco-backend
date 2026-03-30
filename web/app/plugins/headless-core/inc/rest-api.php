@@ -2231,6 +2231,187 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/product-services') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionId'] = isset($attrs['sectionId']) && trim((string) $attrs['sectionId']) !== ''
+            ? trim((string) $attrs['sectionId'])
+            : 'services';
+        $attrs['gradientAngle'] = isset($attrs['gradientAngle'])
+            ? max(0, min(360, (int) $attrs['gradientAngle']))
+            : 90;
+
+        $attrs['gradientFrom'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientFrom']) ? (string) $attrs['gradientFrom'] : '',
+            '#00B2E0'
+        );
+        $attrs['gradientVia'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientVia']) ? (string) $attrs['gradientVia'] : '',
+            '#00AFBB'
+        );
+        $attrs['gradientTo'] = headless_core_sanitize_color_string(
+            isset($attrs['gradientTo']) ? (string) $attrs['gradientTo'] : '',
+            '#00AB81'
+        );
+        $attrs['topBarBg'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarBg']) ? (string) $attrs['topBarBg'] : '',
+            '#F5F4EE'
+        );
+        $attrs['topCurveRectFill'] = headless_core_sanitize_color_string(
+            isset($attrs['topCurveRectFill']) ? (string) $attrs['topCurveRectFill'] : '',
+            '#00AFBB'
+        );
+        $attrs['topCurvePathFill'] = headless_core_sanitize_color_string(
+            isset($attrs['topCurvePathFill']) ? (string) $attrs['topCurvePathFill'] : '',
+            '#F5F4EE'
+        );
+        $attrs['kickerText'] = isset($attrs['kickerText']) ? sanitize_text_field((string) $attrs['kickerText']) : 'YOUR JOURNEY OF PROSPERITY START HERE!';
+        $attrs['kickerColor'] = headless_core_sanitize_color_string(
+            isset($attrs['kickerColor']) ? (string) $attrs['kickerColor'] : '',
+            '#ffffff'
+        );
+        $attrs['centerPillText'] = isset($attrs['centerPillText']) ? sanitize_text_field((string) $attrs['centerPillText']) : 'HOW CAN WE UPLIFT YOU TODAY?';
+        $attrs['centerPillBg'] = headless_core_sanitize_color_string(
+            isset($attrs['centerPillBg']) ? (string) $attrs['centerPillBg'] : '',
+            '#EE6E2A'
+        );
+        $attrs['centerPillHoverBg'] = headless_core_sanitize_color_string(
+            isset($attrs['centerPillHoverBg']) ? (string) $attrs['centerPillHoverBg'] : '',
+            '#d96525'
+        );
+        $attrs['centerPillTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['centerPillTextColor']) ? (string) $attrs['centerPillTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['scrollArrowOuterFill'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollArrowOuterFill']) ? (string) $attrs['scrollArrowOuterFill'] : '',
+            '#ffffff'
+        );
+        $attrs['scrollArrowInnerFill'] = headless_core_sanitize_color_string(
+            isset($attrs['scrollArrowInnerFill']) ? (string) $attrs['scrollArrowInnerFill'] : '',
+            '#22ACB6'
+        );
+        $attrs['boxBg'] = headless_core_sanitize_color_string(
+            isset($attrs['boxBg']) ? (string) $attrs['boxBg'] : '',
+            '#ffffff'
+        );
+        $attrs['boxTitle'] = isset($attrs['boxTitle']) ? sanitize_text_field((string) $attrs['boxTitle']) : 'PRODUCTS & SERVICES THAT UPLIFT YOUR FINANCIAL SUCCESS!';
+        $attrs['boxSubtitle'] = isset($attrs['boxSubtitle']) ? sanitize_text_field((string) $attrs['boxSubtitle']) : 'SELECT THE PRODUCT OR SERVICE YOU NEED';
+        $attrs['boxTitleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['boxTitleColor']) ? (string) $attrs['boxTitleColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['boxSubtitleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['boxSubtitleColor']) ? (string) $attrs['boxSubtitleColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['dropdownPlaceholder'] = isset($attrs['dropdownPlaceholder']) ? sanitize_text_field((string) $attrs['dropdownPlaceholder']) : 'How can we uplift you today?';
+        $attrs['dropdownBg'] = headless_core_sanitize_color_string(
+            isset($attrs['dropdownBg']) ? (string) $attrs['dropdownBg'] : '',
+            '#38f0ba'
+        );
+        $attrs['dropdownBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['dropdownBorderColor']) ? (string) $attrs['dropdownBorderColor'] : '',
+            '#e8e8e8'
+        );
+        $attrs['dropdownTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['dropdownTextColor']) ? (string) $attrs['dropdownTextColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['dropdownChevronColor'] = headless_core_sanitize_color_string(
+            isset($attrs['dropdownChevronColor']) ? (string) $attrs['dropdownChevronColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['goButtonBg'] = headless_core_sanitize_color_string(
+            isset($attrs['goButtonBg']) ? (string) $attrs['goButtonBg'] : '',
+            '#38f0ba'
+        );
+        $attrs['goButtonBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['goButtonBorderColor']) ? (string) $attrs['goButtonBorderColor'] : '',
+            '#e8e8e8'
+        );
+        $attrs['goButtonIconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['goButtonIconColor']) ? (string) $attrs['goButtonIconColor'] : '',
+            '#3b4e6b'
+        );
+        $attrs['goButtonHoverOpacity'] = isset($attrs['goButtonHoverOpacity'])
+            ? max(0.2, min(1.0, (float) $attrs['goButtonHoverOpacity']))
+            : 0.85;
+        $attrs['dividerColor'] = headless_core_sanitize_color_string(
+            isset($attrs['dividerColor']) ? (string) $attrs['dividerColor'] : '',
+            '#e8e8e8'
+        );
+        $attrs['pillBg'] = headless_core_sanitize_color_string(
+            isset($attrs['pillBg']) ? (string) $attrs['pillBg'] : '',
+            '#00ada0'
+        );
+        $attrs['pillBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['pillBorderColor']) ? (string) $attrs['pillBorderColor'] : '',
+            '#e8e8e8'
+        );
+        $attrs['pillTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['pillTextColor']) ? (string) $attrs['pillTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['pillHoverBg'] = headless_core_sanitize_color_string(
+            isset($attrs['pillHoverBg']) ? (string) $attrs['pillHoverBg'] : '',
+            '#ee6e2a'
+        );
+        $attrs['pillHoverBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['pillHoverBorderColor']) ? (string) $attrs['pillHoverBorderColor'] : '',
+            '#ee6e2a'
+        );
+        $attrs['pillHoverTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['pillHoverTextColor']) ? (string) $attrs['pillHoverTextColor'] : '',
+            '#ffffff'
+        );
+
+        $dropdownItems = isset($attrs['dropdownItems']) && is_array($attrs['dropdownItems']) ? $attrs['dropdownItems'] : [];
+        $ddOut = [];
+        foreach ($dropdownItems as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $label = isset($row['label']) ? sanitize_text_field((string) $row['label']) : '';
+            $url = isset($row['url']) ? trim((string) $row['url']) : '';
+            if ($label === '') {
+                continue;
+            }
+            $ddOut[] = [
+                'label' => $label,
+                'url' => $url !== '' ? $url : '#',
+            ];
+        }
+        $attrs['dropdownItems'] = $ddOut;
+
+        $productButtons = isset($attrs['productButtons']) && is_array($attrs['productButtons']) ? $attrs['productButtons'] : [];
+        $pbOut = [];
+        foreach ($productButtons as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $label = isset($row['label']) ? sanitize_text_field((string) $row['label']) : '';
+            $url = isset($row['url']) ? trim((string) $row['url']) : '';
+            if ($label === '') {
+                continue;
+            }
+            $pbOut[] = [
+                'label' => $label,
+                'url' => $url !== '' ? $url : '#',
+            ];
+        }
+        $attrs['productButtons'] = $pbOut;
+
+        return $attrs;
+    }
+
     if ($name === 'custom/home-banner-slider') {
         if (isset($attrs['anchor'])) {
             $anchor = sanitize_title((string) $attrs['anchor']);
@@ -2329,6 +2510,21 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         );
         $attrs['topBarColor'] = headless_core_sanitize_color_string(
             isset($attrs['topBarColor']) ? (string) $attrs['topBarColor'] : '',
+            '#ffffff'
+        );
+        $attrs['topBarGradientAngle'] = isset($attrs['topBarGradientAngle'])
+            ? max(0, min(360, (int) $attrs['topBarGradientAngle']))
+            : 90;
+        $attrs['topBarGradientFrom'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientFrom']) ? (string) $attrs['topBarGradientFrom'] : '',
+            '#ffffff'
+        );
+        $attrs['topBarGradientVia'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientVia']) ? (string) $attrs['topBarGradientVia'] : '',
+            '#ffffff'
+        );
+        $attrs['topBarGradientTo'] = headless_core_sanitize_color_string(
+            isset($attrs['topBarGradientTo']) ? (string) $attrs['topBarGradientTo'] : '',
             '#ffffff'
         );
         $attrs['headerTextColor'] = headless_core_sanitize_color_string(

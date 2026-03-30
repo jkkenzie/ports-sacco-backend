@@ -29,6 +29,10 @@
       autoplayDelayMs: { type: 'number', default: 3500 },
       sectionBgColor: { type: 'string', default: '#F5F4EE' },
       topBarColor: { type: 'string', default: '#ffffff' },
+      topBarGradientAngle: { type: 'number', default: 90 },
+      topBarGradientFrom: { type: 'string', default: '#ffffff' },
+      topBarGradientVia: { type: 'string', default: '#ffffff' },
+      topBarGradientTo: { type: 'string', default: '#ffffff' },
       headerTextColor: { type: 'string', default: '#22ACB6' },
       buttonBgColor: { type: 'string', default: '#EE6E2A' },
       buttonTextColor: { type: 'string', default: '#ffffff' },
@@ -57,10 +61,16 @@
           return { label: cat.name, value: cat.id };
         })
       );
-      var colors = ['#22ACB6', '#EE6E2A', '#ffffff', '#000000', '#F5F4EE', '#3b4e6b', '#e8e8e8', '#82cdcb', '#00AFBB'];
+      var colors = ['#22ACB6', '#EE6E2A', '#ffffff', '#000000', '#F5F4EE', '#3b4e6b', '#e8e8e8', '#82cdcb', '#00AFBB', '#00B2E0', '#00AB81'];
       function palette() {
         return colors.map(function (hex) { return { color: hex, name: hex }; });
       }
+
+      var topBarGrad = 'linear-gradient(' + (Number(props.attributes.topBarGradientAngle) || 90) + 'deg, ' +
+        (props.attributes.topBarGradientFrom || '#ffffff') + ', ' +
+        (props.attributes.topBarGradientVia || '#ffffff') + ', ' +
+        (props.attributes.topBarGradientTo || '#ffffff') + ')';
+      var gradId = 'loans-carousel-topbar-grad-editor-' + String(props.clientId || '0').replace(/[^a-z0-9-]/gi, '');
 
       return el(
         'div',
@@ -109,7 +119,31 @@
             { title: __('Colors', 'headless-core'), initialOpen: false },
             el(BaseControl, { label: __('Section background', 'headless-core') }),
             el(ColorPalette, { value: props.attributes.sectionBgColor, colors: palette(), onChange: function (c) { props.setAttributes({ sectionBgColor: c || '#F5F4EE' }); } }),
-            el(BaseControl, { label: __('Top bar background', 'headless-core') }),
+            el('hr', { style: { margin: '12px 0' } }),
+            el('p', { style: { fontWeight: 700, marginBottom: '6px' } }, __('Top bar gradient', 'headless-core')),
+            el(RangeControl, {
+              label: __('Top bar gradient angle (deg)', 'headless-core'),
+              value: Number(props.attributes.topBarGradientAngle || 90),
+              onChange: function (v) { props.setAttributes({ topBarGradientAngle: Number(v) || 90 }); },
+              min: 0,
+              max: 360,
+            }),
+            el(BaseControl, { label: __('Top bar gradient start', 'headless-core') }),
+            el(ColorPalette, {
+              value: props.attributes.topBarGradientFrom || '#ffffff',
+              colors: palette(),
+              disableCustomColors: false,
+              onChange: function (c) {
+                props.setAttributes({ topBarGradientFrom: c && String(c).trim() !== '' ? c : '#ffffff' });
+              },
+            }),
+            el(BaseControl, { label: __('Top bar gradient middle', 'headless-core') }),
+            el(ColorPalette, { value: props.attributes.topBarGradientVia || '#ffffff', colors: palette(), onChange: function (c) { props.setAttributes({ topBarGradientVia: c && String(c).trim() !== '' ? c : '#ffffff' }); } }),
+            el(BaseControl, { label: __('Top bar gradient end', 'headless-core') }),
+            el(ColorPalette, { value: props.attributes.topBarGradientTo || '#ffffff', colors: palette(), onChange: function (c) { props.setAttributes({ topBarGradientTo: c && String(c).trim() !== '' ? c : '#ffffff' }); } }),
+
+            el('hr', { style: { margin: '12px 0' } }),
+            el(BaseControl, { label: __('Top bar fallback solid color', 'headless-core') }),
             el(ColorPalette, {
               value: props.attributes.topBarColor || '#ffffff',
               colors: palette(),
@@ -117,16 +151,6 @@
               onChange: function (c) {
                 props.setAttributes({ topBarColor: c && String(c).trim() !== '' ? c : '#ffffff' });
               },
-            }),
-            el(TextControl, {
-              label: __('Top bar color (hex)', 'headless-core'),
-              value: props.attributes.topBarColor || '',
-              placeholder: '#ffffff',
-              onChange: function (v) {
-                var t = String(v || '').trim();
-                props.setAttributes({ topBarColor: t !== '' ? t : '#ffffff' });
-              },
-              help: __('Use the palette above or paste a hex value; preview updates below.', 'headless-core'),
             }),
             el(BaseControl, { label: __('Header text', 'headless-core') }),
             el(ColorPalette, { value: props.attributes.headerTextColor, colors: palette(), onChange: function (c) { props.setAttributes({ headerTextColor: c || '#22ACB6' }); } }),
@@ -165,7 +189,7 @@
               marginTop: '-8px',
               position: 'relative',
               overflow: 'hidden',
-              backgroundColor: props.attributes.topBarColor || '#ffffff',
+              background: topBarGrad,
               minHeight: '37px',
             },
           },
@@ -180,6 +204,13 @@
             el(
               'defs',
               null,
+              el(
+                'linearGradient',
+                { id: gradId, gradientUnits: 'objectBoundingBox', x1: '0', y1: '0', x2: '1', y2: '0' },
+                el('stop', { offset: '0%', stopColor: props.attributes.topBarGradientFrom || '#ffffff' }),
+                el('stop', { offset: '50%', stopColor: props.attributes.topBarGradientVia || '#ffffff' }),
+                el('stop', { offset: '100%', stopColor: props.attributes.topBarGradientTo || '#ffffff' })
+              ),
               el('clipPath', { id: 'clip-loans-carousel-editor-' + String(props.clientId || '0').replace(/[^a-z0-9-]/gi, '') },
                 el('rect', { x: '484.39', y: '0', width: '120', height: '38.01' })
               )
@@ -190,7 +221,7 @@
               el('rect', { x: '422.93', width: '240.31', height: '38.01', style: { fill: props.attributes.sectionBgColor || '#F5F4EE' } }),
               el('path', {
                 d: 'M1088.78,38.01h-485.18c-9.52-.55-19.25-5.16-24.51-12.52-1.19-1.67-1.76-3.43-2.78-5.14-13.44-22.42-47.98-22.41-61.41,0-1.02,1.71-1.59,3.47-2.78,5.14-5.25,7.34-15.01,11.97-24.51,12.52H0V0h1088.78v38.01Z',
-                style: { fill: props.attributes.topBarColor || '#ffffff' },
+                style: { fill: 'url(#' + gradId + ')' },
               })
             )
           )
