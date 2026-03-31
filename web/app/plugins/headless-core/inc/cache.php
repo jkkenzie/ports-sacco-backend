@@ -186,6 +186,15 @@ function headless_core_bump_events_cache_version(): void
     update_option('headless_events_cache_ver', $v + 1, false);
 }
 
+/**
+ * @return void
+ */
+function headless_core_bump_team_members_cache_version(): void
+{
+    $v = (int) get_option('headless_team_members_cache_ver', 1);
+    update_option('headless_team_members_cache_ver', $v + 1, false);
+}
+
 add_action('save_post_page', static function (int $postId, WP_Post $post, bool $update): void {
     if (wp_is_post_revision($postId) || $post->post_status === 'auto-draft') {
         return;
@@ -227,4 +236,11 @@ add_action('save_post_event', static function (int $postId, WP_Post $post): void
         return;
     }
     headless_core_bump_events_cache_version();
+}, 10, 2);
+
+add_action('save_post_team_member', static function (int $postId, WP_Post $post): void {
+    if (wp_is_post_revision($postId) || $post->post_status === 'auto-draft') {
+        return;
+    }
+    headless_core_bump_team_members_cache_version();
 }, 10, 2);

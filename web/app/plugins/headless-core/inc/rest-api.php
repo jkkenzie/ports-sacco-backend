@@ -110,6 +110,24 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
+    register_rest_route('custom/v1', '/team-members', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_team_members',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'category' => [
+                'required' => false,
+                'type' => 'integer',
+            ],
+            'per_page' => [
+                'required' => false,
+                'type' => 'integer',
+                'minimum' => 0,
+                'maximum' => 100,
+            ],
+        ],
+    ]);
+
     register_rest_route('custom/v1', '/services', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_services',
@@ -934,6 +952,10 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             ? (string) $attrs['title']
             : 'Savings Products';
         $attrs['intro'] = isset($attrs['intro']) ? (string) $attrs['intro'] : '';
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#22ABB5'
+        );
         $attrs['titleColor'] = headless_core_sanitize_color_string(
             isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
             '#22ABB5'
@@ -2583,6 +2605,53 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/team-display') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['sectionId'] = isset($attrs['sectionId']) && trim((string) $attrs['sectionId']) !== ''
+            ? trim((string) $attrs['sectionId'])
+            : 'team';
+        $attrs['categoryId'] = isset($attrs['categoryId']) ? max(0, (int) $attrs['categoryId']) : 0;
+        $attrs['heading'] = isset($attrs['heading']) && trim((string) $attrs['heading']) !== ''
+            ? sanitize_text_field((string) $attrs['heading'])
+            : 'The Board of Directors';
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['headingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headingColor']) ? (string) $attrs['headingColor'] : '',
+            '#40C9BF'
+        );
+        $attrs['nameColor'] = headless_core_sanitize_color_string(
+            isset($attrs['nameColor']) ? (string) $attrs['nameColor'] : '',
+            '#212529'
+        );
+        $attrs['positionColor'] = headless_core_sanitize_color_string(
+            isset($attrs['positionColor']) ? (string) $attrs['positionColor'] : '',
+            '#EE6E2A'
+        );
+        $attrs['heroImageId'] = isset($attrs['heroImageId']) ? (int) $attrs['heroImageId'] : 0;
+        $attrs['heroImageUrl'] = isset($attrs['heroImageUrl']) ? trim((string) $attrs['heroImageUrl']) : '';
+        if ($attrs['heroImageId'] > 0) {
+            $url = wp_get_attachment_image_url((int) $attrs['heroImageId'], 'full');
+            if (is_string($url) && $url !== '') {
+                $attrs['heroImageUrl'] = $url;
+            }
+        }
+        $attrs['heroHeight'] = isset($attrs['heroHeight']) ? max(120, (int) $attrs['heroHeight']) : 260;
+        $attrs['maxItems'] = isset($attrs['maxItems']) ? max(0, (int) $attrs['maxItems']) : 0;
+
+        return $attrs;
+    }
+
     if ($name === 'custom/events-carousel') {
         if (isset($attrs['anchor'])) {
             $anchor = sanitize_title((string) $attrs['anchor']);
@@ -3914,6 +3983,87 @@ function headless_core_rest_loan_product(WP_REST_Request $request)
     ];
 
     headless_core_cache_set('loan_products', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @return WP_REST_Response
+ */
+function headless_core_rest_team_members(WP_REST_Request $request): WP_REST_Response
+{
+    $categoryId = (int) $request->get_param('category');
+    $categoryId = max(0, $categoryId);
+    $perPage = (int) $request->get_param('per_page');
+    $perPage = max(0, min(100, $perPage));
+    $cacheVersion = (string) get_option('headless_team_members_cache_ver', '1');
+    $limitKey = $perPage > 0 ? (string) $perPage : 'all';
+    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId . '_pp_' . $limitKey;
+    $cached = headless_core_cache_get('team_members', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $queryArgs = [
+        'post_type' => 'team_member',
+        'post_status' => 'publish',
+        'orderby' => [
+            'menu_order' => 'ASC',
+            'date' => 'DESC',
+        ],
+        'numberposts' => $perPage > 0 ? $perPage : -1,
+    ];
+    if ($categoryId > 0) {
+        $queryArgs['category'] = $categoryId;
+    }
+    $posts = get_posts($queryArgs);
+
+    $payload = [];
+    foreach ($posts as $post) {
+        if (! $post instanceof WP_Post) {
+            continue;
+        }
+
+        $imageUrl = '';
+        $thumbId = (int) get_post_thumbnail_id($post);
+        if ($thumbId > 0) {
+            $url = wp_get_attachment_image_url($thumbId, 'large');
+            if (is_string($url) && $url !== '') {
+                $imageUrl = $url;
+            }
+        }
+
+        $excerpt = trim((string) $post->post_excerpt);
+        if ($excerpt === '') {
+            $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 45);
+        }
+
+        $position = sanitize_text_field((string) get_post_meta((int) $post->ID, 'position', true));
+        $standAlone = (bool) get_post_meta((int) $post->ID, 'standAlone', true);
+
+        $payload[] = [
+            'id' => (int) $post->ID,
+            'slug' => (string) $post->post_name,
+            'name' => get_the_title($post),
+            'position' => $position,
+            'standAlone' => $standAlone,
+            'excerpt' => $excerpt,
+            'bio' => wp_strip_all_tags((string) $post->post_content),
+            'imageUrl' => $imageUrl,
+        ];
+    }
+
+    // Ensure standalone members appear first (layout parity: first centered card).
+    usort($payload, static function (array $a, array $b): int {
+        $sa = ! empty($a['standAlone']);
+        $sb = ! empty($b['standAlone']);
+        if ($sa === $sb) {
+            return 0;
+        }
+        return $sa ? -1 : 1;
+    });
+
+    headless_core_cache_set('team_members', $cacheKey, $payload);
 
     return new WP_REST_Response($payload, 200);
 }

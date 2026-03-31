@@ -83,6 +83,7 @@
       intro: { type: 'string', default: '' },
       bannerImageId: { type: 'number', default: 0 },
       bannerImageUrl: { type: 'string', default: '' },
+      backgroundColor: { type: 'string', default: '#22ABB5' },
       titleColor: { type: 'string', default: '#22ABB5' },
       navBackgroundColor: { type: 'string', default: '#eef2f8' },
       navBorderColor: { type: 'string', default: '#c8cee3' },
@@ -136,6 +137,12 @@
           el(
             PanelBody,
             { title: __('Colors', 'headless-core'), initialOpen: false },
+            el(BaseControl, { label: __('Background color (fallback when no image)', 'headless-core') }),
+            el(ColorPalette, {
+              value: props.attributes.backgroundColor || '#22ABB5',
+              colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
+              onChange: function (nextColor) { props.setAttributes({ backgroundColor: nextColor || '#22ABB5' }); }
+            }),
             el(BaseControl, { label: __('Title Color', 'headless-core') }),
             el(ColorPalette, {
               value: props.attributes.titleColor || '#22ABB5',

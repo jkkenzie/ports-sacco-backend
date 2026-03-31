@@ -102,6 +102,14 @@ add_action('init', static function (): void {
         HEADLESS_CORE_VERSION,
         true
     );
+
+    wp_register_script(
+        'headless-custom-team-display-editor',
+        HEADLESS_CORE_URL . 'blocks/team-display/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
     wp_register_script(
         'headless-custom-savings-archive-hero-editor',
         HEADLESS_CORE_URL . 'blocks/savings-archive-hero/editor.js',
@@ -803,6 +811,7 @@ add_action('init', static function (): void {
             'intro' => ['type' => 'string', 'default' => ''],
             'bannerImageId' => ['type' => 'number', 'default' => 0],
             'bannerImageUrl' => ['type' => 'string', 'default' => ''],
+            'backgroundColor' => ['type' => 'string', 'default' => '#22ABB5'],
             'titleColor' => ['type' => 'string', 'default' => '#22ABB5'],
             'navBackgroundColor' => ['type' => 'string', 'default' => '#eef2f8'],
             'navBorderColor' => ['type' => 'string', 'default' => '#c8cee3'],
@@ -1628,6 +1637,30 @@ add_action('init', static function (): void {
         'attributes' => [
             'bgColor' => ['type' => 'string', 'default' => '#ffffff'],
             'logoId' => ['type' => 'number', 'default' => 0],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/team-display', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-team-display-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'team'],
+            'categoryId' => ['type' => 'number', 'default' => 0],
+            'heading' => ['type' => 'string', 'default' => 'The Board of Directors'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'headingColor' => ['type' => 'string', 'default' => '#40C9BF'],
+            'nameColor' => ['type' => 'string', 'default' => '#212529'],
+            'positionColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'heroImageId' => ['type' => 'number', 'default' => 0],
+            'heroImageUrl' => ['type' => 'string', 'default' => ''],
+            'heroHeight' => ['type' => 'number', 'default' => 260],
+            'maxItems' => ['type' => 'number', 'default' => 0],
         ],
         'render_callback' => static function (): string {
             return '';
