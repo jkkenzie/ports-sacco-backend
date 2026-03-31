@@ -86,6 +86,22 @@ add_action('init', static function (): void {
         HEADLESS_CORE_VERSION,
         true
     );
+
+    wp_register_script(
+        'headless-custom-header-topbar-editor',
+        HEADLESS_CORE_URL . 'blocks/header-topbar/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
+        'headless-custom-header-main-editor',
+        HEADLESS_CORE_URL . 'blocks/header-main/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
     wp_register_script(
         'headless-custom-savings-archive-hero-editor',
         HEADLESS_CORE_URL . 'blocks/savings-archive-hero/editor.js',
@@ -1581,6 +1597,37 @@ add_action('init', static function (): void {
             'creditUrl' => ['type' => 'string', 'default' => ''],
             'linkColor' => ['type' => 'string', 'default' => '#22ACB6'],
             'linkHoverColor' => ['type' => 'string', 'default' => '#FFFFFF'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/header-topbar', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-header-topbar-editor',
+        'attributes' => [
+            'bgColor' => ['type' => 'string', 'default' => '#1BB5B5'],
+            'textColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'hoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'links' => ['type' => 'array', 'default' => []],
+            'locationItems' => ['type' => 'array', 'default' => []],
+            'phoneText' => ['type' => 'string', 'default' => 'CALL US: +254 111 173 000'],
+            'phoneUrl' => ['type' => 'string', 'default' => ''],
+            'loginLabel' => ['type' => 'string', 'default' => 'MEMBER LOGIN'],
+            'loginUrl' => ['type' => 'string', 'default' => ''],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/header-main', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-header-main-editor',
+        'attributes' => [
+            'bgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'logoId' => ['type' => 'number', 'default' => 0],
         ],
         'render_callback' => static function (): string {
             return '';
