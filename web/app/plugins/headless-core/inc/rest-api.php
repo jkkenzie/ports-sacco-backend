@@ -1972,6 +1972,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
             '#00AFBB'
         );
+        $attrs['showTopBar'] = isset($attrs['showTopBar']) ? (bool) $attrs['showTopBar'] : true;
         $attrs['topBarBg'] = headless_core_sanitize_color_string(
             isset($attrs['topBarBg']) ? (string) $attrs['topBarBg'] : '',
             '#FFFFFF'

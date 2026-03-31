@@ -299,6 +299,7 @@ function headless_core_header_defaults(): array
 {
     return [
         'topbar' => [
+            'enabled' => true,
             'bgColor' => '#1BB5B5',
             'textColor' => '#ffffff',
             'hoverColor' => '#ee6e2a',
@@ -352,6 +353,7 @@ function headless_core_header_merge_non_empty(array $defaults, array $data): arr
 function headless_core_header_sanitize_topbar(array $attrs): array
 {
     $out = [];
+    $out['enabled'] = isset($attrs['enabled']) ? (bool) $attrs['enabled'] : true;
     $out['bgColor'] = headless_core_sanitize_color_string((string) ($attrs['bgColor'] ?? ''), '#1BB5B5');
     $out['textColor'] = headless_core_sanitize_color_string((string) ($attrs['textColor'] ?? ''), '#ffffff');
     $out['hoverColor'] = headless_core_sanitize_color_string((string) ($attrs['hoverColor'] ?? ''), '#ee6e2a');

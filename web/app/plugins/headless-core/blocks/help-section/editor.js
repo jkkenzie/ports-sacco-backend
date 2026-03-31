@@ -10,6 +10,7 @@
   var SelectControl = components.SelectControl;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
+  var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
 
   var DEFAULT_CARDS = [
@@ -89,6 +90,7 @@
     attributes: {
       sectionId: { type: 'string', default: 'help' },
       sectionBgColor: { type: 'string', default: '#00AFBB' },
+      showTopBar: { type: 'boolean', default: true },
       topBarBg: { type: 'string', default: '#FFFFFF' },
       waveAccentColor: { type: 'string', default: '#00AFBB' },
       scrollOuterColor: { type: 'string', default: '#ffffff' },
@@ -115,7 +117,7 @@
       var blockProps = useBlockProps({ className: 'headless-help-section-block' });
       var a = props.attributes;
       var cards = normalizeCards(a.cards);
-      var colors = ['#00AFBB', '#22ACB6', '#22acb6', '#EE6E2A', '#ffffff', '#000000', '#808080', '#3b4e6b'];
+      var colors = ['#00AFBB', '#22ACB6', '#22acb6', '#EE6E2A', '#ffffff', '#000000', '#808080', '#3b4e6b', '#f3f5f7', '#eef0f3'];
 
       function palette() {
         return colors.map(function (hex) {
@@ -271,6 +273,13 @@
               colors: palette(),
               onChange: function (c) {
                 props.setAttributes({ sectionBgColor: c || '#00AFBB' });
+              },
+            }),
+            el(ToggleControl, {
+              label: __('Show top bar + scroll button', 'headless-core'),
+              checked: a.showTopBar !== false,
+              onChange: function (v) {
+                props.setAttributes({ showTopBar: Boolean(v) });
               },
             }),
             el(BaseControl, { label: __('Top bar (white strip)', 'headless-core') }),

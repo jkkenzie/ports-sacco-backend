@@ -618,6 +618,7 @@ add_action('init', static function (): void {
         'attributes' => [
             'sectionId' => ['type' => 'string', 'default' => 'help'],
             'sectionBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'showTopBar' => ['type' => 'boolean', 'default' => true],
             'topBarBg' => ['type' => 'string', 'default' => '#FFFFFF'],
             'waveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
             'scrollOuterColor' => ['type' => 'string', 'default' => '#ffffff'],
@@ -1616,6 +1617,7 @@ add_action('init', static function (): void {
         'api_version' => 3,
         'editor_script' => 'headless-custom-header-topbar-editor',
         'attributes' => [
+            'enabled' => ['type' => 'boolean', 'default' => true],
             'bgColor' => ['type' => 'string', 'default' => '#1BB5B5'],
             'textColor' => ['type' => 'string', 'default' => '#ffffff'],
             'hoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],

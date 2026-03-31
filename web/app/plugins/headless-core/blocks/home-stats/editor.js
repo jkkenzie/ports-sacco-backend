@@ -52,7 +52,7 @@
     },
   ];
 
-  var palette = ['#22acb6', '#ffffff', '#EE6E2A', '#40C9BF', '#000000', '#1F2937'];
+  var palette = ['#22acb6', '#ffffff', '#EE6E2A', '#40C9BF', '#000000', '#1F2937', '#f3f5f7', '#eef0f3'];
 
   function normalizeItems(items) {
     if (!Array.isArray(items) || !items.length) {

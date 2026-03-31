@@ -5,6 +5,7 @@
   var InspectorControls = blockEditor.InspectorControls;
   var PanelBody = components.PanelBody;
   var Button = components.Button;
+  var ToggleControl = components.ToggleControl;
   var TextControl = components.TextControl;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
@@ -17,6 +18,7 @@
     category: 'widgets',
     description: __('Editable top bar above the main header.', 'headless-core'),
     attributes: {
+      enabled: { type: 'boolean', default: true },
       bgColor: { type: 'string', default: '#1BB5B5' },
       textColor: { type: 'string', default: '#ffffff' },
       hoverColor: { type: 'string', default: '#ee6e2a' },
@@ -91,6 +93,13 @@
           el(
             PanelBody,
             { title: __('Top bar colors', 'headless-core'), initialOpen: true },
+            el(ToggleControl, {
+              label: __('Enable top bar', 'headless-core'),
+              checked: a.enabled !== false,
+              onChange: function (v) {
+                props.setAttributes({ enabled: Boolean(v) });
+              },
+            }),
             el(BaseControl, { label: __('Background', 'headless-core') }),
             el(ColorPalette, { value: a.bgColor, colors: palette(), onChange: function (c) { props.setAttributes({ bgColor: c || '#1BB5B5' }); } }),
             el(BaseControl, { label: __('Text', 'headless-core') }),
@@ -101,7 +110,7 @@
         ),
         el(
           'div',
-          { style: { padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb', background: a.bgColor || '#1BB5B5', color: a.textColor || '#fff' } },
+          { style: { padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb', background: a.bgColor || '#1BB5B5', color: a.textColor || '#fff', opacity: a.enabled === false ? 0.55 : 1 } },
           el('div', { style: { display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', fontWeight: 900, fontSize: '10px' } },
             el('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } },
               links.map(function (row, i) {
