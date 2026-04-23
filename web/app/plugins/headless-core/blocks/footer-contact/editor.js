@@ -22,9 +22,12 @@
       title: { type: 'string', default: 'Branch Network' },
       officeName: { type: 'string', default: 'Mombasa - Head Office' },
       officeAddress: { type: 'string', default: '' },
+      officeAddressUrl: { type: 'string', default: '' },
       phone: { type: 'string', default: '' },
+      phoneUrl: { type: 'string', default: '' },
       poBox: { type: 'string', default: '' },
       email: { type: 'string', default: '' },
+      emailUrl: { type: 'string', default: '' },
       tagline: { type: 'string', default: 'UPLIFTING PEOPLE' },
       logoId: { type: 'number', default: 0 },
       addressIconId: { type: 'number', default: 0 },
@@ -32,6 +35,7 @@
       poBoxIconId: { type: 'number', default: 0 },
       emailIconId: { type: 'number', default: 0 },
       iconColor: { type: 'string', default: '#FFFFFF' },
+      linkHoverColor: { type: 'string', default: '#22ACB6' },
     },
     edit: function (props) {
       var a = props.attributes;
@@ -106,9 +110,12 @@
           field('title', __('Section Title', 'headless-core')),
           field('officeName', __('Office Name', 'headless-core')),
           field('officeAddress', __('Address', 'headless-core')),
+          field('officeAddressUrl', __('Address Link (URL)', 'headless-core')),
           field('phone', __('Phone', 'headless-core')),
+          field('phoneUrl', __('Phone Link (tel:...)', 'headless-core')),
           field('poBox', __('P.O Box', 'headless-core')),
           field('email', __('Email', 'headless-core')),
+          field('emailUrl', __('Email Link (mailto:...)', 'headless-core')),
           field('tagline', __('Tagline', 'headless-core')),
           mediaField('logoId', __('Logo Image', 'headless-core')),
           mediaField('addressIconId', __('Address Icon (SVG/Image)', 'headless-core')),
@@ -121,6 +128,15 @@
             colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
             onChange: function (value) {
               setAttributes({ iconColor: value || '#FFFFFF' });
+            },
+          })
+          ,
+          el('div', { style: { marginTop: '12px', marginBottom: '8px', fontWeight: '600' } }, __('Contact Link Hover Color', 'headless-core')),
+          el(ColorPalette, {
+            value: a.linkHoverColor || '#22ACB6',
+            colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
+            onChange: function (value) {
+              setAttributes({ linkHoverColor: value || '#22ACB6' });
             },
           })
         )),
