@@ -4374,9 +4374,11 @@ function headless_core_menu_branch(array $byParent, int $parentId): array
 
     $out = [];
     foreach ($byParent[$parentId] as $item) {
+        $rawUrl = (string) $item->url;
         $out[] = [
             'label' => (string) $item->title,
-            'url' => headless_core_menu_url_to_path((string) $item->url),
+            'url' => headless_core_menu_url_to_path($rawUrl),
+            'target' => (string) $item->target,
             'children' => headless_core_menu_branch($byParent, (int) $item->ID),
         ];
     }
@@ -4385,12 +4387,48 @@ function headless_core_menu_branch(array $byParent, int $parentId): array
 }
 
 /**
- * Turn full URLs into site-relative paths for the SPA.
+ * Whether a nav menu URL should leave the SPA (different host or special scheme).
+ */
+function headless_core_menu_url_is_external(string $url): bool
+{
+    if ($url === '' || $url === '#') {
+        return false;
+    }
+
+    if (preg_match('#^(mailto:|tel:|javascript:)#i', $url)) {
+        return true;
+    }
+
+    if (! preg_match('#^(https?:)?//#i', $url)) {
+        return false;
+    }
+
+    $homeParts = wp_parse_url(home_url('/'));
+    $urlParts = wp_parse_url($url);
+    if (! is_array($homeParts) || ! is_array($urlParts)) {
+        return true;
+    }
+
+    $homeHost = isset($homeParts['host']) ? strtolower((string) $homeParts['host']) : '';
+    $urlHost = isset($urlParts['host']) ? strtolower((string) $urlParts['host']) : '';
+    if ($urlHost === '') {
+        return false;
+    }
+
+    return $homeHost !== $urlHost;
+}
+
+/**
+ * Turn same-site URLs into site-relative paths for the SPA; preserve external URLs.
  */
 function headless_core_menu_url_to_path(string $url): string
 {
     if ($url === '' || $url === '#') {
         return '#';
+    }
+
+    if (headless_core_menu_url_is_external($url)) {
+        return $url;
     }
 
     $home = home_url('/');
@@ -4400,9 +4438,18 @@ function headless_core_menu_url_to_path(string $url): string
         return $path === '' ? '/' : $path;
     }
 
+    $homeParts = wp_parse_url($home);
     $parts = wp_parse_url($url);
-    if (is_array($parts) && isset($parts['path'])) {
-        $path = (string) $parts['path'];
+    if (
+        is_array($homeParts)
+        && is_array($parts)
+        && isset($homeParts['host'], $parts['host'])
+        && strtolower((string) $homeParts['host']) === strtolower((string) $parts['host'])
+    ) {
+        $path = isset($parts['path']) ? (string) $parts['path'] : '/';
+        if ($path === '') {
+            $path = '/';
+        }
         if (isset($parts['query']) && $parts['query'] !== '') {
             $path .= '?' . $parts['query'];
         }
@@ -4411,6 +4458,10 @@ function headless_core_menu_url_to_path(string $url): string
         }
 
         return $path;
+    }
+
+    if (strpos($url, '/') === 0) {
+        return $url;
     }
 
     return $url;
