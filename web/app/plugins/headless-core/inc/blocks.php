@@ -16,6 +16,14 @@ add_action('init', static function (): void {
     );
 
     wp_register_script(
+        'headless-custom-home-banner-slider-editor',
+        HEADLESS_CORE_URL . 'blocks/home-banner-slider/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
         'headless-custom-mission-vision-editor',
         HEADLESS_CORE_URL . 'blocks/mission-vision/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
@@ -26,6 +34,13 @@ add_action('init', static function (): void {
         'headless-custom-about-us-stats-editor',
         HEADLESS_CORE_URL . 'blocks/about-us-stats/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-home-stats-editor',
+        HEADLESS_CORE_URL . 'blocks/home-stats/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -51,9 +66,47 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-help-section-editor',
+        HEADLESS_CORE_URL . 'blocks/help-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-home-product-cards-editor',
         HEADLESS_CORE_URL . 'blocks/home-product-cards/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-product-services-editor',
+        HEADLESS_CORE_URL . 'blocks/product-services/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
+        'headless-custom-header-topbar-editor',
+        HEADLESS_CORE_URL . 'blocks/header-topbar/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
+        'headless-custom-header-main-editor',
+        HEADLESS_CORE_URL . 'blocks/header-main/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
+        'headless-custom-team-display-editor',
+        HEADLESS_CORE_URL . 'blocks/team-display/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -81,6 +134,41 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-download-app-editor',
         HEADLESS_CORE_URL . 'blocks/download-app/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-mobile-app-section-editor',
+        HEADLESS_CORE_URL . 'blocks/mobile-app-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-newsletter-section-editor',
+        HEADLESS_CORE_URL . 'blocks/newsletter-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-partners-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/partners-carousel/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-events-section-editor',
+        HEADLESS_CORE_URL . 'blocks/events-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-member-reviews-editor',
+        HEADLESS_CORE_URL . 'blocks/member-reviews/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
         HEADLESS_CORE_VERSION,
         true
@@ -142,8 +230,36 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-events-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/events-carousel/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-savings-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/savings-carousel/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-services-carousel-editor',
+        HEADLESS_CORE_URL . 'blocks/services-carousel/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-services-grid-editor',
         HEADLESS_CORE_URL . 'blocks/services-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-events-grid-editor',
+        HEADLESS_CORE_URL . 'blocks/events-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
         HEADLESS_CORE_VERSION,
         true
@@ -202,6 +318,41 @@ add_action('init', static function (): void {
             'subtitle' => [
                 'type' => 'string',
                 'default' => '',
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/home-banner-slider', [
+        'api_version' => 3,
+        'title' => __('Home banner slider', 'headless-core'),
+        'category' => 'widgets',
+        'icon' => 'slides',
+        'description' => __('Full-width image hero with slides, dots, and arrows.', 'headless-core'),
+        'keywords' => ['banner', 'hero', 'slider', 'carousel', 'home', 'image'],
+        'editor_script' => 'headless-custom-home-banner-slider-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'hero'],
+            'heroBg' => ['type' => 'string', 'default' => '#1BB5B5'],
+            'dotBarBg' => ['type' => 'string', 'default' => '#22acb6'],
+            'arrowBg' => ['type' => 'string', 'default' => 'rgba(255,255,255,0.8)'],
+            'arrowIconColor' => ['type' => 'string', 'default' => '#1BB5B5'],
+            'transitionMs' => ['type' => 'number', 'default' => 700],
+            'slides' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'imageId' => 0,
+                        'imageUrl' => '',
+                        'alt' => '',
+                        'embedHtml' => '',
+                    ],
+                ],
             ],
         ],
         'render_callback' => static function (): string {
@@ -294,6 +445,62 @@ add_action('init', static function (): void {
             'iconWidth' => ['type' => 'number', 'default' => 107],
             'iconHeight' => ['type' => 'number', 'default' => 58],
             'iconColor' => ['type' => 'string', 'default' => '#40C9BF'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/home-stats', [
+        'api_version' => 3,
+        'title' => __('Home stats', 'headless-core'),
+        'category' => 'widgets',
+        'icon' => 'chart-area',
+        'description' => __('Animated stat counters with optional icons (runs when visible).', 'headless-core'),
+        'keywords' => ['stats', 'counter', 'numbers', 'home', 'metrics'],
+        'editor_script' => 'headless-custom-home-stats-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'stats'],
+            'animationDurationSec' => ['type' => 'number', 'default' => 2.5],
+            'sectionBg' => ['type' => 'string', 'default' => '#22acb6'],
+            'numberColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'titleColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'subtitleColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'iconColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'iconWidth' => ['type' => 'number', 'default' => 107],
+            'iconHeight' => ['type' => 'number', 'default' => 58],
+            'items' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'valueStart' => 0,
+                        'valueEnd' => 15,
+                        'showPlus' => false,
+                        'title' => 'AWARDS IN 2025',
+                        'subtitle' => 'We are leading by example',
+                        'iconId' => 0,
+                    ],
+                    [
+                        'valueStart' => 0,
+                        'valueEnd' => 26,
+                        'showPlus' => false,
+                        'title' => 'PRODUCTS OFFERED',
+                        'subtitle' => 'Products that fit your needs',
+                        'iconId' => 0,
+                    ],
+                    [
+                        'valueStart' => 0,
+                        'valueEnd' => 10000,
+                        'showPlus' => true,
+                        'title' => 'REGISTERED MEMBERS',
+                        'subtitle' => 'A growing membership base.',
+                        'iconId' => 0,
+                    ],
+                ],
+            ],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -402,6 +609,80 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/help-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-help-section-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'help'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'showTopBar' => ['type' => 'boolean', 'default' => true],
+            'topBarBg' => ['type' => 'string', 'default' => '#FFFFFF'],
+            'waveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'scrollOuterColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollInnerColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'kickerHtml' => ['type' => 'string', 'default' => '<p>WE ARE HERE TO HELP YOU</p>'],
+            'kickerColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'talkButtonHtml' => ['type' => 'string', 'default' => 'TALK TO US!'],
+            'talkButtonBg' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'talkButtonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardIconColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'cardIconHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'cardBgHoverColor' => ['type' => 'string', 'default' => '#f0fdfa'],
+            'titleHeadingColor' => ['type' => 'string', 'default' => '#808080'],
+            'bodyTextColor' => ['type' => 'string', 'default' => '#000000'],
+            'metaTextColor' => ['type' => 'string', 'default' => '#808080'],
+            'ctaTextColor' => ['type' => 'string', 'default' => '#808080'],
+            'cardChevronBg' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardChevronBgHover' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardChevronIconColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'cardChevronIconHoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'cards' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'iconKey' => 'apply',
+                        'titleHtml' => 'APPLY FOR A LOAN',
+                        'bodyHtml' => '<p>Looking to buy a car, build a home, start a business, pay for education? Apply for a loan now!</p>',
+                        'ctaMode' => 'link',
+                        'ctaLabelHtml' => 'Get an Appointment',
+                        'ctaUrl' => '',
+                        'whatsappUrl' => '',
+                        'phone' => '',
+                        'email' => '',
+                    ],
+                    [
+                        'iconKey' => 'call',
+                        'titleHtml' => 'CALL US!',
+                        'bodyHtml' => '',
+                        'ctaMode' => 'link',
+                        'ctaLabelHtml' => 'Contact us',
+                        'ctaUrl' => '',
+                        'whatsappUrl' => '',
+                        'phone' => '+254 111 173 000',
+                        'email' => 'info@portsacco.co.ke',
+                    ],
+                    [
+                        'iconKey' => 'advisor',
+                        'titleHtml' => 'TALK TO AN ADVISOR',
+                        'bodyHtml' => '<p>Do you need financial planning? Talk to our advisors.</p>',
+                        'ctaMode' => 'whatsapp',
+                        'ctaLabelHtml' => '',
+                        'ctaUrl' => '',
+                        'whatsappUrl' => '',
+                        'phone' => '',
+                        'email' => '',
+                    ],
+                ],
+            ],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/home-product-cards', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-home-product-cards-editor',
@@ -471,6 +752,58 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/product-services', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-product-services-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'services'],
+            'gradientAngle' => ['type' => 'number', 'default' => 90],
+            'gradientFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'gradientVia' => ['type' => 'string', 'default' => '#00AFBB'],
+            'gradientTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'topBarBg' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topCurveRectFill' => ['type' => 'string', 'default' => '#00AFBB'],
+            'topCurvePathFill' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'kickerText' => ['type' => 'string', 'default' => 'YOUR JOURNEY OF PROSPERITY START HERE!'],
+            'kickerColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'centerPillText' => ['type' => 'string', 'default' => 'HOW CAN WE UPLIFT YOU TODAY?'],
+            'centerPillBg' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'centerPillHoverBg' => ['type' => 'string', 'default' => '#d96525'],
+            'centerPillTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollArrowOuterFill' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollArrowInnerFill' => ['type' => 'string', 'default' => '#22ACB6'],
+            'boxBg' => ['type' => 'string', 'default' => '#ffffff'],
+            'boxTitle' => ['type' => 'string', 'default' => 'PRODUCTS & SERVICES THAT UPLIFT YOUR FINANCIAL SUCCESS!'],
+            'boxSubtitle' => ['type' => 'string', 'default' => 'SELECT THE PRODUCT OR SERVICE YOU NEED'],
+            'boxTitleColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'boxSubtitleColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'dropdownPlaceholder' => ['type' => 'string', 'default' => 'How can we uplift you today?'],
+            'dropdownItems' => ['type' => 'array', 'default' => []],
+            'dropdownBg' => ['type' => 'string', 'default' => '#38f0ba'],
+            'dropdownBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'dropdownTextColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'dropdownChevronColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'goButtonBg' => ['type' => 'string', 'default' => '#38f0ba'],
+            'goButtonBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'goButtonIconColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'goButtonHoverOpacity' => ['type' => 'number', 'default' => 0.85],
+            'dividerColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'productButtons' => ['type' => 'array', 'default' => []],
+            'pillBg' => ['type' => 'string', 'default' => '#00ada0'],
+            'pillBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'pillTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'pillHoverBg' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'pillHoverBorderColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'pillHoverTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/savings-archive-hero', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-savings-archive-hero-editor',
@@ -479,6 +812,7 @@ add_action('init', static function (): void {
             'intro' => ['type' => 'string', 'default' => ''],
             'bannerImageId' => ['type' => 'number', 'default' => 0],
             'bannerImageUrl' => ['type' => 'string', 'default' => ''],
+            'backgroundColor' => ['type' => 'string', 'default' => '#22ABB5'],
             'titleColor' => ['type' => 'string', 'default' => '#22ABB5'],
             'navBackgroundColor' => ['type' => 'string', 'default' => '#eef2f8'],
             'navBorderColor' => ['type' => 'string', 'default' => '#c8cee3'],
@@ -612,6 +946,234 @@ add_action('init', static function (): void {
             'appStoreImageId' => ['type' => 'number', 'default' => 0],
             'appStoreImageUrl' => ['type' => 'string', 'default' => ''],
             'appStoreLinkUrl' => ['type' => 'string', 'default' => '#'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/mobile-app-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-mobile-app-section-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'mobile-app'],
+            'gradientFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'gradientVia' => ['type' => 'string', 'default' => '#00AFBB'],
+            'gradientTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'topBarBg' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'curveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => '#22ACB6'],
+            'kickerText' => ['type' => 'string', 'default' => ''],
+            'titleText' => ['type' => 'string', 'default' => ''],
+            'bodyHtml' => ['type' => 'string', 'default' => ''],
+            'downloadHeading' => ['type' => 'string', 'default' => ''],
+            'badgeText' => ['type' => 'string', 'default' => ''],
+            'googlePlayImageId' => ['type' => 'number', 'default' => 0],
+            'googlePlayImageUrl' => ['type' => 'string', 'default' => ''],
+            'googlePlayLinkUrl' => ['type' => 'string', 'default' => ''],
+            'appStoreImageId' => ['type' => 'number', 'default' => 0],
+            'appStoreImageUrl' => ['type' => 'string', 'default' => ''],
+            'appStoreLinkUrl' => ['type' => 'string', 'default' => ''],
+            'ussdImageId' => ['type' => 'number', 'default' => 0],
+            'ussdImageUrl' => ['type' => 'string', 'default' => ''],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/newsletter-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-newsletter-section-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'newsletter'],
+            'gradientFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'gradientVia' => ['type' => 'string', 'default' => '#00AFBB'],
+            'gradientTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'topBarBg' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'curveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => '#22ACB6'],
+            'kickerText' => ['type' => 'string', 'default' => ''],
+            'badgeText' => ['type' => 'string', 'default' => ''],
+            'titleText' => ['type' => 'string', 'default' => ''],
+            'headlineColor' => ['type' => 'string', 'default' => '#000000'],
+            'kickerColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'imageId' => ['type' => 'number', 'default' => 0],
+            'imageUrl' => ['type' => 'string', 'default' => ''],
+            'imageAlt' => ['type' => 'string', 'default' => ''],
+            'emailPlaceholder' => ['type' => 'string', 'default' => 'Enter Your Email Address'],
+            'submitButtonText' => ['type' => 'string', 'default' => 'SUBSCRIBE'],
+            'submitButtonWidth' => ['type' => 'string', 'default' => '300px'],
+            'inputBgColor' => ['type' => 'string', 'default' => '#38f0ba'],
+            'inputTextColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'inputPlaceholderColor' => ['type' => 'string', 'default' => '#3b4e6b'],
+            'submitBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'submitTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'submitArrowColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'mailchimpFormActionUrl' => ['type' => 'string', 'default' => ''],
+            'mailchimpEmailFieldName' => ['type' => 'string', 'default' => 'EMAIL'],
+            'mailchimpBotFieldName' => ['type' => 'string', 'default' => ''],
+            'mailchimpFormTarget' => ['type' => 'string', 'default' => '_self'],
+            'mailchimpHiddenFieldsJson' => ['type' => 'string', 'default' => '[]'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/partners-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-partners-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'partners'],
+            'useGradient' => ['type' => 'boolean', 'default' => true],
+            'gradientFrom' => ['type' => 'string', 'default' => '#00B2E0'],
+            'gradientVia' => ['type' => 'string', 'default' => '#00AFBB'],
+            'gradientTo' => ['type' => 'string', 'default' => '#00AB81'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'topBarBg' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarUseGradient' => ['type' => 'boolean', 'default' => false],
+            'topBarGradientFrom' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarGradientVia' => ['type' => 'string', 'default' => '#E8E6E0'],
+            'topBarGradientTo' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarScrollIconOuterColor' => ['type' => 'string', 'default' => ''],
+            'curveAccentColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => '#22ACB6'],
+            'kickerText' => ['type' => 'string', 'default' => ''],
+            'badgeText' => ['type' => 'string', 'default' => ''],
+            'kickerColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'carouselArrowBg' => ['type' => 'string', 'default' => '#00AFBB'],
+            'carouselArrowIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'dotActiveColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'dotInactiveColor' => ['type' => 'string', 'default' => '#d1d5db'],
+            'maxItems' => ['type' => 'number', 'default' => 0],
+            'slidesToScroll' => ['type' => 'number', 'default' => 1],
+            'visibleMobile' => ['type' => 'number', 'default' => 1],
+            'visibleTablet' => ['type' => 'number', 'default' => 2],
+            'visibleDesktop' => ['type' => 'number', 'default' => 4],
+            'carouselLoop' => ['type' => 'boolean', 'default' => true],
+            'showPartnerCount' => ['type' => 'boolean', 'default' => true],
+            'partnerCountSuffix' => ['type' => 'string', 'default' => 'partners'],
+            'partners' => ['type' => 'array', 'default' => []],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/events-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-events-section-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'events'],
+            'gradientFrom' => ['type' => 'string', 'default' => '#FF8C00'],
+            'gradientVia' => ['type' => 'string', 'default' => '#FF6347'],
+            'gradientTo' => ['type' => 'string', 'default' => '#800080'],
+            'topCurveFillColor' => ['type' => 'string', 'default' => ''],
+            'topBarBg' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarUseGradient' => ['type' => 'boolean', 'default' => false],
+            'topBarGradientFrom' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarGradientVia' => ['type' => 'string', 'default' => '#FF6347'],
+            'topBarGradientTo' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarScrollIconOuterColor' => ['type' => 'string', 'default' => ''],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => ''],
+            'patternImageId' => ['type' => 'number', 'default' => 0],
+            'patternImageUrl' => ['type' => 'string', 'default' => ''],
+            'patternOpacity' => ['type' => 'number', 'default' => 0.3],
+            'orchidTintColor' => ['type' => 'string', 'default' => '#ff7bac'],
+            'logoImageId' => ['type' => 'number', 'default' => 0],
+            'logoImageUrl' => ['type' => 'string', 'default' => ''],
+            'logoAlt' => ['type' => 'string', 'default' => 'Ports Sacco'],
+            'eventTitle' => ['type' => 'string', 'default' => 'ADM'],
+            'eventSubtitle' => ['type' => 'string', 'default' => 'Annual Delegate Meeting'],
+            'dayName' => ['type' => 'string', 'default' => 'FRIDAY'],
+            'dayNumber' => ['type' => 'string', 'default' => '30'],
+            'monthName' => ['type' => 'string', 'default' => 'JAN'],
+            'year' => ['type' => 'string', 'default' => '2026'],
+            'venueTitle' => ['type' => 'string', 'default' => 'Venue'],
+            'timeLine' => ['type' => 'string', 'default' => '09.00 HOURS'],
+            'bannerTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/member-reviews', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-member-reviews-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'member-reviews'],
+            'useGradient' => ['type' => 'boolean', 'default' => false],
+            'gradientFrom' => ['type' => 'string', 'default' => '#FF8C00'],
+            'gradientVia' => ['type' => 'string', 'default' => '#FF6347'],
+            'gradientTo' => ['type' => 'string', 'default' => '#800080'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'topCurveFillColor' => ['type' => 'string', 'default' => ''],
+            'wavePathFill' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarBg' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarUseGradient' => ['type' => 'boolean', 'default' => false],
+            'topBarGradientFrom' => ['type' => 'string', 'default' => '#ff6346'],
+            'topBarGradientVia' => ['type' => 'string', 'default' => '#FF6347'],
+            'topBarGradientTo' => ['type' => 'string', 'default' => '#ff6346'],
+            'patternImageId' => ['type' => 'number', 'default' => 0],
+            'patternImageUrl' => ['type' => 'string', 'default' => ''],
+            'patternOpacity' => ['type' => 'number', 'default' => 0.3],
+            'orchidTintColor' => ['type' => 'string', 'default' => '#ff7bac'],
+            'topBarScrollIconOuterColor' => ['type' => 'string', 'default' => ''],
+            'scrollArrowBg' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollIconColor' => ['type' => 'string', 'default' => ''],
+            'scrollButtonOuter' => ['type' => 'string', 'default' => '#ffffff'],
+            'scrollButtonInner' => ['type' => 'string', 'default' => ''],
+            'badgeLabelHtml' => ['type' => 'string', 'default' => 'MEMBER REVIEWS'],
+            'subtitleHtml' => ['type' => 'string', 'default' => 'WHAT OUR MEMBERS SAY!'],
+            'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'subtitleColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'showAllReviewsRow' => ['type' => 'boolean', 'default' => true],
+            'allReviewsLabel' => ['type' => 'string', 'default' => 'ALL REVIEWS'],
+            'allReviewsUrl' => ['type' => 'string', 'default' => ''],
+            'secondaryButtonBorderColor' => ['type' => 'string', 'default' => '#d1d5db'],
+            'secondaryButtonTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'quoteTextColor' => ['type' => 'string', 'default' => '#6b7280'],
+            'nameColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'cardBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'starFilledColor' => ['type' => 'string', 'default' => '#EAB308'],
+            'starEmptyColor' => ['type' => 'string', 'default' => '#D1D5DB'],
+            'carouselArrowBg' => ['type' => 'string', 'default' => '#22ACB6'],
+            'carouselArrowIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'dotActiveColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'dotInactiveColor' => ['type' => 'string', 'default' => '#d1d5db'],
+            'maxItems' => ['type' => 'number', 'default' => 0],
+            'slidesToScroll' => ['type' => 'number', 'default' => 1],
+            'visibleMobile' => ['type' => 'number', 'default' => 1],
+            'visibleTablet' => ['type' => 'number', 'default' => 2],
+            'visibleDesktop' => ['type' => 'number', 'default' => 3],
+            'carouselLoop' => ['type' => 'boolean', 'default' => false],
+            'reviews' => ['type' => 'array', 'default' => []],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -776,6 +1338,17 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/events-grid', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-events-grid-editor',
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/loans-carousel', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-loans-carousel-editor',
@@ -788,6 +1361,46 @@ add_action('init', static function (): void {
             'buttonText' => ['type' => 'string', 'default' => 'LOANS'],
             'linkText' => ['type' => 'string', 'default' => 'ALL LOAN PRODUCTS'],
             'linkUrl' => ['type' => 'string', 'default' => '/loan-products'],
+            'maxItems' => ['type' => 'number', 'default' => 9],
+            'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'topBarColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'topBarGradientAngle' => ['type' => 'number', 'default' => 90],
+            'topBarGradientFrom' => ['type' => 'string', 'default' => '#ffffff'],
+            'topBarGradientVia' => ['type' => 'string', 'default' => '#ffffff'],
+            'topBarGradientTo' => ['type' => 'string', 'default' => '#ffffff'],
+            'headerTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkTextHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkBadgeBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkBadgeHoverBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowHoverBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkArrowColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'arrowButtonBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
+            'arrowButtonIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/events-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-events-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+            'sectionHeader' => ['type' => 'string', 'default' => 'CELEBRATE, EXPLORE AND SHARE OUR INCREDIBLE JOURNEYS OF PROSPERITY.'],
+            'buttonText' => ['type' => 'string', 'default' => 'LATEST EVENTS'],
+            'linkText' => ['type' => 'string', 'default' => 'ALL EVENTS'],
+            'linkUrl' => ['type' => 'string', 'default' => '/events'],
+            'readMoreLabel' => ['type' => 'string', 'default' => 'READ MORE'],
             'maxItems' => ['type' => 'number', 'default' => 9],
             'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
             'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
@@ -805,6 +1418,79 @@ add_action('init', static function (): void {
             'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
             'arrowButtonBgColor' => ['type' => 'string', 'default' => '#00AFBB'],
             'arrowButtonIconColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'metaTextColor' => ['type' => 'string', 'default' => '#808080'],
+            'cardTitleColor' => ['type' => 'string', 'default' => '#808080'],
+            'cardTitleHoverColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'readMoreTextColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'readMoreHoverColor' => ['type' => 'string', 'default' => '#22aab7'],
+            'readMoreArrowBg' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'readMoreArrowHoverBg' => ['type' => 'string', 'default' => '#22aab7'],
+            'carouselNavArrowColor' => ['type' => 'string', 'default' => '#82cdcb'],
+            'dotActiveColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'dotInactiveColor' => ['type' => 'string', 'default' => 'rgba(255,255,255,0.6)'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/savings-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-savings-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionHeader' => ['type' => 'string', 'default' => 'DISCOVER OUR SAVINGS SOLUTIONS'],
+            'buttonText' => ['type' => 'string', 'default' => 'SAVINGS'],
+            'linkText' => ['type' => 'string', 'default' => 'ALL SAVINGS PRODUCTS'],
+            'linkUrl' => ['type' => 'string', 'default' => '/savings-products'],
+            'maxItems' => ['type' => 'number', 'default' => 9],
+            'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'headerTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkTextHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkBadgeBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkBadgeHoverBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowHoverBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkArrowColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/services-carousel', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-services-carousel-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'categoryId' => ['type' => 'number', 'default' => 0],
+            'sectionHeader' => ['type' => 'string', 'default' => 'EXPLORE OUR SERVICES'],
+            'buttonText' => ['type' => 'string', 'default' => 'SERVICES'],
+            'linkText' => ['type' => 'string', 'default' => 'ALL SERVICES'],
+            'linkUrl' => ['type' => 'string', 'default' => '/services'],
+            'maxItems' => ['type' => 'number', 'default' => 9],
+            'autoplayDelayMs' => ['type' => 'number', 'default' => 3500],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#F5F4EE'],
+            'headerTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkTextColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkTextHoverColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkBadgeBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkBadgeHoverBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkArrowHoverBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'linkArrowColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'linkArrowHoverColor' => ['type' => 'string', 'default' => '#ffffff'],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -921,6 +1607,62 @@ add_action('init', static function (): void {
             'creditUrl' => ['type' => 'string', 'default' => ''],
             'linkColor' => ['type' => 'string', 'default' => '#22ACB6'],
             'linkHoverColor' => ['type' => 'string', 'default' => '#FFFFFF'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/header-topbar', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-header-topbar-editor',
+        'attributes' => [
+            'enabled' => ['type' => 'boolean', 'default' => true],
+            'bgColor' => ['type' => 'string', 'default' => '#1BB5B5'],
+            'textColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'hoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'links' => ['type' => 'array', 'default' => []],
+            'locationItems' => ['type' => 'array', 'default' => []],
+            'phoneText' => ['type' => 'string', 'default' => 'CALL US: +254 111 173 000'],
+            'phoneUrl' => ['type' => 'string', 'default' => ''],
+            'loginLabel' => ['type' => 'string', 'default' => 'MEMBER LOGIN'],
+            'loginUrl' => ['type' => 'string', 'default' => ''],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/header-main', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-header-main-editor',
+        'attributes' => [
+            'bgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'logoId' => ['type' => 'number', 'default' => 0],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/team-display', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-team-display-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'sectionId' => ['type' => 'string', 'default' => 'team'],
+            'categoryId' => ['type' => 'number', 'default' => 0],
+            'heading' => ['type' => 'string', 'default' => 'The Board of Directors'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'headingColor' => ['type' => 'string', 'default' => '#40C9BF'],
+            'nameColor' => ['type' => 'string', 'default' => '#212529'],
+            'positionColor' => ['type' => 'string', 'default' => '#EE6E2A'],
+            'heroImageId' => ['type' => 'number', 'default' => 0],
+            'heroImageUrl' => ['type' => 'string', 'default' => ''],
+            'heroHeight' => ['type' => 'number', 'default' => 260],
+            'maxItems' => ['type' => 'number', 'default' => 0],
         ],
         'render_callback' => static function (): string {
             return '';

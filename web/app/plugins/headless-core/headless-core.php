@@ -16,14 +16,17 @@ if (! defined('ABSPATH')) {
 
 define('HEADLESS_CORE_PATH', plugin_dir_path(__FILE__));
 define('HEADLESS_CORE_URL', plugin_dir_url(__FILE__));
-define('HEADLESS_CORE_VERSION', '1.0.38');
+define('HEADLESS_CORE_VERSION', '1.0.56');
 
 require_once HEADLESS_CORE_PATH . 'inc/cache.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-api.php';
 require_once HEADLESS_CORE_PATH . 'inc/migration.php';
 require_once HEADLESS_CORE_PATH . 'inc/blocks.php';
 require_once HEADLESS_CORE_PATH . 'inc/footer.php';
+require_once HEADLESS_CORE_PATH . 'inc/header.php';
+require_once HEADLESS_CORE_PATH . 'inc/team.php';
 require_once HEADLESS_CORE_PATH . 'inc/admin.php';
+require_once HEADLESS_CORE_PATH . 'inc/upload-mimes.php';
 require_once HEADLESS_CORE_PATH . 'inc/post-types.php';
 require_once HEADLESS_CORE_PATH . 'inc/wxr-import.php';
 

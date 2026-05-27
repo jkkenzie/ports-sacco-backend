@@ -7,6 +7,8 @@ if (! defined('ABSPATH')) {
 }
 
 const HEADLESS_CORE_OPTION_ENABLE_TRANSIENTS = 'headless_core_enable_transients';
+const HEADLESS_CORE_OPTION_RECAPTCHA_SECRET = 'headless_core_recaptcha_secret';
+const HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE = 'headless_core_recaptcha_min_score';
 
 add_action('admin_menu', static function (): void {
     add_menu_page(
@@ -28,6 +30,30 @@ add_action('admin_init', static function (): void {
         },
         'default' => '1',
     ]);
+
+    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_RECAPTCHA_SECRET, [
+        'type' => 'string',
+        'sanitize_callback' => static function ($value): string {
+            return trim((string) $value);
+        },
+        'default' => '',
+    ]);
+
+    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE, [
+        'type' => 'string',
+        'sanitize_callback' => static function ($value): string {
+            $raw = trim((string) $value);
+            if ($raw === '') {
+                return '';
+            }
+            $num = (float) $raw;
+            if ($num <= 0 || $num > 1) {
+                return '';
+            }
+            return rtrim(rtrim(number_format($num, 2, '.', ''), '0'), '.');
+        },
+        'default' => '',
+    ]);
 });
 
 /**
@@ -45,6 +71,8 @@ function headless_core_render_settings_page(): void
     }
 
     $enabled = get_option(HEADLESS_CORE_OPTION_ENABLE_TRANSIENTS, '1') === '1';
+    $recaptchaSecret = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET, '');
+    $recaptchaMinScore = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE, '');
     ?>
     <div class="wrap">
         <h1><?php echo esc_html__('Headless Core Settings', 'headless-core'); ?></h1>
@@ -91,6 +119,27 @@ function headless_core_render_settings_page(): void
                 box-shadow: 0 0 0 2px rgba(34,172,182,.25);
             }
         </style>
+        <script>
+            (function () {
+                function ready(fn) {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', fn);
+                    } else {
+                        fn();
+                    }
+                }
+                ready(function () {
+                    var btn = document.getElementById('headless-core-recaptcha-toggle');
+                    var input = document.getElementById('<?php echo esc_js(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>');
+                    if (!btn || !input) return;
+                    btn.addEventListener('click', function () {
+                        var isHidden = input.type === 'password';
+                        input.type = isHidden ? 'text' : 'password';
+                        btn.textContent = isHidden ? '<?php echo esc_js(__('Hide', 'headless-core')); ?>' : '<?php echo esc_js(__('Show', 'headless-core')); ?>';
+                    });
+                });
+            })();
+        </script>
         <div class="nav-tab-wrapper" style="margin-bottom: 16px;">
             <a href="<?php echo esc_url(admin_url('admin.php?page=headless-core-settings&tab=general')); ?>" class="nav-tab <?php echo $activeTab === 'general' ? 'nav-tab-active' : ''; ?>">
                 <?php echo esc_html__('General Settings', 'headless-core'); ?>
@@ -120,6 +169,64 @@ function headless_core_render_settings_page(): void
                             </div>
                         </div>
                     </div>
+
+                    <hr style="margin: 22px 0; border: 0; border-top: 1px solid #e5e7eb;" />
+                    <h2 style="margin-top: 0;"><?php echo esc_html__('Bot protection (reCAPTCHA v3)', 'headless-core'); ?></h2>
+                    <p style="color: #50575e; margin-top: 6px;">
+                        <?php echo esc_html__('Used to protect public form submissions (Contact + Apply). The secret key is stored in WordPress options and used server-side only.', 'headless-core'); ?>
+                    </p>
+                    <table class="form-table" role="presentation" style="margin-top: 8px;">
+                        <tbody>
+                        <tr>
+                            <th scope="row">
+                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"><?php echo esc_html__('reCAPTCHA Secret Key', 'headless-core'); ?></label>
+                            </th>
+                            <td>
+                                <div style="display: flex; gap: 8px; align-items: center; max-width: 520px;">
+                                    <input
+                                        type="password"
+                                        id="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"
+                                        name="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"
+                                        value="<?php echo esc_attr($recaptchaSecret); ?>"
+                                        class="regular-text"
+                                        autocomplete="new-password"
+                                        style="flex: 1 1 auto;"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="button"
+                                        id="headless-core-recaptcha-toggle"
+                                        aria-controls="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"
+                                    >
+                                        <?php echo esc_html__('Show', 'headless-core'); ?>
+                                    </button>
+                                </div>
+                                <p class="description">
+                                    <?php echo esc_html__('Paste your Google reCAPTCHA v3 secret key here. (Do not put the site key here.)', 'headless-core'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE); ?>"><?php echo esc_html__('Minimum score (0–1)', 'headless-core'); ?></label>
+                            </th>
+                            <td>
+                                <input
+                                    type="text"
+                                    id="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE); ?>"
+                                    name="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE); ?>"
+                                    value="<?php echo esc_attr($recaptchaMinScore); ?>"
+                                    class="small-text"
+                                    inputmode="decimal"
+                                    placeholder="0.5"
+                                />
+                                <p class="description">
+                                    <?php echo esc_html__('Optional. If empty, defaults to 0.5. Lower = easier to pass; higher = stricter.', 'headless-core'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
                 <p style="margin-top: 16px;">
                     <?php submit_button(__('Save Settings', 'headless-core'), 'primary', 'submit', false); ?>

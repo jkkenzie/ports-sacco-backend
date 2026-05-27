@@ -28,7 +28,7 @@
     { label: 'BIASHARA', href: '#' },
     { label: 'FIXED DEPOSIT', href: '#' }
   ];
-  var COLOR_CHOICES = ['#22abb5', '#ed6e2a', '#ffffff', '#000000', '#65605f', '#c8cee3'];
+  var COLOR_CHOICES = ['#40c9bf', '#22abb5', '#ed6e2a', '#ffffff', '#000000', '#65605f', '#c8cee3', '#90D4D3'];
 
   function normalizeButtons(buttons) {
     if (!Array.isArray(buttons) || !buttons.length) {
@@ -83,6 +83,9 @@
       intro: { type: 'string', default: '' },
       bannerImageId: { type: 'number', default: 0 },
       bannerImageUrl: { type: 'string', default: '' },
+      bannerImagePositionX: { type: 'string', default: 'center' },
+      bannerImagePositionY: { type: 'string', default: 'bottom' },
+      backgroundColor: { type: 'string', default: '#40c9bf' },
       titleColor: { type: 'string', default: '#22ABB5' },
       navBackgroundColor: { type: 'string', default: '#eef2f8' },
       navBorderColor: { type: 'string', default: '#c8cee3' },
@@ -136,6 +139,12 @@
           el(
             PanelBody,
             { title: __('Colors', 'headless-core'), initialOpen: false },
+            el(BaseControl, { label: __('Background color (fallback when no image)', 'headless-core') }),
+            el(ColorPalette, {
+              value: props.attributes.backgroundColor || '#22ABB5',
+              colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
+              onChange: function (nextColor) { props.setAttributes({ backgroundColor: nextColor || '#22ABB5' }); }
+            }),
             el(BaseControl, { label: __('Title Color', 'headless-core') }),
             el(ColorPalette, {
               value: props.attributes.titleColor || '#22ABB5',
@@ -185,6 +194,22 @@
               el('strong', null, __('Banner image', 'headless-core')),
               props.attributes.bannerImageUrl
                 ? el('img', { src: props.attributes.bannerImageUrl, alt: '', style: { width: '100%', maxHeight: '160px', objectFit: 'cover', marginTop: '8px', borderRadius: '6px' } })
+                : null,
+              props.attributes.bannerImageUrl
+                ? el('div', { style: { marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' } },
+                    el(TextControl, {
+                      label: __('Banner image position X', 'headless-core'),
+                      help: __('Examples: left, center, right, 50%, 20px', 'headless-core'),
+                      value: props.attributes.bannerImagePositionX || 'center',
+                      onChange: function (v) { props.setAttributes({ bannerImagePositionX: v || 'center' }); }
+                    }),
+                    el(TextControl, {
+                      label: __('Banner image position Y', 'headless-core'),
+                      help: __('Examples: top, center, bottom, 50%, 20px', 'headless-core'),
+                      value: props.attributes.bannerImagePositionY || 'bottom',
+                      onChange: function (v) { props.setAttributes({ bannerImagePositionY: v || 'bottom' }); }
+                    })
+                  )
                 : null,
               el('div', { style: { marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' } },
                 el(MediaUploadCheck, null,

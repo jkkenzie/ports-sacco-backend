@@ -351,9 +351,12 @@ function headless_core_footer_defaults(): array
             'title' => 'Branch Network',
             'officeName' => 'Mombasa - Head Office',
             'officeAddress' => 'Ports Sacco Plaza, Mwakilingo Road, off Moi Avenue, Mombasa',
+            'officeAddressUrl' => '',
             'phone' => 'Tel: 0111 173 000',
+            'phoneUrl' => '',
             'poBox' => 'P.O Box 95372 - 80100, Mombasa',
             'email' => 'info@portsacco.co.ke',
+            'emailUrl' => '',
             'tagline' => 'UPLIFTING PEOPLE',
             'logoId' => 0,
             'addressIconId' => 0,
@@ -361,6 +364,7 @@ function headless_core_footer_defaults(): array
             'poBoxIconId' => 0,
             'emailIconId' => 0,
             'iconColor' => '#FFFFFF',
+            'linkHoverColor' => '#22ACB6',
         ],
         'branches' => [
             ['name' => 'Nairobi CBD Office', 'address' => 'KCS House, 7th Floor, Mama Ngina Street', 'phone' => 'Tel: 0111 173 138'],
@@ -525,13 +529,17 @@ function headless_core_footer_sanitize_branches($rows): array
 function headless_core_footer_sanitize_contact(array $attrs): array
 {
     $iconColor = sanitize_hex_color((string) ($attrs['iconColor'] ?? ''));
+    $linkHoverColor = sanitize_hex_color((string) ($attrs['linkHoverColor'] ?? ''));
     return [
         'title' => sanitize_text_field((string) ($attrs['title'] ?? '')),
         'officeName' => sanitize_text_field((string) ($attrs['officeName'] ?? '')),
         'officeAddress' => sanitize_text_field((string) ($attrs['officeAddress'] ?? '')),
+        'officeAddressUrl' => esc_url_raw((string) ($attrs['officeAddressUrl'] ?? '')),
         'phone' => sanitize_text_field((string) ($attrs['phone'] ?? '')),
+        'phoneUrl' => esc_url_raw((string) ($attrs['phoneUrl'] ?? '')),
         'poBox' => sanitize_text_field((string) ($attrs['poBox'] ?? '')),
         'email' => sanitize_email((string) ($attrs['email'] ?? '')),
+        'emailUrl' => esc_url_raw((string) ($attrs['emailUrl'] ?? '')),
         'tagline' => sanitize_text_field((string) ($attrs['tagline'] ?? '')),
         'logoId' => (int) ($attrs['logoId'] ?? 0),
         'addressIconId' => (int) ($attrs['addressIconId'] ?? 0),
@@ -539,6 +547,7 @@ function headless_core_footer_sanitize_contact(array $attrs): array
         'poBoxIconId' => (int) ($attrs['poBoxIconId'] ?? 0),
         'emailIconId' => (int) ($attrs['emailIconId'] ?? 0),
         'iconColor' => is_string($iconColor) && $iconColor !== '' ? $iconColor : '#FFFFFF',
+        'linkHoverColor' => is_string($linkHoverColor) && $linkHoverColor !== '' ? $linkHoverColor : '#22ACB6',
     ];
 }
 
