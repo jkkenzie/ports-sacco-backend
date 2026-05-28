@@ -33,6 +33,7 @@ require_once HEADLESS_CORE_PATH . 'inc/wxr-import.php';
 add_action('after_setup_theme', static function (): void {
     register_nav_menus([
         'primary' => __('Primary Menu', 'headless-core'),
+        'topbar_member_login' => __('Top Bar Member Login Menu', 'headless-core'),
     ]);
 });
 

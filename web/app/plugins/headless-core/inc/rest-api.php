@@ -4375,10 +4375,14 @@ function headless_core_menu_branch(array $byParent, int $parentId): array
     $out = [];
     foreach ($byParent[$parentId] as $item) {
         $rawUrl = (string) $item->url;
+        $target = isset($item->target) ? (string) $item->target : '';
+        if ($target === '' && isset($item->ID)) {
+            $target = (string) get_post_meta((int) $item->ID, '_menu_item_target', true);
+        }
         $out[] = [
             'label' => (string) $item->title,
             'url' => headless_core_menu_url_to_path($rawUrl),
-            'target' => (string) $item->target,
+            'target' => $target,
             'children' => headless_core_menu_branch($byParent, (int) $item->ID),
         ];
     }
