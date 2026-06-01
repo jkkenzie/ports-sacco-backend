@@ -1,0 +1,22 @@
+/* Ensure every URL search field in block sidebars stays visible (multiple instances). */
+.headless-url-search-control.block-editor-url-input,
+.headless-url-search-control .block-editor-url-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.headless-url-search-control input[type="text"],
+.headless-url-search-control input.components-input-control__input {
+  min-height: 36px;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+.headless-url-search-wrap {
+  position: relative;
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  isolation: isolate;
+}

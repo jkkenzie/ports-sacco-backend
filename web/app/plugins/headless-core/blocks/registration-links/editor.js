@@ -15,8 +15,11 @@
   var headlessLink = window.headlessCoreEditor || {};
 
   function renderUrlField(label, item, urlKey, onChange) {
+    // Avoid LinkControl here: two instances crash WP LinkPreview/Clipboard in the block editor.
     if (headlessLink.renderLinkControl) {
-      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange, {
+        forceTextControl: true,
+      });
     }
     return el(TextControl, {
       label: label,
@@ -81,9 +84,18 @@
       var entries = normalizeEntries(props.attributes.entries);
       var colors = ['#333333', '#000000', '#65605f', '#eb651b', '#ee6e2a', '#22acb6', '#ffffff'];
 
+      function pickEntryFields(row) {
+        return {
+          title: String((row && row.title) || ''),
+          paragraph: String((row && row.paragraph) || ''),
+          linkText: String((row && row.linkText) || ''),
+          linkUrl: String((row && row.linkUrl) || ''),
+        };
+      }
+
       function setEntry(index, patch) {
         var next = entries.slice();
-        next[index] = Object.assign({}, next[index], patch);
+        next[index] = pickEntryFields(Object.assign({}, next[index], patch));
         props.setAttributes({ entries: next });
       }
 

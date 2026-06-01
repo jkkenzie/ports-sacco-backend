@@ -89,18 +89,31 @@
     );
   }
 
-  function renderLinkControl(label, item, urlKey, onChange) {
-    if (headlessLink.renderLinkControl) {
-      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+  function readItemUrl(item, urlKey) {
+    if (headlessLink.readUrlFromItem) {
+      return headlessLink.readUrlFromItem(item, urlKey);
+    }
+    var raw = String((item && item[urlKey]) || '');
+    return raw === '#' ? '' : raw;
+  }
+
+  function renderUrlSearchField(label, item, urlKey, onChange, instanceKey) {
+    if (headlessLink.renderUrlSearchInput) {
+      return headlessLink.renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, {
+        instanceKey: instanceKey,
+      });
     }
     return el(TextControl, {
       label: label,
-      value: String((item && item[urlKey]) || ''),
+      value: readItemUrl(item, urlKey),
       onChange: function (v) {
         var patch = {};
         patch[urlKey] = String(v || '');
         if (urlKey === 'href') {
           patch.url = patch[urlKey];
+        }
+        if (urlKey === 'url') {
+          patch.href = patch[urlKey];
         }
         onChange(patch);
       },
@@ -113,9 +126,14 @@
     }
     return buttons.map(function (btn, i) {
       var d = DEFAULT_BUTTONS[i] || { label: '', url: '#', textColor: '#22abb5', borderColor: '#22abb5', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#22abb5', hoverBorderColor: '#22abb5', opensInNewTab: false, target: '' };
+      var url = readItemUrl(btn, 'url') || String((btn && btn.url) || d.url);
+      if (url === '#') {
+        url = '';
+      }
       return Object.assign({}, d, {
         label: String((btn && btn.label) || d.label),
-        url: String((btn && btn.url) || d.url),
+        url: url,
+        href: url,
         textColor: String((btn && btn.textColor) || d.textColor),
         borderColor: String((btn && btn.borderColor) || d.borderColor),
         bgColor: String((btn && btn.bgColor) || d.bgColor),
@@ -135,15 +153,33 @@
       return DEFAULT_MENU_ITEMS.map(function (item) { return Object.assign({}, item); });
     }
     return items.map(function (item) {
+      var href = readItemUrl(item, 'href') || String((item && item.href) || '');
+      if (href === '#') {
+        href = '';
+      }
       return {
         label: String((item && item.label) || ''),
-        href: String((item && item.href) || '#'),
+        href: href,
+        url: href,
         opensInNewTab: Boolean(item && (item.opensInNewTab || item.target === '_blank')),
         target: item && item.target ? String(item.target) : (item && item.opensInNewTab ? '_blank' : ''),
         linkId: item && item.linkId ? Number(item.linkId) : 0,
         linkType: item && item.linkType ? String(item.linkType) : '',
       };
     });
+  }
+
+  function mergeLinkPatch(row, patch, urlKey) {
+    var next = Object.assign({}, row, patch);
+    var url = readItemUrl(next, urlKey);
+    next[urlKey] = url;
+    if (urlKey === 'href') {
+      next.url = url;
+    }
+    if (urlKey === 'url') {
+      next.href = url;
+    }
+    return next;
   }
 
   function moveRow(list, index, dir) {
@@ -185,8 +221,9 @@
       var menuItems = normalizeMenuItems(props.attributes.menuItems);
 
       function patchButton(index, patch) {
-        var next = buttons.slice();
-        next[index] = Object.assign({}, next[index], patch);
+        var current = normalizeButtons(props.attributes.buttons);
+        var next = current.slice();
+        next[index] = mergeLinkPatch(next[index], patch, 'url');
         props.setAttributes({ buttons: next });
       }
 
@@ -215,8 +252,9 @@
       }
 
       function patchMenuItem(index, patch) {
-        var next = menuItems.slice();
-        next[index] = Object.assign({}, next[index], patch);
+        var current = normalizeMenuItems(props.attributes.menuItems);
+        var next = current.slice();
+        next[index] = mergeLinkPatch(next[index], patch, 'href');
         props.setAttributes({ menuItems: next });
       }
 
@@ -257,8 +295,8 @@
                 el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
                   el('strong', null, __('Menu item', 'headless-core') + ' ' + (index + 1)),
                   el('div', { style: { display: 'flex', gap: '6px' } },
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ menuItems: moveRow(normalizeMenuItems(props.attributes.menuItems), index, -1) }); } }, '˄'),
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { props.setAttributes({ menuItems: moveRow(normalizeMenuItems(props.attributes.menuItems), index, 1) }); } }, '˅'),
                     el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)
                   )
                 ),
@@ -267,9 +305,9 @@
                   value: item.label,
                   onChange: function (v) { patchMenuItem(index, { label: v }); },
                 }),
-                renderLinkControl(__('Link', 'headless-core'), item, 'href', function (patch) {
+                renderUrlSearchField(__('Link URL', 'headless-core'), item, 'href', function (patch) {
                   patchMenuItem(index, patch);
-                })
+                }, 'page-hero-menu-' + index)
               );
             }),
             el(Button, { variant: 'secondary', onClick: addMenuItem }, '+ ', __('Add menu item', 'headless-core'))
@@ -284,8 +322,8 @@
                 el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
                   el('strong', null, __('Button', 'headless-core') + ' ' + (index + 1)),
                   el('div', { style: { display: 'flex', gap: '6px' } },
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ buttons: moveRow(normalizeButtons(props.attributes.buttons), index, -1) }); } }, '˄'),
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { props.setAttributes({ buttons: moveRow(normalizeButtons(props.attributes.buttons), index, 1) }); } }, '˅'),
                     el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
                   )
                 ),
@@ -294,9 +332,9 @@
                   value: btn.label,
                   onChange: function (v) { patchButton(index, { label: v }); },
                 }),
-                renderLinkControl(__('Link', 'headless-core'), btn, 'url', function (patch) {
+                renderUrlSearchField(__('Link URL', 'headless-core'), btn, 'url', function (patch) {
                   patchButton(index, patch);
-                })
+                }, 'page-hero-button-' + index)
               );
             }),
             el(Button, { variant: 'secondary', onClick: addButton }, '+ ', __('Add button', 'headless-core'))

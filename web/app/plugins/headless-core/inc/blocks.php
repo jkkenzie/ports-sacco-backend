@@ -1770,3 +1770,12 @@ add_action('init', static function (): void {
         },
     ]);
 });
+
+add_action('enqueue_block_editor_assets', static function (): void {
+    wp_enqueue_style(
+        'headless-core-block-editor',
+        HEADLESS_CORE_URL . 'blocks/shared/editor.css',
+        [],
+        HEADLESS_CORE_VERSION
+    );
+});
