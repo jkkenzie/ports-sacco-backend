@@ -1083,11 +1083,8 @@ add_action('init', static function (): void {
             'submitArrowColor' => ['type' => 'string', 'default' => '#ffffff'],
             'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
             'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
-            'mailchimpFormActionUrl' => ['type' => 'string', 'default' => ''],
-            'mailchimpEmailFieldName' => ['type' => 'string', 'default' => 'EMAIL'],
-            'mailchimpBotFieldName' => ['type' => 'string', 'default' => ''],
-            'mailchimpFormTarget' => ['type' => 'string', 'default' => '_self'],
-            'mailchimpHiddenFieldsJson' => ['type' => 'string', 'default' => '[]'],
+            'newsletterListIds' => ['type' => 'string', 'default' => ''],
+            'newsletterFormId' => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => static function (): string {
             return '';

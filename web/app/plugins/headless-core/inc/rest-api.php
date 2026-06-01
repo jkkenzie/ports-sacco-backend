@@ -3229,19 +3229,12 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
         }
 
-        $action = isset($attrs['mailchimpFormActionUrl']) ? trim((string) $attrs['mailchimpFormActionUrl']) : '';
-        $attrs['mailchimpFormActionUrl'] = $action !== '' ? esc_url_raw($action) : '';
-        $attrs['mailchimpEmailFieldName'] = isset($attrs['mailchimpEmailFieldName']) ? sanitize_key((string) $attrs['mailchimpEmailFieldName']) : 'EMAIL';
-        if ($attrs['mailchimpEmailFieldName'] === '') {
-            $attrs['mailchimpEmailFieldName'] = 'EMAIL';
-        }
-        $attrs['mailchimpBotFieldName'] = isset($attrs['mailchimpBotFieldName']) ? sanitize_key((string) $attrs['mailchimpBotFieldName']) : '';
-        $target = isset($attrs['mailchimpFormTarget']) ? trim((string) $attrs['mailchimpFormTarget']) : '_self';
-        $attrs['mailchimpFormTarget'] = in_array($target, ['_self', '_blank'], true) ? $target : '_self';
-
-        $hiddenJson = isset($attrs['mailchimpHiddenFieldsJson']) ? (string) $attrs['mailchimpHiddenFieldsJson'] : '[]';
-        $decoded = json_decode($hiddenJson, true);
-        $attrs['mailchimpHiddenFieldsJson'] = is_array($decoded) ? wp_json_encode($decoded) : '[]';
+        $attrs['newsletterListIds'] = isset($attrs['newsletterListIds'])
+            ? preg_replace('/[^0-9,\s;]/', '', (string) $attrs['newsletterListIds'])
+            : '';
+        $attrs['newsletterFormId'] = isset($attrs['newsletterFormId'])
+            ? sanitize_key((string) $attrs['newsletterFormId'])
+            : '';
 
         return $attrs;
     }

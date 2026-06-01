@@ -22,6 +22,7 @@ require_once HEADLESS_CORE_PATH . 'inc/cache.php';
 require_once HEADLESS_CORE_PATH . 'inc/cors.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-nonce.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-api.php';
+require_once HEADLESS_CORE_PATH . 'inc/newsletter-subscribe.php';
 require_once HEADLESS_CORE_PATH . 'inc/migration.php';
 require_once HEADLESS_CORE_PATH . 'inc/blocks.php';
 require_once HEADLESS_CORE_PATH . 'inc/footer.php';
