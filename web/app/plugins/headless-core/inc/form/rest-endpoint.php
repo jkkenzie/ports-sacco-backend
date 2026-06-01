@@ -11,51 +11,14 @@ require_once HEADLESS_CORE_PATH . 'inc/form/register-cpt.php';
 require_once HEADLESS_CORE_PATH . 'inc/form/submission-storage.php';
 
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/nonce', [
-        'methods' => WP_REST_Server::READABLE,
-        'callback' => 'ports_form_rest_nonce',
-        'permission_callback' => '__return_true',
-    ]);
-
     register_rest_route('custom/v1', '/submit-form', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'ports_form_rest_submit',
-        'permission_callback' => 'ports_form_rest_submit_permission',
+        'permission_callback' => 'headless_core_rest_verify_nonce_permission',
     ]);
 });
 
 // CORS for form routes is handled by headless_core_maybe_send_cors_headers in inc/cors.php.
-
-/**
- * @return WP_REST_Response
- */
-function ports_form_rest_nonce(): WP_REST_Response
-{
-    return new WP_REST_Response([
-        'nonce' => wp_create_nonce('wp_rest'),
-    ], 200);
-}
-
-/**
- * @return true|WP_Error
- */
-function ports_form_rest_submit_permission(WP_REST_Request $request)
-{
-    $nonce = $request->get_header('X-WP-Nonce');
-    if (! is_string($nonce) || $nonce === '') {
-        $nonce = (string) $request->get_param('_wpnonce');
-    }
-
-    if ($nonce === '' || ! wp_verify_nonce($nonce, 'wp_rest')) {
-        return new WP_Error(
-            'rest_cookie_invalid_nonce',
-            __('Invalid or missing nonce.', 'headless-core'),
-            ['status' => 403]
-        );
-    }
-
-    return true;
-}
 
 /**
  * @return WP_REST_Response|WP_Error

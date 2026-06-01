@@ -192,7 +192,7 @@ add_action('rest_api_init', static function (): void {
     register_rest_route('custom/v1', '/contact', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'headless_core_rest_contact_submit',
-        'permission_callback' => '__return_true',
+        'permission_callback' => 'headless_core_rest_verify_nonce_permission',
         'args' => [
             'name' => ['required' => true, 'type' => 'string'],
             'email' => ['required' => true, 'type' => 'string'],
