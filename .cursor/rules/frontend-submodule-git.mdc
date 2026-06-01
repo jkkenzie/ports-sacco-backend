@@ -1,0 +1,45 @@
+---
+description: Git workflow for web/frontend submodule vs Bedrock parent repo
+alwaysApply: true
+---
+
+# Frontend submodule git workflow
+
+This Bedrock repo (`site/`) tracks `web/frontend` as a **git submodule**. Never commit frontend source files from the parent repo.
+
+## 1. Frontend changes (submodule only)
+
+All React/Vite work lives in `web/frontend`. Commit and push there first:
+
+```bash
+cd web/frontend
+git add .
+git commit -m "Descriptive message"
+git push
+```
+
+- Do **not** add `web/frontend/src/**` (or other frontend paths) in the Bedrock root commit.
+- Finish and push the submodule commit before updating the parent pointer.
+
+## 2. Bedrock pointer (parent repo only)
+
+After the submodule is pushed, record the new SHA in Bedrock:
+
+```bash
+cd ../..   # repo root (from web/frontend)
+git add web/frontend
+git commit -m "Update frontend submodule reference"
+git push
+```
+
+The parent commit should only change the `web/frontend` submodule entry (plus any separate Bedrock/PHP changes in their own commits).
+
+## When the user asks to commit
+
+1. Commit in `web/frontend` with a message that describes the frontend work.
+2. If they want the full deploy workflow (or said “push”), push the submodule, then update and push the parent pointer.
+3. Keep PHP/plugin (`web/app/plugins/headless-core/`, `composer.json`, etc.) commits in the Bedrock repo separate from frontend source commits.
+
+## Dirty submodule warning
+
+If `git status` at the repo root shows `m web/frontend`, there are uncommitted changes inside the submodule. Commit (or discard) them in `web/frontend` before relying on a clean submodule reference.
