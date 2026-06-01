@@ -16,9 +16,10 @@ if (! defined('ABSPATH')) {
 
 define('HEADLESS_CORE_PATH', plugin_dir_path(__FILE__));
 define('HEADLESS_CORE_URL', plugin_dir_url(__FILE__));
-define('HEADLESS_CORE_VERSION', '1.0.56');
+define('HEADLESS_CORE_VERSION', '1.0.67');
 
 require_once HEADLESS_CORE_PATH . 'inc/cache.php';
+require_once HEADLESS_CORE_PATH . 'inc/cors.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-api.php';
 require_once HEADLESS_CORE_PATH . 'inc/migration.php';
 require_once HEADLESS_CORE_PATH . 'inc/blocks.php';
@@ -28,6 +29,14 @@ require_once HEADLESS_CORE_PATH . 'inc/team.php';
 require_once HEADLESS_CORE_PATH . 'inc/admin.php';
 require_once HEADLESS_CORE_PATH . 'inc/upload-mimes.php';
 require_once HEADLESS_CORE_PATH . 'inc/post-types.php';
+require_once HEADLESS_CORE_PATH . 'inc/form/form-spec.php';
+require_once HEADLESS_CORE_PATH . 'inc/form/settings.php';
+require_once HEADLESS_CORE_PATH . 'inc/form/submission-storage.php';
+require_once HEADLESS_CORE_PATH . 'inc/form/register-cpt.php';
+require_once HEADLESS_CORE_PATH . 'inc/form/admin-submission.php';
+require_once HEADLESS_CORE_PATH . 'inc/form/email-notifications.php';
+require_once HEADLESS_CORE_PATH . 'inc/form/rest-endpoint.php';
+require_once HEADLESS_CORE_PATH . 'inc/mailhog.php';
 require_once HEADLESS_CORE_PATH . 'inc/wxr-import.php';
 
 add_action('after_setup_theme', static function (): void {
@@ -36,6 +45,13 @@ add_action('after_setup_theme', static function (): void {
         'topbar_member_login' => __('Top Bar Member Login Menu', 'headless-core'),
     ]);
 });
+
+add_action('init', static function (): void {
+    if (get_option('headless_core_page_content_v1') !== '1') {
+        headless_core_seed_page_block_content();
+    }
+    headless_core_seed_page_block_content_v2();
+}, 20);
 
 register_activation_hook(__FILE__, 'headless_core_on_activation');
 

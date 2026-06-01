@@ -12,6 +12,22 @@
   var ColorPalette = components.ColorPalette;
   var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
+
+  function renderUrlField(label, item, urlKey, onChange) {
+    if (headlessLink.renderLinkControl) {
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+    }
+    return el(TextControl, {
+      label: label,
+      value: String((item && item[urlKey]) || ''),
+      onChange: function (v) {
+        var patch = {};
+        patch[urlKey] = String(v || '');
+        onChange(patch);
+      },
+    });
+  }
 
   var DEFAULT_CARDS = [
     {
@@ -229,23 +245,13 @@
             },
           }),
           c.ctaMode === 'link'
-            ? el(TextControl, {
-                label: __('Link URL', 'headless-core'),
-                value: c.ctaUrl || '',
-                onChange: function (v) {
-                  setCards(patchCard(cards, index, { ctaUrl: v }));
-                },
-                help: __('Leave empty for a non-clickable label.', 'headless-core'),
+            ? renderUrlField(__('Link URL', 'headless-core'), c, 'ctaUrl', function (patch) {
+                setCards(patchCard(cards, index, patch));
               })
             : null,
           c.ctaMode === 'whatsapp'
-            ? el(TextControl, {
-                label: __('WhatsApp link URL', 'headless-core'),
-                value: c.whatsappUrl || '',
-                onChange: function (v) {
-                  setCards(patchCard(cards, index, { whatsappUrl: v }));
-                },
-                help: __('Full https://wa.me/… or https://api.whatsapp.com/… URL.', 'headless-core'),
+            ? renderUrlField(__('WhatsApp link URL', 'headless-core'), c, 'whatsappUrl', function (patch) {
+                setCards(patchCard(cards, index, patch));
               })
             : null
         );

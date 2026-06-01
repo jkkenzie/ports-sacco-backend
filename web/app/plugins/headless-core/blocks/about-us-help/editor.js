@@ -11,6 +11,22 @@
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
+
+  function renderUrlField(label, item, urlKey, onChange) {
+    if (headlessLink.renderLinkControl) {
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+    }
+    return el(TextControl, {
+      label: label,
+      value: String((item && item[urlKey]) || ''),
+      onChange: function (v) {
+        var patch = {};
+        patch[urlKey] = String(v || '');
+        onChange(patch);
+      },
+    });
+  }
   var trashSvg = el(
     'svg',
     { viewBox: '0 0 24 24', width: '16', height: '16', style: { display: 'block' }, fill: 'currentColor' },
@@ -281,12 +297,7 @@
                     imageChooser(item, index, 'linkSvg')
                   )
               ,
-              el(TextControl, {
-                label: __('Link URL', 'headless-core'),
-                value: item.linkUrl || '',
-                onChange: function (v) { patchItem(index, { linkUrl: String(v || '') }); },
-                placeholder: __('https://example.com or /path', 'headless-core'),
-              })
+              renderUrlField(__('Link URL', 'headless-core'), item, 'linkUrl', function (patch) { patchItem(index, patch); })
             );
           })
         ),

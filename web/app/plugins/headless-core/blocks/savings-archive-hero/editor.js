@@ -6,6 +6,7 @@
   var RichText = blockEditor.RichText;
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
+  var headlessLink = window.headlessCoreEditor || {};
   var PanelBody = components.PanelBody;
   var Button = components.Button;
   var BaseControl = components.BaseControl;
@@ -20,23 +21,99 @@
   );
 
   var DEFAULT_BUTTONS = [
-    { label: 'GET A CALL BACK', url: '#', textColor: '#22abb5', borderColor: '#22abb5', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#22abb5', hoverBorderColor: '#22abb5' },
-    { label: 'JOIN PORTS SACCO', url: '/contact-us', textColor: '#ed6e2a', borderColor: '#ed6e2a', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#ed6e2a', hoverBorderColor: '#ed6e2a' }
+    { label: 'GET A CALL BACK', url: '#', textColor: '#22abb5', borderColor: '#22abb5', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#22abb5', hoverBorderColor: '#22abb5', opensInNewTab: false, target: '' },
+    { label: 'JOIN PORTS SACCO', url: '/contact-us', textColor: '#ed6e2a', borderColor: '#ed6e2a', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#ed6e2a', hoverBorderColor: '#ed6e2a', opensInNewTab: false, target: '' }
   ];
   var DEFAULT_MENU_ITEMS = [
-    { label: 'GROUP', href: '#' },
-    { label: 'BIASHARA', href: '#' },
-    { label: 'FIXED DEPOSIT', href: '#' }
+    { label: 'GROUP', href: '#', opensInNewTab: false, target: '', linkId: 0, linkType: '' },
+    { label: 'BIASHARA', href: '#', opensInNewTab: false, target: '', linkId: 0, linkType: '' },
+    { label: 'FIXED DEPOSIT', href: '#', opensInNewTab: false, target: '', linkId: 0, linkType: '' }
   ];
   var COLOR_CHOICES = ['#40c9bf', '#22abb5', '#ed6e2a', '#ffffff', '#000000', '#65605f', '#c8cee3', '#90D4D3'];
+
+  var BANNER_POSITION_X_OPTIONS = [
+    { label: __('Left', 'headless-core'), value: 'left' },
+    { label: __('Center', 'headless-core'), value: 'center' },
+    { label: __('Right', 'headless-core'), value: 'right' },
+    { label: __('0%', 'headless-core'), value: '0%' },
+    { label: __('25%', 'headless-core'), value: '25%' },
+    { label: __('50%', 'headless-core'), value: '50%' },
+    { label: __('75%', 'headless-core'), value: '75%' },
+    { label: __('100%', 'headless-core'), value: '100%' },
+  ];
+
+  var BANNER_POSITION_Y_OPTIONS = [
+    { label: __('Top', 'headless-core'), value: 'top' },
+    { label: __('Center', 'headless-core'), value: 'center' },
+    { label: __('Bottom', 'headless-core'), value: 'bottom' },
+    { label: __('0%', 'headless-core'), value: '0%' },
+    { label: __('25%', 'headless-core'), value: '25%' },
+    { label: __('50%', 'headless-core'), value: '50%' },
+    { label: __('75%', 'headless-core'), value: '75%' },
+    { label: __('100%', 'headless-core'), value: '100%' },
+  ];
+
+  function bannerPositionValue(value, fallback) {
+    var raw = String(value || '').trim();
+    return raw !== '' ? raw : fallback;
+  }
+
+  function bannerPositionListId(label) {
+    return 'banner-pos-' + String(label || 'field').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+  }
+
+  function renderBannerPositionControl(label, value, options, fallback, onChange) {
+    var current = bannerPositionValue(value, fallback);
+    var help = __('Choose a preset or type a custom CSS value (e.g. 20px, 15%).', 'headless-core');
+    var listId = bannerPositionListId(label);
+
+    return el(
+      'div',
+      null,
+      el(TextControl, {
+        label: label,
+        value: current,
+        list: listId,
+        onChange: function (v) {
+          onChange(bannerPositionValue(v, fallback));
+        },
+        help: help,
+      }),
+      el(
+        'datalist',
+        { id: listId },
+        options.map(function (opt) {
+          return el('option', { key: opt.value, value: opt.value }, opt.label);
+        })
+      )
+    );
+  }
+
+  function renderLinkControl(label, item, urlKey, onChange) {
+    if (headlessLink.renderLinkControl) {
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+    }
+    return el(TextControl, {
+      label: label,
+      value: String((item && item[urlKey]) || ''),
+      onChange: function (v) {
+        var patch = {};
+        patch[urlKey] = String(v || '');
+        if (urlKey === 'href') {
+          patch.url = patch[urlKey];
+        }
+        onChange(patch);
+      },
+    });
+  }
 
   function normalizeButtons(buttons) {
     if (!Array.isArray(buttons) || !buttons.length) {
       return DEFAULT_BUTTONS.map(function (btn) { return Object.assign({}, btn); });
     }
     return buttons.map(function (btn, i) {
-      var d = DEFAULT_BUTTONS[i] || { label: '', url: '#', textColor: '#22abb5', borderColor: '#22abb5', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#22abb5', hoverBorderColor: '#22abb5' };
-      return {
+      var d = DEFAULT_BUTTONS[i] || { label: '', url: '#', textColor: '#22abb5', borderColor: '#22abb5', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#22abb5', hoverBorderColor: '#22abb5', opensInNewTab: false, target: '' };
+      return Object.assign({}, d, {
         label: String((btn && btn.label) || d.label),
         url: String((btn && btn.url) || d.url),
         textColor: String((btn && btn.textColor) || d.textColor),
@@ -44,20 +121,27 @@
         bgColor: String((btn && btn.bgColor) || d.bgColor),
         hoverTextColor: String((btn && btn.hoverTextColor) || d.hoverTextColor),
         hoverBgColor: String((btn && btn.hoverBgColor) || d.hoverBgColor),
-        hoverBorderColor: String((btn && btn.hoverBorderColor) || d.hoverBorderColor)
-      };
+        hoverBorderColor: String((btn && btn.hoverBorderColor) || d.hoverBorderColor),
+        opensInNewTab: Boolean(btn && (btn.opensInNewTab || btn.target === '_blank')),
+        target: btn && btn.target ? String(btn.target) : (btn && btn.opensInNewTab ? '_blank' : ''),
+        linkId: btn && btn.linkId ? Number(btn.linkId) : 0,
+        linkType: btn && btn.linkType ? String(btn.linkType) : '',
+      });
     });
   }
 
   function normalizeMenuItems(items) {
-    if (!Array.isArray(items) || !items.length) {
+    if (!Array.isArray(items)) {
       return DEFAULT_MENU_ITEMS.map(function (item) { return Object.assign({}, item); });
     }
-    return items.map(function (item, i) {
-      var d = DEFAULT_MENU_ITEMS[i] || { label: '', href: '#' };
+    return items.map(function (item) {
       return {
-        label: String((item && item.label) || d.label),
-        href: String((item && item.href) || d.href)
+        label: String((item && item.label) || ''),
+        href: String((item && item.href) || '#'),
+        opensInNewTab: Boolean(item && (item.opensInNewTab || item.target === '_blank')),
+        target: item && item.target ? String(item.target) : (item && item.opensInNewTab ? '_blank' : ''),
+        linkId: item && item.linkId ? Number(item.linkId) : 0,
+        linkType: item && item.linkType ? String(item.linkType) : '',
       };
     });
   }
@@ -74,10 +158,10 @@
 
   registerBlockType('custom/savings-archive-hero', {
     apiVersion: 3,
-    title: __('Savings Archive Hero', 'headless-core'),
+    title: __('Page Hero Content', 'headless-core'),
     icon: 'cover-image',
     category: 'widgets',
-    description: __('Hero section for the savings products archive page.', 'headless-core'),
+    description: __('Page hero with title, banner, CTA buttons, and a flexible sub-navigation menu.', 'headless-core'),
     attributes: {
       title: { type: 'string', default: 'Savings Products' },
       intro: { type: 'string', default: '' },
@@ -96,7 +180,7 @@
       menuItems: { type: 'array', default: DEFAULT_MENU_ITEMS }
     },
     edit: function (props) {
-      var blockProps = useBlockProps({ className: 'headless-savings-archive-hero-block' });
+      var blockProps = useBlockProps({ className: 'headless-page-hero-content-block' });
       var buttons = normalizeButtons(props.attributes.buttons);
       var menuItems = normalizeMenuItems(props.attributes.menuItems);
 
@@ -107,12 +191,27 @@
       }
 
       function addButton() {
-        props.setAttributes({ buttons: buttons.concat([{ label: '', url: '#', textColor: '#22abb5', borderColor: '#22abb5', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#22abb5', hoverBorderColor: '#22abb5' }]) });
+        props.setAttributes({
+          buttons: buttons.concat([{
+            label: '',
+            url: '#',
+            textColor: '#22abb5',
+            borderColor: '#22abb5',
+            bgColor: '#ffffff',
+            hoverTextColor: '#ffffff',
+            hoverBgColor: '#22abb5',
+            hoverBorderColor: '#22abb5',
+            opensInNewTab: false,
+            target: '',
+            linkId: 0,
+            linkType: '',
+          }]),
+        });
       }
 
       function removeButton(index) {
         var next = buttons.filter(function (_, i) { return i !== index; });
-        props.setAttributes({ buttons: next.length ? next : normalizeButtons([]) });
+        props.setAttributes({ buttons: next });
       }
 
       function patchMenuItem(index, patch) {
@@ -122,12 +221,21 @@
       }
 
       function addMenuItem() {
-        props.setAttributes({ menuItems: menuItems.concat([{ label: '', href: '#' }]) });
+        props.setAttributes({
+          menuItems: menuItems.concat([{
+            label: '',
+            href: '#',
+            opensInNewTab: false,
+            target: '',
+            linkId: 0,
+            linkType: '',
+          }]),
+        });
       }
 
       function removeMenuItem(index) {
         var next = menuItems.filter(function (_, i) { return i !== index; });
-        props.setAttributes({ menuItems: next.length ? next : normalizeMenuItems([]) });
+        props.setAttributes({ menuItems: next });
       }
 
       return el(
@@ -136,6 +244,63 @@
         el(
           InspectorControls,
           null,
+          el(
+            PanelBody,
+            { title: __('Menu items', 'headless-core'), initialOpen: true },
+            menuItems.length === 0
+              ? el('p', { style: { color: '#666', marginTop: 0 } }, __('No menu items yet. Add links for the sub-navigation row.', 'headless-core'))
+              : null,
+            menuItems.map(function (item, index) {
+              return el(
+                'div',
+                { key: 'menu-inspector-' + index, style: { border: '1px solid #eee', padding: '10px', marginBottom: '10px', borderRadius: '8px' } },
+                el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
+                  el('strong', null, __('Menu item', 'headless-core') + ' ' + (index + 1)),
+                  el('div', { style: { display: 'flex', gap: '6px' } },
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
+                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)
+                  )
+                ),
+                el(TextControl, {
+                  label: __('Label', 'headless-core'),
+                  value: item.label,
+                  onChange: function (v) { patchMenuItem(index, { label: v }); },
+                }),
+                renderLinkControl(__('Link', 'headless-core'), item, 'href', function (patch) {
+                  patchMenuItem(index, patch);
+                })
+              );
+            }),
+            el(Button, { variant: 'secondary', onClick: addMenuItem }, '+ ', __('Add menu item', 'headless-core'))
+          ),
+          el(
+            PanelBody,
+            { title: __('Buttons', 'headless-core'), initialOpen: false },
+            buttons.map(function (btn, index) {
+              return el(
+                'div',
+                { key: 'btn-inspector-' + index, style: { border: '1px solid #eee', padding: '10px', marginBottom: '10px', borderRadius: '8px' } },
+                el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
+                  el('strong', null, __('Button', 'headless-core') + ' ' + (index + 1)),
+                  el('div', { style: { display: 'flex', gap: '6px' } },
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
+                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
+                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
+                  )
+                ),
+                el(TextControl, {
+                  label: __('Label', 'headless-core'),
+                  value: btn.label,
+                  onChange: function (v) { patchButton(index, { label: v }); },
+                }),
+                renderLinkControl(__('Link', 'headless-core'), btn, 'url', function (patch) {
+                  patchButton(index, patch);
+                })
+              );
+            }),
+            el(Button, { variant: 'secondary', onClick: addButton }, '+ ', __('Add button', 'headless-core'))
+          ),
           el(
             PanelBody,
             { title: __('Colors', 'headless-core'), initialOpen: false },
@@ -187,7 +352,7 @@
           'div',
           { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' } },
           el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
-            el('h3', { style: { margin: 0, marginBottom: '10px' } }, __('Hero content', 'headless-core')),
+            el('h3', { style: { margin: 0, marginBottom: '10px' } }, __('Page Hero Content', 'headless-core')),
             el(TextControl, { label: __('Title', 'headless-core'), value: props.attributes.title, onChange: function (v) { props.setAttributes({ title: v }); } }),
             el(TextareaControl, { label: __('Intro Text', 'headless-core'), value: props.attributes.intro, onChange: function (v) { props.setAttributes({ intro: v }); } }),
             el('div', { style: { marginTop: '8px' } },
@@ -197,18 +362,20 @@
                 : null,
               props.attributes.bannerImageUrl
                 ? el('div', { style: { marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' } },
-                    el(TextControl, {
-                      label: __('Banner image position X', 'headless-core'),
-                      help: __('Examples: left, center, right, 50%, 20px', 'headless-core'),
-                      value: props.attributes.bannerImagePositionX || 'center',
-                      onChange: function (v) { props.setAttributes({ bannerImagePositionX: v || 'center' }); }
-                    }),
-                    el(TextControl, {
-                      label: __('Banner image position Y', 'headless-core'),
-                      help: __('Examples: top, center, bottom, 50%, 20px', 'headless-core'),
-                      value: props.attributes.bannerImagePositionY || 'bottom',
-                      onChange: function (v) { props.setAttributes({ bannerImagePositionY: v || 'bottom' }); }
-                    })
+                    renderBannerPositionControl(
+                      __('Banner image position X', 'headless-core'),
+                      props.attributes.bannerImagePositionX,
+                      BANNER_POSITION_X_OPTIONS,
+                      'center',
+                      function (v) { props.setAttributes({ bannerImagePositionX: v }); }
+                    ),
+                    renderBannerPositionControl(
+                      __('Banner image position Y', 'headless-core'),
+                      props.attributes.bannerImagePositionY,
+                      BANNER_POSITION_Y_OPTIONS,
+                      'bottom',
+                      function (v) { props.setAttributes({ bannerImagePositionY: v }); }
+                    )
                   )
                 : null,
               el('div', { style: { marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' } },
@@ -229,54 +396,19 @@
                   : null
               )
             ),
-
-            el('hr', { style: { margin: '18px 0' } }),
-            el('strong', null, __('Buttons', 'headless-core')),
-            buttons.map(function (btn, index) {
-              return el(
-                'div',
-                { key: 'btn-inline-' + index, style: { border: '1px solid #eee', padding: '10px', margin: '10px 0', borderRadius: '8px' } },
-                el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
-                  el('span', null, __('Button', 'headless-core') + ' ' + (index + 1)),
-                  el('div', { style: { display: 'flex', gap: '6px' } },
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
-                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
-                  )
-                ),
-                el(RichText, { tagName: 'p', value: btn.label, onChange: function (v) { patchButton(index, { label: v }); }, placeholder: __('Button label...', 'headless-core'), allowedFormats: [] }),
-                el(TextControl, { label: __('Button Link', 'headless-core'), value: btn.url, onChange: function (v) { patchButton(index, { url: v }); } })
-              );
-            }),
-            el(Button, { variant: 'primary', onClick: addButton }, '+ ', __('Add Button', 'headless-core')),
-
-            el('hr', { style: { margin: '18px 0' } }),
-            el('strong', null, __('Menu Items', 'headless-core')),
-            menuItems.map(function (item, index) {
-              return el(
-                'div',
-                { key: 'menu-inline-' + index, style: { border: '1px solid #eee', padding: '10px', margin: '10px 0', borderRadius: '8px' } },
-                el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
-                  el('span', null, __('Menu Item', 'headless-core') + ' ' + (index + 1)),
-                  el('div', { style: { display: 'flex', gap: '6px' } },
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
-                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)
-                  )
-                ),
-                el(TextControl, { label: __('Menu Label', 'headless-core'), value: item.label, onChange: function (v) { patchMenuItem(index, { label: v }); } }),
-                el(TextControl, { label: __('Menu Link', 'headless-core'), value: item.href, onChange: function (v) { patchMenuItem(index, { href: v }); } })
-              );
-            }),
-            el(Button, { variant: 'primary', onClick: addMenuItem }, '+ ', __('Add Menu Item', 'headless-core'))
+            el('p', { style: { marginTop: '16px', fontSize: '13px', color: '#555' } },
+              __('Buttons:', 'headless-core') + ' ' + buttons.length + ' | ' + __('Menu items:', 'headless-core') + ' ' + menuItems.length + '. ' + __('Edit in the sidebar panels.', 'headless-core')
+            )
           )
         ),
         el(
           'div',
-          { style: { padding: '1rem', border: '1px dashed #ccc', borderRadius: '4px' } },
-          el('strong', null, props.attributes.title || __('Savings Products', 'headless-core')),
-          el('p', { style: { marginTop: '8px' } }, props.attributes.intro || __('Archive intro text', 'headless-core')),
-          el('p', { style: { marginTop: '8px' } }, __('Buttons:', 'headless-core') + ' ' + buttons.length + ' | ' + __('Menu items:', 'headless-core') + ' ' + menuItems.length),
+          { style: { padding: '1rem', border: '1px dashed #ccc', borderRadius: '4px', marginTop: '8px' } },
+          el('strong', null, props.attributes.title || __('Page Hero', 'headless-core')),
+          props.attributes.intro ? el('p', { style: { marginTop: '8px' } }, props.attributes.intro) : null,
+          menuItems.length > 0
+            ? el('p', { style: { marginTop: '8px', fontSize: '12px' } }, menuItems.map(function (m) { return m.label; }).filter(Boolean).join(' · '))
+            : null,
           el('p', { style: { marginTop: '8px', fontSize: '12px', color: '#555' } }, __('Rendered by React frontend.', 'headless-core'))
         )
       );
