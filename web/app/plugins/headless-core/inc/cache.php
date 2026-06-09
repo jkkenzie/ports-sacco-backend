@@ -142,12 +142,57 @@ function headless_core_bump_menu_cache_version(): void
 }
 
 /**
+ * Whether API response transients should be used (page/menu/product lists).
+ * Disabled in development and when HEADLESS_API_NO_CACHE is set.
+ */
+function headless_core_api_cache_enabled(): bool
+{
+    if (! headless_core_transients_enabled()) {
+        return false;
+    }
+
+    $noCache = getenv('HEADLESS_API_NO_CACHE');
+    if ($noCache === '1' || $noCache === 'true' || $noCache === 'yes') {
+        return false;
+    }
+
+    if (defined('WP_ENV') && WP_ENV === 'development') {
+        return false;
+    }
+
+    return true;
+}
+
+/**
  * @return void
  */
 function headless_core_bump_page_cache_version(): void
 {
     $v = (int) get_option('headless_page_cache_ver', 1);
     update_option('headless_page_cache_ver', $v + 1, false);
+}
+
+/**
+ * Invalidate page API cache after a page is saved (late hook so post_content is written).
+ *
+ * @return void
+ */
+function headless_core_on_page_saved(int $postId): void
+{
+    if ($postId <= 0 || wp_is_post_revision($postId) || wp_is_post_autosave($postId)) {
+        return;
+    }
+
+    $post = get_post($postId);
+    if (! $post instanceof WP_Post || $post->post_type !== 'page') {
+        return;
+    }
+
+    if ($post->post_status === 'auto-draft') {
+        return;
+    }
+
+    headless_core_bump_page_cache_version();
 }
 
 /**
@@ -195,12 +240,17 @@ function headless_core_bump_team_members_cache_version(): void
     update_option('headless_team_members_cache_ver', $v + 1, false);
 }
 
-add_action('save_post_page', static function (int $postId, WP_Post $post, bool $update): void {
-    if (wp_is_post_revision($postId) || $post->post_status === 'auto-draft') {
-        return;
+add_action('save_post_page', 'headless_core_on_page_saved', PHP_INT_MAX, 1);
+
+add_action('wp_after_insert_post', static function (int $postId, WP_Post $post, bool $update): void {
+    if ($post->post_type === 'page') {
+        headless_core_on_page_saved($postId);
     }
-    headless_core_bump_page_cache_version();
-}, 10, 3);
+}, 100, 3);
+
+add_action('rest_after_insert_page', static function (WP_Post $post): void {
+    headless_core_on_page_saved((int) $post->ID);
+}, 10, 1);
 
 add_action('wp_update_nav_menu', static function (): void {
     headless_core_bump_menu_cache_version();

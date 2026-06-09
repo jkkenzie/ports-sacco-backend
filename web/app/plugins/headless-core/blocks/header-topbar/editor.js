@@ -9,7 +9,24 @@
   var TextControl = components.TextControl;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
+  var RangeControl = components.RangeControl;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
+
+  function renderUrlField(label, item, urlKey, onChange) {
+    if (headlessLink.renderLinkControl) {
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+    }
+    return el(TextControl, {
+      label: label,
+      value: String((item && item[urlKey]) || ''),
+      onChange: function (v) {
+        var patch = {};
+        patch[urlKey] = String(v || '');
+        onChange(patch);
+      },
+    });
+  }
 
   registerBlockType('custom/header-topbar', {
     apiVersion: 3,
@@ -20,8 +37,15 @@
     attributes: {
       enabled: { type: 'boolean', default: true },
       bgColor: { type: 'string', default: '#1BB5B5' },
+      bgOpacity: { type: 'number', default: 100 },
       textColor: { type: 'string', default: '#ffffff' },
       hoverColor: { type: 'string', default: '#ee6e2a' },
+      fontSize: { type: 'number', default: 10 },
+      menuLinkColor: { type: 'string', default: '#ffffff' },
+      menuLinkHoverColor: { type: 'string', default: '#ee6e2a' },
+      dropdownBgColor: { type: 'string', default: 'rgba(255,255,255,0.92)' },
+      dropdownItemColor: { type: 'string', default: '#4b5563' },
+      dropdownItemHoverColor: { type: 'string', default: '#ee6e2a' },
       links: { type: 'array', default: [] },
       locationItems: { type: 'array', default: [] },
       phoneText: { type: 'string', default: 'CALL US: +254 111 173 000' },
@@ -102,16 +126,46 @@
             }),
             el(BaseControl, { label: __('Background', 'headless-core') }),
             el(ColorPalette, { value: a.bgColor, colors: palette(), onChange: function (c) { props.setAttributes({ bgColor: c || '#1BB5B5' }); } }),
+            el(RangeControl, {
+              label: __('Background opacity (%)', 'headless-core'),
+              value: typeof a.bgOpacity === 'number' ? a.bgOpacity : 100,
+              min: 0,
+              max: 100,
+              step: 1,
+              onChange: function (v) { props.setAttributes({ bgOpacity: typeof v === 'number' ? v : 100 }); },
+            }),
             el(BaseControl, { label: __('Text', 'headless-core') }),
             el(ColorPalette, { value: a.textColor, colors: palette(), onChange: function (c) { props.setAttributes({ textColor: c || '#ffffff' }); } }),
             el(BaseControl, { label: __('Hover', 'headless-core') }),
-            el(ColorPalette, { value: a.hoverColor, colors: palette(), onChange: function (c) { props.setAttributes({ hoverColor: c || '#ee6e2a' }); } })
+            el(ColorPalette, { value: a.hoverColor, colors: palette(), onChange: function (c) { props.setAttributes({ hoverColor: c || '#ee6e2a' }); } }),
+            el(BaseControl, { label: __('Top bar menu link color', 'headless-core') }),
+            el(ColorPalette, { value: a.menuLinkColor, colors: palette(), onChange: function (c) { props.setAttributes({ menuLinkColor: c || '#ffffff' }); } }),
+            el(BaseControl, { label: __('Top bar menu link hover', 'headless-core') }),
+            el(ColorPalette, { value: a.menuLinkHoverColor, colors: palette(), onChange: function (c) { props.setAttributes({ menuLinkHoverColor: c || '#ee6e2a' }); } }),
+            el(TextControl, {
+              label: __('Dropdown background color', 'headless-core'),
+              value: a.dropdownBgColor || 'rgba(255,255,255,0.92)',
+              onChange: function (v) { props.setAttributes({ dropdownBgColor: String(v || '').trim() || 'rgba(255,255,255,0.92)' }); },
+              help: __('Use hex or rgba, e.g. rgba(255,255,255,0.92)', 'headless-core'),
+            }),
+            el(BaseControl, { label: __('Dropdown item text color', 'headless-core') }),
+            el(ColorPalette, { value: a.dropdownItemColor, colors: palette(), onChange: function (c) { props.setAttributes({ dropdownItemColor: c || '#4b5563' }); } }),
+            el(BaseControl, { label: __('Dropdown item hover color', 'headless-core') }),
+            el(ColorPalette, { value: a.dropdownItemHoverColor, colors: palette(), onChange: function (c) { props.setAttributes({ dropdownItemHoverColor: c || '#ee6e2a' }); } }),
+            el(RangeControl, {
+              label: __('Font size (px)', 'headless-core'),
+              value: typeof a.fontSize === 'number' ? a.fontSize : 10,
+              min: 8,
+              max: 18,
+              step: 1,
+              onChange: function (v) { props.setAttributes({ fontSize: typeof v === 'number' ? v : 10 }); },
+            })
           )
         ),
         el(
           'div',
-          { style: { padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb', background: a.bgColor || '#1BB5B5', color: a.textColor || '#fff', opacity: a.enabled === false ? 0.55 : 1 } },
-          el('div', { style: { display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', fontWeight: 900, fontSize: '10px' } },
+          { style: { padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb', background: a.bgColor || '#1BB5B5', color: a.textColor || '#fff', opacity: a.enabled === false ? 0.55 : ((typeof a.bgOpacity === 'number' ? a.bgOpacity : 100) / 100) } },
+          el('div', { style: { display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', fontWeight: 900, fontSize: String(typeof a.fontSize === 'number' ? a.fontSize : 10) + 'px' } },
             el('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } },
               links.map(function (row, i) {
                 return el('span', { key: 'hdr-link-prev-' + i, style: { textDecoration: 'underline' } }, row.label || '');
@@ -131,16 +185,20 @@
               'div',
               { key: 'hdr-loc-' + i, style: { marginBottom: '10px', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px' } },
               el(TextControl, { label: __('Label', 'headless-core'), value: row.label, onChange: function (v) { setLocation(i, { label: v }); } }),
-              el(TextControl, { label: __('URL', 'headless-core'), value: row.url, onChange: function (v) { setLocation(i, { url: v }); } }),
+              renderUrlField(__('URL', 'headless-core'), row, 'url', function (patch) { setLocation(i, patch); }),
               el(Button, { isDestructive: true, variant: 'secondary', onClick: function () { removeLocation(i); } }, __('Remove', 'headless-core'))
             );
           }),
           el(Button, { variant: 'primary', onClick: addLocation }, __('Add location', 'headless-core')),
           el('hr', { style: { margin: '12px 0' } }),
           el(TextControl, { label: __('Phone text', 'headless-core'), value: a.phoneText || '', onChange: function (v) { props.setAttributes({ phoneText: v }); } }),
-          el(TextControl, { label: __('Phone URL (optional)', 'headless-core'), value: a.phoneUrl || '', onChange: function (v) { props.setAttributes({ phoneUrl: v }); } }),
+          headlessLink.renderLinkControlAttribute
+            ? headlessLink.renderLinkControlAttribute(el, blockEditor, components, i18n, __('Phone URL (optional)', 'headless-core'), a, 'phoneUrl', props.setAttributes)
+            : el(TextControl, { label: __('Phone URL (optional)', 'headless-core'), value: a.phoneUrl || '', onChange: function (v) { props.setAttributes({ phoneUrl: v }); } }),
           el(TextControl, { label: __('Login label', 'headless-core'), value: a.loginLabel || '', onChange: function (v) { props.setAttributes({ loginLabel: v }); } }),
-          el(TextControl, { label: __('Login URL (optional)', 'headless-core'), value: a.loginUrl || '', onChange: function (v) { props.setAttributes({ loginUrl: v }); } }),
+          headlessLink.renderLinkControlAttribute
+            ? headlessLink.renderLinkControlAttribute(el, blockEditor, components, i18n, __('Login URL (optional)', 'headless-core'), a, 'loginUrl', props.setAttributes)
+            : el(TextControl, { label: __('Login URL (optional)', 'headless-core'), value: a.loginUrl || '', onChange: function (v) { props.setAttributes({ loginUrl: v }); } }),
           el('hr', { style: { margin: '12px 0' } }),
           el('p', { style: { fontWeight: 700, marginBottom: '6px' } }, __('Left links (label + URL)', 'headless-core')),
           links.map(function (row, i) {
@@ -148,7 +206,7 @@
               'div',
               { key: 'hdr-link-' + i, style: { marginBottom: '10px', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px' } },
               el(TextControl, { label: __('Label', 'headless-core'), value: row.label, onChange: function (v) { setLink(i, { label: v }); } }),
-              el(TextControl, { label: __('URL', 'headless-core'), value: row.url, onChange: function (v) { setLink(i, { url: v }); } }),
+              renderUrlField(__('URL', 'headless-core'), row, 'url', function (patch) { setLink(i, patch); }),
               el(Button, { isDestructive: true, variant: 'secondary', onClick: function () { removeLink(i); } }, __('Remove', 'headless-core'))
             );
           }),

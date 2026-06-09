@@ -25,6 +25,7 @@ function headless_core_run_migration(): void
 
     headless_core_ensure_page(__('About Us', 'headless-core'), 'about-us', 0);
     headless_core_ensure_page(__('Contact Us', 'headless-core'), 'contact-us', 0);
+    headless_core_ensure_page(__('New Member Registration', 'headless-core'), 'new-member-registration', 0);
     headless_core_ensure_page(__('Board of Directors', 'headless-core'), 'board-of-directors', 0);
     headless_core_ensure_page(__('Membership', 'headless-core'), 'membership', 0);
 
@@ -43,6 +44,263 @@ function headless_core_run_migration(): void
     headless_core_ensure_page(__('Events', 'headless-core'), 'events', 0);
 
     headless_core_ensure_primary_menu();
+    headless_core_seed_page_block_content();
+    headless_core_seed_page_block_content_v2();
+}
+
+/**
+ * Append default Gutenberg blocks to key pages when missing (idempotent).
+ *
+ * @return void
+ */
+function headless_core_seed_page_block_content(): void
+{
+    if (get_option('headless_core_page_content_v1') === '1') {
+        return;
+    }
+
+    $contactPage = get_page_by_path('contact-us', OBJECT, 'page');
+    if ($contactPage instanceof WP_Post) {
+        headless_core_restore_contact_us_page_blocks((int) $contactPage->ID);
+    }
+
+    $registrationPage = get_page_by_path('new-member-registration', OBJECT, 'page');
+    if ($registrationPage instanceof WP_Post) {
+        headless_core_restore_new_member_registration_page_blocks((int) $registrationPage->ID);
+    }
+
+    update_option('headless_core_page_content_v1', '1', true);
+}
+
+/**
+ * New Member Registration page should only contain the registration block (not Contact Form).
+ *
+ * @return void
+ */
+function headless_core_restore_new_member_registration_page_blocks(int $pageId): void
+{
+    if ($pageId <= 0) {
+        return;
+    }
+
+    $post = get_post($pageId);
+    if (! $post instanceof WP_Post) {
+        return;
+    }
+
+    $blocks = parse_blocks((string) $post->post_content);
+    $out = [];
+    $hasRegistration = false;
+    $legacyRegistrationAttrs = [];
+    $changed = false;
+
+    foreach ($blocks as $block) {
+        $name = (string) ($block['blockName'] ?? '');
+
+        if ($name === 'custom/new-member-registration') {
+            $hasRegistration = true;
+            $out[] = $block;
+            continue;
+        }
+
+        if ($name === 'custom/contact-form') {
+            $attrs = is_array($block['attrs'] ?? null) ? $block['attrs'] : [];
+            if (! $hasRegistration) {
+                $legacyRegistrationAttrs = $attrs;
+            }
+            $changed = true;
+            continue;
+        }
+
+        $out[] = $block;
+    }
+
+    if (! $hasRegistration) {
+        $out[] = [
+            'blockName' => 'custom/new-member-registration',
+            'attrs' => $legacyRegistrationAttrs,
+            'innerBlocks' => [],
+            'innerHTML' => '',
+            'innerContent' => [],
+        ];
+        $changed = true;
+    } elseif ($changed) {
+        // Registration block already present; contact-form was removed above.
+    }
+
+    if ($changed) {
+        wp_update_post([
+            'ID' => $pageId,
+            'post_content' => serialize_blocks($out),
+        ]);
+    }
+}
+
+/**
+ * Run page-content fixes that may need to apply after v1 (e.g. registration page cleanup).
+ *
+ * @return void
+ */
+function headless_core_seed_page_block_content_v2(): void
+{
+    if (get_option('headless_core_page_content_v2') === '1') {
+        return;
+    }
+
+    $registrationPage = get_page_by_path('new-member-registration', OBJECT, 'page');
+    if ($registrationPage instanceof WP_Post) {
+        headless_core_restore_new_member_registration_page_blocks((int) $registrationPage->ID);
+    }
+
+    update_option('headless_core_page_content_v2', '1', true);
+}
+
+/**
+ * Ensure Contact Us has enquiry form + map; reset if onboarding form was placed here by mistake.
+ *
+ * @return void
+ */
+function headless_core_restore_contact_us_page_blocks(int $pageId): void
+{
+    if ($pageId <= 0) {
+        return;
+    }
+
+    $post = get_post($pageId);
+    if (! $post instanceof WP_Post) {
+        return;
+    }
+
+    $blocks = parse_blocks((string) $post->post_content);
+    $changed = false;
+    $hasContactForm = false;
+    $hasRegistrationForm = false;
+    $out = [];
+
+    foreach ($blocks as $block) {
+        $name = (string) ($block['blockName'] ?? '');
+
+        if ($name === 'custom/contact-form') {
+            $hasContactForm = true;
+            $attrs = is_array($block['attrs'] ?? null) ? $block['attrs'] : [];
+            $title = trim((string) ($attrs['title'] ?? ''));
+            $formName = trim((string) ($attrs['formName'] ?? ''));
+            if ($title === 'New Member Registration' || $formName === 'Onboarding Form') {
+                $block['attrs'] = [];
+                $changed = true;
+            }
+            $out[] = $block;
+            continue;
+        }
+
+        if ($name === 'custom/new-member-registration') {
+            $hasRegistrationForm = true;
+            $changed = true;
+            continue;
+        }
+
+        $out[] = $block;
+    }
+
+    if (! $hasContactForm) {
+        $out[] = [
+            'blockName' => 'custom/contact-form',
+            'attrs' => [],
+            'innerBlocks' => [],
+            'innerHTML' => '',
+            'innerContent' => [],
+        ];
+        $changed = true;
+    }
+
+    if (! headless_core_page_has_block_in_list($out, 'custom/contact-map')) {
+        $out[] = [
+            'blockName' => 'custom/contact-map',
+            'attrs' => [],
+            'innerBlocks' => [],
+            'innerHTML' => '',
+            'innerContent' => [],
+        ];
+        $changed = true;
+    }
+
+    if ($hasRegistrationForm) {
+        $registrationPage = get_page_by_path('new-member-registration', OBJECT, 'page');
+        if ($registrationPage instanceof WP_Post) {
+            headless_core_append_block_if_missing(
+                (int) $registrationPage->ID,
+                'custom/new-member-registration',
+                "<!-- wp:custom/new-member-registration /-->"
+            );
+        }
+    }
+
+    if ($changed) {
+        wp_update_post([
+            'ID' => $pageId,
+            'post_content' => serialize_blocks($out),
+        ]);
+    }
+}
+
+/**
+ * @param array<int, array<string, mixed>> $blocks
+ */
+function headless_core_page_has_block_in_list(array $blocks, string $blockName): bool
+{
+    foreach ($blocks as $block) {
+        if (($block['blockName'] ?? '') === $blockName) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * @return bool
+ */
+function headless_core_page_has_block(int $pageId, string $blockName): bool
+{
+    $post = get_post($pageId);
+    if (! $post instanceof WP_Post) {
+        return false;
+    }
+
+    $blocks = parse_blocks((string) $post->post_content);
+    foreach ($blocks as $block) {
+        if (($block['blockName'] ?? '') === $blockName) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * @return void
+ */
+function headless_core_append_block_if_missing(int $pageId, string $blockName, string $blockMarkup): void
+{
+    if ($pageId <= 0 || headless_core_page_has_block($pageId, $blockName)) {
+        return;
+    }
+
+    $post = get_post($pageId);
+    if (! $post instanceof WP_Post) {
+        return;
+    }
+
+    $content = trim((string) $post->post_content);
+    if ($content !== '') {
+        $content .= "\n\n";
+    }
+    $content .= trim($blockMarkup);
+
+    wp_update_post([
+        'ID' => $pageId,
+        'post_content' => $content,
+    ]);
 }
 
 /**

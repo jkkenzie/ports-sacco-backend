@@ -10,30 +10,34 @@
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
 
-  registerBlockType('custom/contact-form', {
+  registerBlockType('custom/new-member-registration', {
     apiVersion: 3,
-    title: __('Contact Form', 'headless-core'),
-    icon: 'email-alt',
+    title: __('New Member Registration', 'headless-core'),
+    icon: 'id-alt',
     category: 'widgets',
-    description: __('Contact form section that sends via WP Mail SMTP.', 'headless-core'),
+    description: __('Membership onboarding application form (Individual, Joint, or Group/Company).', 'headless-core'),
     attributes: {
-      title: { type: 'string', default: 'Get in touch.' },
-      subtitle: { type: 'string', default: 'Reach out to us and we will respond as soon as we can.' },
-      formName: { type: 'string', default: 'Contact Form' },
+      title: { type: 'string', default: 'Join Us' },
+      subtitle: { type: 'string', default: '' },
+      formName: { type: 'string', default: 'Onboarding Form' },
       backgroundColor: { type: 'string', default: '#ffffff' },
       titleColor: { type: 'string', default: '#22ABB5' },
       textColor: { type: 'string', default: '#333333' },
       labelColor: { type: 'string', default: '#333333' },
       inputBorderColor: { type: 'string', default: '#e8e8e8' },
-      buttonLabel: { type: 'string', default: 'SUBMIT' },
+      buttonLabel: { type: 'string', default: 'Submit Details' },
       buttonBgColor: { type: 'string', default: '#ED6E2A' },
       buttonTextColor: { type: 'string', default: '#ffffff' },
       buttonHoverBgColor: { type: 'string', default: '#22ACB6' },
       buttonHoverTextColor: { type: 'string', default: '#ffffff' },
-      successMessage: { type: 'string', default: 'Thanks — we have received your message.' },
+      successMessage: {
+        type: 'string',
+        default:
+          'Thank you for submitting your details! We are processing your member application and will be in touch with you shortly.',
+      },
     },
     edit: function (props) {
-      var blockProps = useBlockProps({ className: 'headless-contact-form-block' });
+      var blockProps = useBlockProps({ className: 'headless-new-member-registration-block' });
       var colors = ['#22ACB6', '#ED6E2A', '#ffffff', '#eef0f3', '#000000', '#e8e8e8', '#65605f', '#3b4e6b'];
       function palette() {
         return colors.map(function (hex) { return { color: hex, name: hex }; });
@@ -85,7 +89,7 @@
                   fontSize: '13px',
                 },
               },
-              __('Name, email, phone, and message fields render on the frontend and submit to the contact API.', 'headless-core')
+              __('Full onboarding form (account type, personal details, uploads, etc.) renders on the frontend.', 'headless-core')
             )
           )
         )

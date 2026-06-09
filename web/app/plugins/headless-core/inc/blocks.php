@@ -8,9 +8,17 @@ if (! defined('ABSPATH')) {
 
 add_action('init', static function (): void {
     wp_register_script(
+        'headless-core-link-control',
+        HEADLESS_CORE_URL . 'blocks/shared/link-control.js',
+        ['wp-element', 'wp-components', 'wp-i18n', 'wp-block-editor'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
         'headless-custom-hero-editor',
         HEADLESS_CORE_URL . 'blocks/hero/hero-editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -18,7 +26,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-home-banner-slider-editor',
         HEADLESS_CORE_URL . 'blocks/home-banner-slider/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -26,7 +34,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-mission-vision-editor',
         HEADLESS_CORE_URL . 'blocks/mission-vision/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -40,49 +48,49 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-home-stats-editor',
         HEADLESS_CORE_URL . 'blocks/home-stats/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-about-us-awards-editor',
         HEADLESS_CORE_URL . 'blocks/about-us-awards/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-about-us-help-editor',
         HEADLESS_CORE_URL . 'blocks/about-us-help/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-home-about-editor',
         HEADLESS_CORE_URL . 'blocks/home-about/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-help-section-editor',
         HEADLESS_CORE_URL . 'blocks/help-section/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-home-product-cards-editor',
         HEADLESS_CORE_URL . 'blocks/home-product-cards/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-product-services-editor',
         HEADLESS_CORE_URL . 'blocks/product-services/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -90,7 +98,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-header-topbar-editor',
         HEADLESS_CORE_URL . 'blocks/header-topbar/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -98,7 +106,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-header-main-editor',
         HEADLESS_CORE_URL . 'blocks/header-main/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -113,63 +121,70 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-savings-archive-hero-editor',
         HEADLESS_CORE_URL . 'blocks/savings-archive-hero/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-core-data', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-savings-why-save-editor',
         HEADLESS_CORE_URL . 'blocks/savings-why-save/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-membership-content-editor',
         HEADLESS_CORE_URL . 'blocks/membership-content/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-registration-links-editor',
+        HEADLESS_CORE_URL . 'blocks/registration-links/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-download-app-editor',
         HEADLESS_CORE_URL . 'blocks/download-app/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-mobile-app-section-editor',
         HEADLESS_CORE_URL . 'blocks/mobile-app-section/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-newsletter-section-editor',
         HEADLESS_CORE_URL . 'blocks/newsletter-section/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-partners-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/partners-carousel/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-events-section-editor',
         HEADLESS_CORE_URL . 'blocks/events-section/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-member-reviews-editor',
         HEADLESS_CORE_URL . 'blocks/member-reviews/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -183,35 +198,42 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-asset-finance-whatever-editor',
         HEADLESS_CORE_URL . 'blocks/asset-finance-whatever/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-asset-finance-faq-editor',
         HEADLESS_CORE_URL . 'blocks/asset-finance-faq/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-asset-finance-apply-editor',
         HEADLESS_CORE_URL . 'blocks/asset-finance-apply/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-contact-form-editor',
         HEADLESS_CORE_URL . 'blocks/contact-form/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-new-member-registration-editor',
+        HEADLESS_CORE_URL . 'blocks/new-member-registration/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-contact-map-editor',
         HEADLESS_CORE_URL . 'blocks/contact-map/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -274,7 +296,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-footer-branches-editor',
         HEADLESS_CORE_URL . 'blocks/footer-branches/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -295,7 +317,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-footer-hours-editor',
         HEADLESS_CORE_URL . 'blocks/footer-hours/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -806,12 +828,16 @@ add_action('init', static function (): void {
 
     register_block_type('custom/savings-archive-hero', [
         'api_version' => 3,
+        'title' => __('Page Hero Content', 'headless-core'),
+        'description' => __('Page hero with title, banner, CTA buttons, and a flexible sub-navigation menu.', 'headless-core'),
         'editor_script' => 'headless-custom-savings-archive-hero-editor',
         'attributes' => [
             'title' => ['type' => 'string', 'default' => 'Savings Products'],
             'intro' => ['type' => 'string', 'default' => ''],
             'bannerImageId' => ['type' => 'number', 'default' => 0],
             'bannerImageUrl' => ['type' => 'string', 'default' => ''],
+            'bannerImagePositionX' => ['type' => 'string', 'default' => 'center'],
+            'bannerImagePositionY' => ['type' => 'string', 'default' => 'bottom'],
             'backgroundColor' => ['type' => 'string', 'default' => '#22ABB5'],
             'titleColor' => ['type' => 'string', 'default' => '#22ABB5'],
             'navBackgroundColor' => ['type' => 'string', 'default' => '#eef2f8'],
@@ -930,6 +956,43 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/registration-links', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-registration-links-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'imageId' => ['type' => 'number', 'default' => 0],
+            'imageUrl' => ['type' => 'string', 'default' => ''],
+            'imageAlt' => ['type' => 'string', 'default' => 'Registration'],
+            'entries' => [
+                'type' => 'array',
+                'default' => [
+                    [
+                        'title' => 'Existing Member Registration to Portal',
+                        'paragraph' => 'If you are a member of our SACCO but not registered on our portal, please click on the link below to go to the existing member registration page.',
+                        'linkText' => 'Register Here >>',
+                        'linkUrl' => 'https://portal.portsacco.co.ke/user/register',
+                    ],
+                    [
+                        'title' => 'New Member Registration',
+                        'paragraph' => 'If you are not a member of our SACCO, you can join us by clicking on the register link below to go to the new member registration page.',
+                        'linkText' => 'Register Here >>',
+                        'linkUrl' => '/new-member-registration/',
+                    ],
+                ],
+            ],
+            'titleColor' => ['type' => 'string', 'default' => '#333333'],
+            'textColor' => ['type' => 'string', 'default' => '#333333'],
+            'linkColor' => ['type' => 'string', 'default' => '#eb651b'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/download-app', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-download-app-editor',
@@ -1020,11 +1083,8 @@ add_action('init', static function (): void {
             'submitArrowColor' => ['type' => 'string', 'default' => '#ffffff'],
             'badgeBgColor' => ['type' => 'string', 'default' => '#EE6E2A'],
             'badgeTextColor' => ['type' => 'string', 'default' => '#ffffff'],
-            'mailchimpFormActionUrl' => ['type' => 'string', 'default' => ''],
-            'mailchimpEmailFieldName' => ['type' => 'string', 'default' => 'EMAIL'],
-            'mailchimpBotFieldName' => ['type' => 'string', 'default' => ''],
-            'mailchimpFormTarget' => ['type' => 'string', 'default' => '_self'],
-            'mailchimpHiddenFieldsJson' => ['type' => 'string', 'default' => '[]'],
+            'newsletterListIds' => ['type' => 'string', 'default' => ''],
+            'newsletterFormId' => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -1270,6 +1330,8 @@ add_action('init', static function (): void {
 
     register_block_type('custom/contact-form', [
         'api_version' => 3,
+        'title' => __('Contact Form', 'headless-core'),
+        'description' => __('Contact form section that sends via WP Mail SMTP.', 'headless-core'),
         'editor_script' => 'headless-custom-contact-form-editor',
         'supports' => [
             'anchor' => true,
@@ -1289,6 +1351,38 @@ add_action('init', static function (): void {
             'buttonHoverBgColor' => ['type' => 'string', 'default' => '#22ACB6'],
             'buttonHoverTextColor' => ['type' => 'string', 'default' => '#ffffff'],
             'successMessage' => ['type' => 'string', 'default' => 'Thanks — we have received your message.'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/new-member-registration', [
+        'api_version' => 3,
+        'title' => __('New Member Registration', 'headless-core'),
+        'description' => __('Membership onboarding application form for the headless frontend.', 'headless-core'),
+        'editor_script' => 'headless-custom-new-member-registration-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Join Us'],
+            'subtitle' => ['type' => 'string', 'default' => ''],
+            'formName' => ['type' => 'string', 'default' => 'Onboarding Form'],
+            'backgroundColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'titleColor' => ['type' => 'string', 'default' => '#22ABB5'],
+            'textColor' => ['type' => 'string', 'default' => '#333333'],
+            'labelColor' => ['type' => 'string', 'default' => '#333333'],
+            'inputBorderColor' => ['type' => 'string', 'default' => '#e8e8e8'],
+            'buttonLabel' => ['type' => 'string', 'default' => 'Submit Details'],
+            'buttonBgColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'buttonTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'buttonHoverBgColor' => ['type' => 'string', 'default' => '#22ACB6'],
+            'buttonHoverTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'successMessage' => [
+                'type' => 'string',
+                'default' => 'Thank you for submitting your details! We are processing your member application and will be in touch with you shortly.',
+            ],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -1619,8 +1713,15 @@ add_action('init', static function (): void {
         'attributes' => [
             'enabled' => ['type' => 'boolean', 'default' => true],
             'bgColor' => ['type' => 'string', 'default' => '#1BB5B5'],
+            'bgOpacity' => ['type' => 'number', 'default' => 100],
             'textColor' => ['type' => 'string', 'default' => '#ffffff'],
             'hoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'fontSize' => ['type' => 'number', 'default' => 10],
+            'menuLinkColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'menuLinkHoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'dropdownBgColor' => ['type' => 'string', 'default' => 'rgba(255,255,255,0.92)'],
+            'dropdownItemColor' => ['type' => 'string', 'default' => '#4b5563'],
+            'dropdownItemHoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
             'links' => ['type' => 'array', 'default' => []],
             'locationItems' => ['type' => 'array', 'default' => []],
             'phoneText' => ['type' => 'string', 'default' => 'CALL US: +254 111 173 000'],

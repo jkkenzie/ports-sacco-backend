@@ -13,10 +13,11 @@ add_filter('rest_post_dispatch', static function ($response, $server, $request) 
 
     $route = (string) $request->get_route();
     if (strpos($route, '/custom/v1/') !== false) {
-        if (headless_core_transients_enabled()) {
+        if (headless_core_api_cache_enabled()) {
             $response->header('Cache-Control', 'public, max-age=' . (int) headless_core_cache_ttl());
         } else {
             $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+            $response->header('Pragma', 'no-cache');
         }
     }
 
@@ -191,7 +192,7 @@ add_action('rest_api_init', static function (): void {
     register_rest_route('custom/v1', '/contact', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'headless_core_rest_contact_submit',
-        'permission_callback' => '__return_true',
+        'permission_callback' => 'headless_core_rest_verify_nonce_permission',
         'args' => [
             'name' => ['required' => true, 'type' => 'string'],
             'email' => ['required' => true, 'type' => 'string'],
@@ -207,23 +208,9 @@ add_action('rest_api_init', static function (): void {
 });
 
 add_filter('rest_pre_serve_request', static function ($served, $result, $request, $server) {
-    $origin = getenv('HEADLESS_CORS_ORIGIN');
-    if (! is_string($origin) || $origin === '') {
-        return $served;
+    if ($request instanceof WP_REST_Request) {
+        headless_core_maybe_send_cors_headers($request);
     }
-
-    if (! $request instanceof WP_REST_Request) {
-        return $served;
-    }
-
-    $route = (string) $request->get_route();
-    if (strpos($route, '/custom/v1/') === false) {
-        return $served;
-    }
-
-    header('Access-Control-Allow-Origin: ' . $origin);
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept');
 
     return $served;
 }, 10, 4);
@@ -268,9 +255,13 @@ function headless_core_rest_page(WP_REST_Request $request)
 function headless_core_build_page_response(string $slug)
 {
     $cacheKey = $slug === '' ? 'home' : $slug;
-    $cached = headless_core_cache_get('page', $cacheKey);
-    if (is_array($cached)) {
-        return new WP_REST_Response($cached, 200);
+    $useCache = headless_core_api_cache_enabled();
+
+    if ($useCache) {
+        $cached = headless_core_cache_get('page', $cacheKey);
+        if (is_array($cached)) {
+            return new WP_REST_Response($cached, 200);
+        }
     }
 
     $post = headless_core_resolve_page($slug);
@@ -300,7 +291,9 @@ function headless_core_build_page_response(string $slug)
         'blocks' => $blocks,
     ];
 
-    headless_core_cache_set('page', $cacheKey, $payload);
+    if ($useCache) {
+        headless_core_cache_set('page', $cacheKey, $payload);
+    }
 
     return new WP_REST_Response($payload, 200);
 }
@@ -812,6 +805,31 @@ function headless_core_sanitize_color_string(string $value, string $fallback): s
 }
 
 /**
+ * Sanitize a single CSS background-position component (keyword, %, or length).
+ */
+function headless_core_sanitize_banner_position(string $value, string $fallback): string
+{
+    $value = trim(sanitize_text_field($value));
+    if ($value === '') {
+        return $fallback;
+    }
+
+    if (preg_match('/^(left|center|right|top|bottom)$/i', $value)) {
+        return strtolower($value);
+    }
+
+    if (preg_match('/^-?\d+(\.\d+)?%$/', $value)) {
+        return $value;
+    }
+
+    if (preg_match('/^-?\d+(\.\d+)?(px|rem|em|vh|vw)$/i', $value)) {
+        return strtolower($value);
+    }
+
+    return $fallback;
+}
+
+/**
  * @return string SVG markup or empty string
  */
 function headless_core_attachment_inline_svg_markup(int $attachmentId): string
@@ -987,9 +1005,14 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         if ($bannerId > 0) {
             $url = wp_get_attachment_image_url($bannerId, 'full');
             if (is_string($url) && $url !== '') {
-                $attrs['bannerImageUrl'] = $url;
+                $modified = (int) get_post_modified_time('U', true, $bannerId);
+                $attrs['bannerImageUrl'] = add_query_arg('v', (string) ($modified > 0 ? $modified : $bannerId), $url);
             }
         }
+        $posX = isset($attrs['bannerImagePositionX']) ? (string) $attrs['bannerImagePositionX'] : '';
+        $posY = isset($attrs['bannerImagePositionY']) ? (string) $attrs['bannerImagePositionY'] : '';
+        $attrs['bannerImagePositionX'] = headless_core_sanitize_banner_position($posX, 'center');
+        $attrs['bannerImagePositionY'] = headless_core_sanitize_banner_position($posY, 'bottom');
 
         if (! isset($attrs['buttons']) || ! is_array($attrs['buttons']) || $attrs['buttons'] === []) {
             $legacyButtons = [];
@@ -1038,19 +1061,20 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                 }
                 $normalizedButtons[] = [
                     'label' => $label !== '' ? $label : 'BUTTON',
-                    'url' => $url !== '' ? $url : '#',
+                    'url' => headless_core_menu_url_to_path($url !== '' ? $url : '#'),
                     'textColor' => headless_core_sanitize_color_string((string) ($button['textColor'] ?? ''), '#22abb5'),
                     'borderColor' => headless_core_sanitize_color_string((string) ($button['borderColor'] ?? ''), '#22abb5'),
                     'bgColor' => headless_core_sanitize_color_string((string) ($button['bgColor'] ?? ''), '#ffffff'),
                     'hoverTextColor' => headless_core_sanitize_color_string((string) ($button['hoverTextColor'] ?? ''), '#ffffff'),
                     'hoverBgColor' => headless_core_sanitize_color_string((string) ($button['hoverBgColor'] ?? ''), '#22abb5'),
                     'hoverBorderColor' => headless_core_sanitize_color_string((string) ($button['hoverBorderColor'] ?? ''), '#22abb5'),
+                    'target' => ! empty($button['opensInNewTab']) || (($button['target'] ?? '') === '_blank') ? '_blank' : '',
                 ];
             }
             $attrs['buttons'] = $normalizedButtons;
         }
 
-        if (! isset($attrs['menuItems']) || ! is_array($attrs['menuItems']) || $attrs['menuItems'] === []) {
+        if (! isset($attrs['menuItems']) || ! is_array($attrs['menuItems'])) {
             $attrs['menuItems'] = [
                 ['label' => 'GROUP', 'href' => '#'],
                 ['label' => 'BIASHARA', 'href' => '#'],
@@ -1069,7 +1093,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                 }
                 $normalizedMenuItems[] = [
                     'label' => $label !== '' ? $label : 'MENU ITEM',
-                    'href' => $href !== '' ? $href : '#',
+                    'href' => headless_core_menu_url_to_path($href !== '' ? $href : '#'),
+                    'target' => ! empty($item['opensInNewTab']) || (($item['target'] ?? '') === '_blank') ? '_blank' : '',
                 ];
             }
             $attrs['menuItems'] = $normalizedMenuItems;
@@ -1403,6 +1428,70 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         $attrs['successMessage'] = isset($attrs['successMessage']) && trim((string) $attrs['successMessage']) !== ''
             ? trim((string) $attrs['successMessage'])
             : 'Thanks — we have received your message.';
+
+        $attrs['backgroundColor'] = headless_core_sanitize_color_string(
+            isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
+            '#ffffff'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#22ABB5'
+        );
+        $attrs['textColor'] = headless_core_sanitize_color_string(
+            isset($attrs['textColor']) ? (string) $attrs['textColor'] : '',
+            '#333333'
+        );
+        $attrs['labelColor'] = headless_core_sanitize_color_string(
+            isset($attrs['labelColor']) ? (string) $attrs['labelColor'] : '',
+            '#333333'
+        );
+        $attrs['inputBorderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['inputBorderColor']) ? (string) $attrs['inputBorderColor'] : '',
+            '#e8e8e8'
+        );
+        $attrs['buttonBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonBgColor']) ? (string) $attrs['buttonBgColor'] : '',
+            '#ED6E2A'
+        );
+        $attrs['buttonTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonTextColor']) ? (string) $attrs['buttonTextColor'] : '',
+            '#ffffff'
+        );
+        $attrs['buttonHoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverBgColor']) ? (string) $attrs['buttonHoverBgColor'] : '',
+            '#22ACB6'
+        );
+        $attrs['buttonHoverTextColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverTextColor']) ? (string) $attrs['buttonHoverTextColor'] : '',
+            '#ffffff'
+        );
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/new-member-registration') {
+        if (isset($attrs['anchor'])) {
+            $anchor = sanitize_title((string) $attrs['anchor']);
+            if ($anchor !== '') {
+                $attrs['anchor'] = $anchor;
+            } else {
+                unset($attrs['anchor']);
+            }
+        }
+
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? (string) $attrs['title']
+            : 'Join Us';
+        $attrs['subtitle'] = isset($attrs['subtitle']) ? trim((string) $attrs['subtitle']) : '';
+        $attrs['formName'] = isset($attrs['formName']) && trim((string) $attrs['formName']) !== ''
+            ? trim((string) $attrs['formName'])
+            : 'Onboarding Form';
+        $attrs['buttonLabel'] = isset($attrs['buttonLabel']) && trim((string) $attrs['buttonLabel']) !== ''
+            ? trim((string) $attrs['buttonLabel'])
+            : 'Submit Details';
+        $attrs['successMessage'] = isset($attrs['successMessage']) && trim((string) $attrs['successMessage']) !== ''
+            ? trim((string) $attrs['successMessage'])
+            : 'Thank you for submitting your details! We are processing your member application and will be in touch with you shortly.';
 
         $attrs['backgroundColor'] = headless_core_sanitize_color_string(
             isset($attrs['backgroundColor']) ? (string) $attrs['backgroundColor'] : '',
@@ -3140,19 +3229,12 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
         }
 
-        $action = isset($attrs['mailchimpFormActionUrl']) ? trim((string) $attrs['mailchimpFormActionUrl']) : '';
-        $attrs['mailchimpFormActionUrl'] = $action !== '' ? esc_url_raw($action) : '';
-        $attrs['mailchimpEmailFieldName'] = isset($attrs['mailchimpEmailFieldName']) ? sanitize_key((string) $attrs['mailchimpEmailFieldName']) : 'EMAIL';
-        if ($attrs['mailchimpEmailFieldName'] === '') {
-            $attrs['mailchimpEmailFieldName'] = 'EMAIL';
-        }
-        $attrs['mailchimpBotFieldName'] = isset($attrs['mailchimpBotFieldName']) ? sanitize_key((string) $attrs['mailchimpBotFieldName']) : '';
-        $target = isset($attrs['mailchimpFormTarget']) ? trim((string) $attrs['mailchimpFormTarget']) : '_self';
-        $attrs['mailchimpFormTarget'] = in_array($target, ['_self', '_blank'], true) ? $target : '_self';
-
-        $hiddenJson = isset($attrs['mailchimpHiddenFieldsJson']) ? (string) $attrs['mailchimpHiddenFieldsJson'] : '[]';
-        $decoded = json_decode($hiddenJson, true);
-        $attrs['mailchimpHiddenFieldsJson'] = is_array($decoded) ? wp_json_encode($decoded) : '[]';
+        $attrs['newsletterListIds'] = isset($attrs['newsletterListIds'])
+            ? preg_replace('/[^0-9,\s;]/', '', (string) $attrs['newsletterListIds'])
+            : '';
+        $attrs['newsletterFormId'] = isset($attrs['newsletterFormId'])
+            ? sanitize_key((string) $attrs['newsletterFormId'])
+            : '';
 
         return $attrs;
     }
@@ -3718,9 +3800,13 @@ function headless_core_rest_menu(WP_REST_Request $request)
     $location = (string) $request->get_param('location');
     $ver = (string) get_option('headless_menu_cache_ver', '1');
     $cacheKey = $location . '_' . $ver;
-    $cached = headless_core_cache_get('menu', $cacheKey);
-    if (is_array($cached)) {
-        return new WP_REST_Response($cached, 200);
+    $useCache = headless_core_api_cache_enabled();
+
+    if ($useCache) {
+        $cached = headless_core_cache_get('menu', $cacheKey);
+        if (is_array($cached)) {
+            return new WP_REST_Response($cached, 200);
+        }
     }
 
     $locations = get_nav_menu_locations();
@@ -3739,7 +3825,9 @@ function headless_core_rest_menu(WP_REST_Request $request)
     }
 
     $tree = headless_core_menu_build_tree($items);
-    headless_core_cache_set('menu', $cacheKey, $tree);
+    if ($useCache) {
+        headless_core_cache_set('menu', $cacheKey, $tree);
+    }
 
     return new WP_REST_Response($tree, 200);
 }
@@ -4374,9 +4462,15 @@ function headless_core_menu_branch(array $byParent, int $parentId): array
 
     $out = [];
     foreach ($byParent[$parentId] as $item) {
+        $rawUrl = (string) $item->url;
+        $target = isset($item->target) ? (string) $item->target : '';
+        if ($target === '' && isset($item->ID)) {
+            $target = (string) get_post_meta((int) $item->ID, '_menu_item_target', true);
+        }
         $out[] = [
             'label' => (string) $item->title,
-            'url' => headless_core_menu_url_to_path((string) $item->url),
+            'url' => headless_core_menu_url_to_path($rawUrl),
+            'target' => $target,
             'children' => headless_core_menu_branch($byParent, (int) $item->ID),
         ];
     }
@@ -4385,12 +4479,48 @@ function headless_core_menu_branch(array $byParent, int $parentId): array
 }
 
 /**
- * Turn full URLs into site-relative paths for the SPA.
+ * Whether a nav menu URL should leave the SPA (different host or special scheme).
+ */
+function headless_core_menu_url_is_external(string $url): bool
+{
+    if ($url === '' || $url === '#') {
+        return false;
+    }
+
+    if (preg_match('#^(mailto:|tel:|javascript:)#i', $url)) {
+        return true;
+    }
+
+    if (! preg_match('#^(https?:)?//#i', $url)) {
+        return false;
+    }
+
+    $homeParts = wp_parse_url(home_url('/'));
+    $urlParts = wp_parse_url($url);
+    if (! is_array($homeParts) || ! is_array($urlParts)) {
+        return true;
+    }
+
+    $homeHost = isset($homeParts['host']) ? strtolower((string) $homeParts['host']) : '';
+    $urlHost = isset($urlParts['host']) ? strtolower((string) $urlParts['host']) : '';
+    if ($urlHost === '') {
+        return false;
+    }
+
+    return $homeHost !== $urlHost;
+}
+
+/**
+ * Turn same-site URLs into site-relative paths for the SPA; preserve external URLs.
  */
 function headless_core_menu_url_to_path(string $url): string
 {
     if ($url === '' || $url === '#') {
         return '#';
+    }
+
+    if (headless_core_menu_url_is_external($url)) {
+        return $url;
     }
 
     $home = home_url('/');
@@ -4400,9 +4530,18 @@ function headless_core_menu_url_to_path(string $url): string
         return $path === '' ? '/' : $path;
     }
 
+    $homeParts = wp_parse_url($home);
     $parts = wp_parse_url($url);
-    if (is_array($parts) && isset($parts['path'])) {
-        $path = (string) $parts['path'];
+    if (
+        is_array($homeParts)
+        && is_array($parts)
+        && isset($homeParts['host'], $parts['host'])
+        && strtolower((string) $homeParts['host']) === strtolower((string) $parts['host'])
+    ) {
+        $path = isset($parts['path']) ? (string) $parts['path'] : '/';
+        if ($path === '') {
+            $path = '/';
+        }
         if (isset($parts['query']) && $parts['query'] !== '') {
             $path .= '?' . $parts['query'];
         }
@@ -4411,6 +4550,10 @@ function headless_core_menu_url_to_path(string $url): string
         }
 
         return $path;
+    }
+
+    if (strpos($url, '/') === 0) {
+        return $url;
     }
 
     return $url;

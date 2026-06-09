@@ -13,6 +13,22 @@
   var TextControl = components.TextControl;
   var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
+
+  function renderUrlField(label, item, urlKey, onChange) {
+    if (headlessLink.renderLinkControl) {
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+    }
+    return el(TextControl, {
+      label: label,
+      value: String((item && item[urlKey]) || ''),
+      onChange: function (v) {
+        var patch = {};
+        patch[urlKey] = String(v || '');
+        onChange(patch);
+      },
+    });
+  }
   var trashSvg = el(
     'svg',
     { viewBox: '0 0 24 24', width: '16', height: '16', style: { display: 'block' }, fill: 'currentColor' },
@@ -341,11 +357,8 @@
                           value: (item && item.linkText) || '(click here)',
                           onChange: function (v) { setItem(index, { linkText: v }); },
                         }),
-                        el(TextControl, {
-                          label: __('Link URL', 'headless-core'),
-                          value: (item && item.linkUrl) || '',
-                          onChange: function (v) { setItem(index, { linkUrl: v }); },
-                          help: __('Use /path, #section, or https://…', 'headless-core'),
+                        renderUrlField(__('Link URL', 'headless-core'), item, 'linkUrl', function (patch) {
+                          setItem(index, patch);
                         })
                       )
                     : null
@@ -397,12 +410,14 @@
               value: props.attributes.buttonLabel,
               onChange: function (v) { props.setAttributes({ buttonLabel: v }); },
             }),
-            el(TextControl, {
-              label: __('URL', 'headless-core'),
-              value: props.attributes.buttonUrl,
-              onChange: function (v) { props.setAttributes({ buttonUrl: v }); },
-              help: __('Use a path like /contact-us or #section', 'headless-core'),
-            }),
+            headlessLink.renderLinkControlAttribute
+              ? headlessLink.renderLinkControlAttribute(el, blockEditor, components, i18n, __('URL', 'headless-core'), props.attributes, 'buttonUrl', props.setAttributes)
+              : el(TextControl, {
+                  label: __('URL', 'headless-core'),
+                  value: props.attributes.buttonUrl,
+                  onChange: function (v) { props.setAttributes({ buttonUrl: v }); },
+                  help: __('Use a path like /contact-us or #section', 'headless-core'),
+                }),
             el('div', { style: { marginTop: '10px', display: 'flex', justifyContent: 'center' } },
               el('span', {
                 style: {

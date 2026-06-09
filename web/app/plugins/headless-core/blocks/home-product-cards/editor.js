@@ -13,6 +13,22 @@
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
+
+  function renderUrlField(label, item, urlKey, onChange) {
+    if (headlessLink.renderLinkControl) {
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+    }
+    return el(TextControl, {
+      label: label,
+      value: String((item && item[urlKey]) || ''),
+      onChange: function (v) {
+        var patch = {};
+        patch[urlKey] = String(v || '');
+        onChange(patch);
+      },
+    });
+  }
 
   function normalizeCards(cards) {
     if (!Array.isArray(cards) || cards.length === 0) return [];
@@ -194,7 +210,7 @@
                   el(TextControl, { label: __('Title', 'headless-core'), value: card.title, onChange: function (v) { setCard(i, { title: v }); } }),
                   el(TextareaControl, { label: __('Description', 'headless-core'), value: card.description, onChange: function (v) { setCard(i, { description: v }); } }),
                   el(TextControl, { label: __('Tag', 'headless-core'), value: card.tag, onChange: function (v) { setCard(i, { tag: v }); } }),
-                  el(TextControl, { label: __('Link (href)', 'headless-core'), value: card.href, onChange: function (v) { setCard(i, { href: v }); } })
+                  renderUrlField(__('Link (href)', 'headless-core'), card, 'href', function (patch) { setCard(i, patch); })
                 );
               }),
               el('div', { style: { marginTop: '12px' } },

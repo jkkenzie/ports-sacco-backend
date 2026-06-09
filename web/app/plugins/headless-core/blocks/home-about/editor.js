@@ -10,6 +10,7 @@
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
 
   registerBlockType('custom/home-about', {
     apiVersion: 3,
@@ -76,7 +77,9 @@
           el('div', { style: { height: '38px', background: a.barBgColor || '#22acb6' } }),
           el('div', { style: { padding: '16px' } },
             el(TextControl, { label: __('Section ID', 'headless-core'), value: a.sectionId, onChange: function (v) { props.setAttributes({ sectionId: v }); }, help: __('Used as the section id for hash links (e.g. #about).', 'headless-core') }),
-            el(TextControl, { label: __('Read more URL', 'headless-core'), value: a.readMoreUrl, onChange: function (v) { props.setAttributes({ readMoreUrl: v }); } }),
+            headlessLink.renderLinkControlAttribute
+              ? headlessLink.renderLinkControlAttribute(el, blockEditor, components, i18n, __('Read more URL', 'headless-core'), a, 'readMoreUrl', props.setAttributes)
+              : el(TextControl, { label: __('Read more URL', 'headless-core'), value: a.readMoreUrl, onChange: function (v) { props.setAttributes({ readMoreUrl: v }); } }),
             el(RichText, {
               tagName: 'div',
               value: a.badgeText || '',

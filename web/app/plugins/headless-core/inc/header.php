@@ -242,11 +242,13 @@ add_action('rest_api_init', static function (): void {
  */
 function headless_core_rest_header()
 {
-    $cached = headless_core_transient_get_raw(HEADLESS_CORE_HEADER_CACHE_KEY);
-    if (is_array($cached)) {
-        $res = new WP_REST_Response($cached, 200);
-        $res->header('X-Headless-Cache', 'hit');
-        return $res;
+    if (headless_core_api_cache_enabled()) {
+        $cached = headless_core_transient_get_raw(HEADLESS_CORE_HEADER_CACHE_KEY);
+        if (is_array($cached)) {
+            $res = new WP_REST_Response($cached, 200);
+            $res->header('X-Headless-Cache', 'hit');
+            return $res;
+        }
     }
 
     $postId = headless_core_get_or_create_header_post_id();
@@ -273,8 +275,9 @@ function headless_core_rest_header()
 
     $data = headless_core_header_merge_defaults($data);
 
-    // Cache the computed header payload, but keep TTL short so Gutenberg edits reflect quickly.
-    headless_core_transient_set_raw(HEADLESS_CORE_HEADER_CACHE_KEY, $data, headless_core_cache_ttl());
+    if (headless_core_api_cache_enabled()) {
+        headless_core_transient_set_raw(HEADLESS_CORE_HEADER_CACHE_KEY, $data, headless_core_cache_ttl());
+    }
 
     $res = new WP_REST_Response($data, 200);
     $res->header('X-Headless-Cache', 'miss');
@@ -418,8 +421,15 @@ function headless_core_header_defaults(): array
         'topbar' => [
             'enabled' => true,
             'bgColor' => '#1BB5B5',
+            'bgOpacity' => 100,
             'textColor' => '#ffffff',
             'hoverColor' => '#ee6e2a',
+            'fontSize' => 10,
+            'menuLinkColor' => '#ffffff',
+            'menuLinkHoverColor' => '#ee6e2a',
+            'dropdownBgColor' => 'rgba(255,255,255,0.92)',
+            'dropdownItemColor' => '#4b5563',
+            'dropdownItemHoverColor' => '#ee6e2a',
             'links' => [
                 ['label' => 'NEWS & EVENTS', 'url' => '#'],
                 ['label' => 'CAREERS', 'url' => '#'],
@@ -481,8 +491,30 @@ function headless_core_header_sanitize_topbar(array $attrs): array
     $out = [];
     $out['enabled'] = isset($attrs['enabled']) ? (bool) $attrs['enabled'] : true;
     $out['bgColor'] = headless_core_sanitize_color_string((string) ($attrs['bgColor'] ?? ''), '#1BB5B5');
+    $bgOpacity = isset($attrs['bgOpacity']) ? (int) $attrs['bgOpacity'] : 100;
+    if ($bgOpacity < 0) {
+        $bgOpacity = 0;
+    }
+    if ($bgOpacity > 100) {
+        $bgOpacity = 100;
+    }
+    $out['bgOpacity'] = $bgOpacity;
     $out['textColor'] = headless_core_sanitize_color_string((string) ($attrs['textColor'] ?? ''), '#ffffff');
     $out['hoverColor'] = headless_core_sanitize_color_string((string) ($attrs['hoverColor'] ?? ''), '#ee6e2a');
+    $fontSize = isset($attrs['fontSize']) ? (int) $attrs['fontSize'] : 10;
+    if ($fontSize < 8) {
+        $fontSize = 8;
+    }
+    if ($fontSize > 18) {
+        $fontSize = 18;
+    }
+    $out['fontSize'] = $fontSize;
+    $out['menuLinkColor'] = headless_core_sanitize_color_string((string) ($attrs['menuLinkColor'] ?? ''), '#ffffff');
+    $out['menuLinkHoverColor'] = headless_core_sanitize_color_string((string) ($attrs['menuLinkHoverColor'] ?? ''), '#ee6e2a');
+    $dropdownBgRaw = trim((string) ($attrs['dropdownBgColor'] ?? ''));
+    $out['dropdownBgColor'] = $dropdownBgRaw !== '' ? sanitize_text_field($dropdownBgRaw) : 'rgba(255,255,255,0.92)';
+    $out['dropdownItemColor'] = headless_core_sanitize_color_string((string) ($attrs['dropdownItemColor'] ?? ''), '#4b5563');
+    $out['dropdownItemHoverColor'] = headless_core_sanitize_color_string((string) ($attrs['dropdownItemHoverColor'] ?? ''), '#ee6e2a');
     $out['phoneText'] = sanitize_text_field((string) ($attrs['phoneText'] ?? ''));
     $out['phoneUrl'] = esc_url_raw((string) ($attrs['phoneUrl'] ?? ''));
     $out['loginLabel'] = sanitize_text_field((string) ($attrs['loginLabel'] ?? ''));

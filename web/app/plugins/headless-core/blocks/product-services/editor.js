@@ -11,6 +11,22 @@
   var ColorPalette = components.ColorPalette;
   var RangeControl = components.RangeControl;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
+
+  function renderUrlField(label, item, urlKey, onChange) {
+    if (headlessLink.renderLinkControl) {
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+    }
+    return el(TextControl, {
+      label: label,
+      value: String((item && item[urlKey]) || ''),
+      onChange: function (v) {
+        var patch = {};
+        patch[urlKey] = String(v || '');
+        onChange(patch);
+      },
+    });
+  }
 
   function normalizeDropdown(items) {
     if (!Array.isArray(items) || items.length === 0) return [];
@@ -513,13 +529,7 @@
                   setDropdown(i, { label: v });
                 },
               }),
-              el(TextControl, {
-                label: __('URL', 'headless-core'),
-                value: row.url,
-                onChange: function (v) {
-                  setDropdown(i, { url: v });
-                },
-              }),
+              renderUrlField(__('URL', 'headless-core'), row, 'url', function (patch) { setDropdown(i, patch); }),
               el(
                 Button,
                 { isDestructive: true, variant: 'secondary', onClick: function () { removeDropdown(i); } },
@@ -542,13 +552,7 @@
                   setPill(i, { label: v });
                 },
               }),
-              el(TextControl, {
-                label: __('URL', 'headless-core'),
-                value: row.url,
-                onChange: function (v) {
-                  setPill(i, { url: v });
-                },
-              }),
+              renderUrlField(__('URL', 'headless-core'), row, 'url', function (patch) { setPill(i, patch); }),
               el(
                 Button,
                 { isDestructive: true, variant: 'secondary', onClick: function () { removePill(i); } },

@@ -41,6 +41,7 @@
     "roots/wordpress": "6.9",
     "roots/wp-config": "1.0.0",
     "wpackagist-theme/twentytwentyfive": "^1.0",
+    "wpackagist-plugin/newsletter": "^9.2",
     "twilio/sdk": "^7.0"
   },
   "require-dev": {

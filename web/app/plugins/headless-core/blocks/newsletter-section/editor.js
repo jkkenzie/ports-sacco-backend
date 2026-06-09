@@ -22,7 +22,7 @@
     title: __('Newsletter', 'headless-core'),
     icon: 'email-alt',
     category: 'widgets',
-    description: __('Gradient section with email signup (Mailchimp-compatible).', 'headless-core'),
+    description: __('Gradient section with email signup (The Newsletter Plugin).', 'headless-core'),
     attributes: {
       sectionId: { type: 'string', default: 'newsletter' },
       gradientFrom: { type: 'string', default: '#00B2E0' },
@@ -51,11 +51,8 @@
       submitArrowColor: { type: 'string', default: '#ffffff' },
       badgeBgColor: { type: 'string', default: '#EE6E2A' },
       badgeTextColor: { type: 'string', default: '#ffffff' },
-      mailchimpFormActionUrl: { type: 'string', default: '' },
-      mailchimpEmailFieldName: { type: 'string', default: 'EMAIL' },
-      mailchimpBotFieldName: { type: 'string', default: '' },
-      mailchimpFormTarget: { type: 'string', default: '_self' },
-      mailchimpHiddenFieldsJson: { type: 'string', default: '[]' },
+      newsletterListIds: { type: 'string', default: '' },
+      newsletterFormId: { type: 'string', default: '' },
     },
     edit: function (props) {
       var a = props.attributes;
@@ -73,33 +70,21 @@
           null,
           el(
             PanelBody,
-            { title: __('Mailchimp', 'headless-core'), initialOpen: true },
+            { title: __('Newsletter plugin', 'headless-core'), initialOpen: true },
+            el('p', { style: { margin: '0 0 12px', fontSize: '12px' } },
+              __('Submissions use The Newsletter Plugin via the headless API (nonce + honeypot).', 'headless-core')
+            ),
             el(TextControl, {
-              label: __('Form action URL', 'headless-core'),
-              value: a.mailchimpFormActionUrl || '',
-              onChange: function (v) { props.setAttributes({ mailchimpFormActionUrl: v || '' }); },
+              label: __('List IDs (optional)', 'headless-core'),
+              value: a.newsletterListIds || '',
+              onChange: function (v) { props.setAttributes({ newsletterListIds: v || '' }); },
+              help: __('Comma-separated public list IDs, e.g. 1,2. Leave empty for plugin defaults.', 'headless-core'),
             }),
             el(TextControl, {
-              label: __('Email field name', 'headless-core'),
-              value: a.mailchimpEmailFieldName || 'EMAIL',
-              onChange: function (v) { props.setAttributes({ mailchimpEmailFieldName: v || 'EMAIL' }); },
-            }),
-            el(TextControl, {
-              label: __('Honeypot field name (optional)', 'headless-core'),
-              value: a.mailchimpBotFieldName || '',
-              onChange: function (v) { props.setAttributes({ mailchimpBotFieldName: v || '' }); },
-            }),
-            el(TextControl, {
-              label: __('Form target', 'headless-core'),
-              value: a.mailchimpFormTarget || '_self',
-              onChange: function (v) { props.setAttributes({ mailchimpFormTarget: v || '_self' }); },
-              help: __('_self or _blank', 'headless-core'),
-            }),
-            el(TextareaControl, {
-              label: __('Hidden fields (JSON array)', 'headless-core'),
-              value: a.mailchimpHiddenFieldsJson || '[]',
-              onChange: function (v) { props.setAttributes({ mailchimpHiddenFieldsJson: v || '[]' }); },
-              help: __('e.g. [{"name":"u","value":"xx"}]', 'headless-core'),
+              label: __('Form ID (optional)', 'headless-core'),
+              value: a.newsletterFormId || '',
+              onChange: function (v) { props.setAttributes({ newsletterFormId: v || '' }); },
+              help: __('Matches Newsletter plugin form tracking ID (nfid).', 'headless-core'),
             })
           ),
           el(
