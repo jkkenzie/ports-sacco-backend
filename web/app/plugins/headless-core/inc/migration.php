@@ -46,6 +46,8 @@ function headless_core_run_migration(): void
     headless_core_ensure_primary_menu();
     headless_core_seed_page_block_content();
     headless_core_seed_page_block_content_v2();
+    headless_core_seed_page_block_content_v3();
+    headless_core_seed_page_block_content_v4();
 }
 
 /**
@@ -153,6 +155,204 @@ function headless_core_seed_page_block_content_v2(): void
     }
 
     update_option('headless_core_page_content_v2', '1', true);
+}
+
+/**
+ * Seed default hero (and optional starter paragraph) on new/empty generic pages.
+ *
+ * @return void
+ */
+function headless_core_seed_page_block_content_v3(): void
+{
+    if (get_option('headless_core_page_content_v3') === '1') {
+        return;
+    }
+
+    $pages = get_posts([
+        'post_type' => 'page',
+        'post_status' => ['publish', 'draft', 'private'],
+        'posts_per_page' => -1,
+        'fields' => 'ids',
+        'suppress_filters' => true,
+    ]);
+
+    if (is_array($pages)) {
+        foreach ($pages as $pageId) {
+            headless_core_maybe_seed_default_page_blocks((int) $pageId);
+            headless_core_maybe_prepend_default_page_hero((int) $pageId);
+        }
+    }
+
+    update_option('headless_core_page_content_v3', '1', true);
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function headless_core_default_page_hero_block(string $title): array
+{
+    return [
+        'blockName' => 'custom/savings-archive-hero',
+        'attrs' => [
+            'title' => $title,
+            'intro' => '',
+            'buttons' => [],
+            'menuItems' => [],
+        ],
+        'innerBlocks' => [],
+        'innerHTML' => '',
+        'innerContent' => [],
+    ];
+}
+
+/**
+ * @return bool
+ */
+function headless_core_page_should_skip_default_layout(WP_Post $post): bool
+{
+    if ($post->post_type !== 'page') {
+        return true;
+    }
+
+    if (in_array($post->post_status, ['auto-draft', 'trash', 'inherit'], true)) {
+        return true;
+    }
+
+    return $post->post_name === 'home';
+}
+
+/**
+ * @return bool
+ */
+function headless_core_page_has_hero_block(int $pageId): bool
+{
+    return headless_core_page_has_block($pageId, 'custom/savings-archive-hero')
+        || headless_core_page_has_block($pageId, 'custom/hero');
+}
+
+/**
+ * Empty pages or pages with only core text blocks get a default hero + starter paragraph.
+ *
+ * @return void
+ */
+function headless_core_maybe_seed_default_page_blocks(int $postId): void
+{
+    static $seeding = false;
+    if ($seeding || $postId <= 0) {
+        return;
+    }
+
+    $post = get_post($postId);
+    if (! $post instanceof WP_Post || headless_core_page_should_skip_default_layout($post)) {
+        return;
+    }
+
+    if (trim((string) $post->post_content) !== '') {
+        return;
+    }
+
+    $title = trim((string) get_the_title($postId));
+    if ($title === '') {
+        $title = __('Page', 'headless-core');
+    }
+
+    $placeholder = esc_html__('Add your page content here.', 'headless-core');
+    $blocks = [
+        headless_core_default_page_hero_block($title),
+        [
+            'blockName' => 'core/paragraph',
+            'attrs' => [],
+            'innerBlocks' => [],
+            'innerHTML' => '<p>' . $placeholder . '</p>',
+            'innerContent' => ['<p>' . $placeholder . '</p>'],
+        ],
+    ];
+
+    $seeding = true;
+    wp_update_post([
+        'ID' => $postId,
+        'post_content' => serialize_blocks($blocks),
+    ]);
+    $seeding = false;
+}
+
+/**
+ * Prepend a hero to generic CMS pages that only contain core text blocks (e.g. a new "News" page).
+ *
+ * @return void
+ */
+function headless_core_maybe_prepend_default_page_hero(int $postId): void
+{
+    static $prepending = false;
+    if ($prepending || $postId <= 0) {
+        return;
+    }
+
+    $post = get_post($postId);
+    if (! $post instanceof WP_Post || headless_core_page_should_skip_default_layout($post)) {
+        return;
+    }
+
+    if (headless_core_page_has_hero_block($postId)) {
+        return;
+    }
+
+    $blocks = parse_blocks((string) $post->post_content);
+    if (! is_array($blocks) || $blocks === []) {
+        return;
+    }
+
+    foreach ($blocks as $block) {
+        $name = (string) ($block['blockName'] ?? '');
+        if ($name === '') {
+            continue;
+        }
+        if (! str_starts_with($name, 'core/')) {
+            return;
+        }
+    }
+
+    $title = trim((string) get_the_title($postId));
+    if ($title === '') {
+        $title = __('Page', 'headless-core');
+    }
+
+    $prepending = true;
+    wp_update_post([
+        'ID' => $postId,
+        'post_content' => serialize_blocks(array_merge([headless_core_default_page_hero_block($title)], $blocks)),
+    ]);
+    $prepending = false;
+}
+
+add_action('wp_insert_post', static function (int $postId, WP_Post $post, bool $update): void {
+    if ($update) {
+        return;
+    }
+    headless_core_maybe_seed_default_page_blocks($postId);
+}, 20, 3);
+
+/**
+ * Ensure the News page includes the news archive grid block.
+ *
+ * @return void
+ */
+function headless_core_seed_page_block_content_v4(): void
+{
+    if (get_option('headless_core_page_content_v4') === '1') {
+        return;
+    }
+
+    $newsPage = get_page_by_path('news', OBJECT, 'page');
+    if ($newsPage instanceof WP_Post) {
+        headless_core_append_block_if_missing(
+            (int) $newsPage->ID,
+            'custom/news-grid',
+            '<!-- wp:custom/news-grid /-->'
+        );
+    }
+
+    update_option('headless_core_page_content_v4', '1', true);
 }
 
 /**

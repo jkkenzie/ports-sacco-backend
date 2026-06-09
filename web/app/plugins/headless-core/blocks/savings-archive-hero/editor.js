@@ -13,6 +13,7 @@
   var ColorPalette = components.ColorPalette;
   var TextControl = components.TextControl;
   var TextareaControl = components.TextareaControl;
+  var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
   var trashSvg = el(
     'svg',
@@ -177,7 +178,8 @@
       menuHoverTextColor: { type: 'string', default: '#ED6E2A' },
       menuHoverBackgroundColor: { type: 'string', default: '#eef2f8' },
       buttons: { type: 'array', default: DEFAULT_BUTTONS },
-      menuItems: { type: 'array', default: DEFAULT_MENU_ITEMS }
+      menuItems: { type: 'array', default: DEFAULT_MENU_ITEMS },
+      showMenu: { type: 'boolean', default: true },
     },
     edit: function (props) {
       var blockProps = useBlockProps({ className: 'headless-page-hero-content-block' });
@@ -247,6 +249,14 @@
           el(
             PanelBody,
             { title: __('Menu items', 'headless-core'), initialOpen: true },
+            el(ToggleControl, {
+              label: __('Show sub-navigation menu', 'headless-core'),
+              checked: props.attributes.showMenu !== false,
+              help: __('Turn off to hide menu links on the frontend while keeping the same layout space for the banner.', 'headless-core'),
+              onChange: function (v) {
+                props.setAttributes({ showMenu: Boolean(v) });
+              },
+            }),
             menuItems.length === 0
               ? el('p', { style: { color: '#666', marginTop: 0 } }, __('No menu items yet. Add links for the sub-navigation row.', 'headless-core'))
               : null,

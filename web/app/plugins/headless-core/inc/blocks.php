@@ -287,6 +287,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-news-grid-editor',
+        HEADLESS_CORE_URL . 'blocks/news-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-footer-contact-editor',
         HEADLESS_CORE_URL . 'blocks/footer-contact/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
@@ -325,6 +332,14 @@ add_action('init', static function (): void {
         'headless-custom-footer-bottom-editor',
         HEADLESS_CORE_URL . 'blocks/footer-bottom/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
+        'headless-core-rich-text-spacing',
+        HEADLESS_CORE_URL . 'blocks/core-rich-text-spacing/editor.js',
+        ['wp-hooks', 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -860,6 +875,7 @@ add_action('init', static function (): void {
                     ['label' => 'FIXED DEPOSIT', 'href' => '#'],
                 ],
             ],
+            'showMenu' => ['type' => 'boolean', 'default' => true],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -1443,6 +1459,18 @@ add_action('init', static function (): void {
         },
     ]);
 
+    register_block_type('custom/news-grid', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-news-grid-editor',
+        'attributes' => [
+            'perPage' => ['type' => 'number', 'default' => 9],
+            'readMoreLabel' => ['type' => 'string', 'default' => 'Read More'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
     register_block_type('custom/loans-carousel', [
         'api_version' => 3,
         'editor_script' => 'headless-custom-loans-carousel-editor',
@@ -1769,4 +1797,8 @@ add_action('init', static function (): void {
             return '';
         },
     ]);
+});
+
+add_action('enqueue_block_editor_assets', static function (): void {
+    wp_enqueue_script('headless-core-rich-text-spacing');
 });

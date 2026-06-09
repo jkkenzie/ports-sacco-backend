@@ -23,6 +23,7 @@ require_once HEADLESS_CORE_PATH . 'inc/cors.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-nonce.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-api.php';
 require_once HEADLESS_CORE_PATH . 'inc/newsletter-subscribe.php';
+require_once HEADLESS_CORE_PATH . 'inc/news-comments.php';
 require_once HEADLESS_CORE_PATH . 'inc/migration.php';
 require_once HEADLESS_CORE_PATH . 'inc/blocks.php';
 require_once HEADLESS_CORE_PATH . 'inc/footer.php';
@@ -53,6 +54,8 @@ add_action('init', static function (): void {
         headless_core_seed_page_block_content();
     }
     headless_core_seed_page_block_content_v2();
+    headless_core_seed_page_block_content_v3();
+    headless_core_seed_page_block_content_v4();
 }, 20);
 
 register_activation_hook(__FILE__, 'headless_core_on_activation');

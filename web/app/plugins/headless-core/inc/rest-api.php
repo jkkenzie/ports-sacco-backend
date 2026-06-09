@@ -189,6 +189,47 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
+    register_rest_route('custom/v1', '/news', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_news',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'category' => [
+                'required' => false,
+                'type' => 'integer',
+            ],
+            'page' => [
+                'required' => false,
+                'type' => 'integer',
+                'minimum' => 1,
+            ],
+            'per_page' => [
+                'required' => false,
+                'type' => 'integer',
+                'minimum' => 1,
+                'maximum' => 24,
+            ],
+        ],
+    ]);
+
+    register_rest_route('custom/v1', '/news/categories', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_news_categories',
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('custom/v1', '/news/(?P<slug>[a-z0-9\-_]+)', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_news_post',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'slug' => [
+                'required' => true,
+                'type' => 'string',
+            ],
+        ],
+    ]);
+
     register_rest_route('custom/v1', '/contact', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'headless_core_rest_contact_submit',
@@ -784,6 +825,53 @@ function headless_core_about_us_help_merge_defaults(array $attrs): array
 }
 
 /**
+ * Sanitize a single CSS margin/padding value for core rich-text blocks.
+ */
+function headless_core_sanitize_css_spacing(string $value): string
+{
+    $value = trim(sanitize_text_field($value));
+    if ($value === '' || $value === '0' || strcasecmp($value, 'auto') === 0) {
+        return $value;
+    }
+
+    if (preg_match('/^-?\d+(\.\d+)?(px|rem|em|%|vh|vw)$/i', $value)) {
+        return strtolower($value);
+    }
+
+    return '';
+}
+
+/**
+ * @param array<string, mixed> $attrs
+ * @return array<string, mixed>
+ */
+function headless_core_apply_core_rich_text_spacing_attrs(array $attrs): array
+{
+    foreach ([
+        'marginTop',
+        'marginRight',
+        'marginBottom',
+        'marginLeft',
+        'paddingTop',
+        'paddingRight',
+        'paddingBottom',
+        'paddingLeft',
+    ] as $key) {
+        if (! array_key_exists($key, $attrs)) {
+            continue;
+        }
+        $sanitized = headless_core_sanitize_css_spacing((string) $attrs[$key]);
+        if ($sanitized === '') {
+            unset($attrs[$key]);
+            continue;
+        }
+        $attrs[$key] = $sanitized;
+    }
+
+    return $attrs;
+}
+
+/**
  * Accepts hex colors and rgb(r, g, b).
  */
 function headless_core_sanitize_color_string(string $value, string $fallback): string
@@ -1099,6 +1187,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
             $attrs['menuItems'] = $normalizedMenuItems;
         }
+
+        $attrs['showMenu'] = ! isset($attrs['showMenu']) || (bool) $attrs['showMenu'];
 
         return $attrs;
     }
@@ -1755,7 +1845,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
     if ($name === 'core/paragraph') {
         $attrs['content'] = headless_core_plain_text_from_parsed_block($block, $attrs);
 
-        return $attrs;
+        return headless_core_apply_core_rich_text_spacing_attrs($attrs);
     }
 
     if ($name === 'core/freeform' || $name === 'core/html') {
@@ -1784,7 +1874,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
         }
 
-        return $attrs;
+        return headless_core_apply_core_rich_text_spacing_attrs($attrs);
     }
 
     if ($name === 'core/list-item') {
@@ -2740,6 +2830,15 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         }
         $attrs['heroHeight'] = isset($attrs['heroHeight']) ? max(120, (int) $attrs['heroHeight']) : 260;
         $attrs['maxItems'] = isset($attrs['maxItems']) ? max(0, (int) $attrs['maxItems']) : 0;
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/news-grid') {
+        $attrs['perPage'] = isset($attrs['perPage']) ? max(1, min(24, (int) $attrs['perPage'])) : 9;
+        $attrs['readMoreLabel'] = isset($attrs['readMoreLabel']) && trim((string) $attrs['readMoreLabel']) !== ''
+            ? sanitize_text_field((string) $attrs['readMoreLabel'])
+            : __('Read More', 'headless-core');
 
         return $attrs;
     }
@@ -4688,4 +4787,337 @@ function headless_core_rest_contact_submit(WP_REST_Request $request)
     }
 
     return new WP_REST_Response(['ok' => true], 200);
+}
+
+/**
+ * Categories that should never appear in the news archive filter.
+ */
+function headless_core_news_is_excluded_category(int $termId, string $slug): bool
+{
+    if ($termId <= 0) {
+        return true;
+    }
+
+    $defaultCategoryId = (int) get_option('default_category', 1);
+    if ($termId === $defaultCategoryId) {
+        return true;
+    }
+
+    return sanitize_title($slug) === 'uncategorized';
+}
+
+/**
+ * Categories assigned to published blog posts only (excludes team/event/etc. shared taxonomy noise).
+ *
+ * @return list<array{id: int, name: string, slug: string, count: int}>
+ */
+function headless_core_news_categories_payload(): array
+{
+    global $wpdb;
+
+    $publishedCount = (int) wp_count_posts('post')->publish;
+    $out = [
+        [
+            'id' => 0,
+            'name' => __('All', 'headless-core'),
+            'slug' => '',
+            'count' => $publishedCount,
+        ],
+    ];
+
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are safe ($wpdb->*)
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT t.term_id, t.name, t.slug, COUNT(DISTINCT p.ID) AS post_count
+            FROM {$wpdb->terms} AS t
+            INNER JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id AND tt.taxonomy = %s
+            INNER JOIN {$wpdb->term_relationships} AS tr ON tt.term_taxonomy_id = tr.term_taxonomy_id
+            INNER JOIN {$wpdb->posts} AS p ON tr.object_id = p.ID
+            WHERE p.post_type = %s AND p.post_status = %s
+            GROUP BY t.term_id, t.name, t.slug
+            HAVING post_count > 0
+            ORDER BY t.name ASC",
+            'category',
+            'post',
+            'publish'
+        ),
+        ARRAY_A
+    );
+
+    if (! is_array($rows)) {
+        return $out;
+    }
+
+    foreach ($rows as $row) {
+        $termId = (int) ($row['term_id'] ?? 0);
+        $slug = (string) ($row['slug'] ?? '');
+        if (headless_core_news_is_excluded_category($termId, $slug)) {
+            continue;
+        }
+
+        $out[] = [
+            'id' => $termId,
+            'name' => (string) ($row['name'] ?? ''),
+            'slug' => $slug,
+            'count' => (int) ($row['post_count'] ?? 0),
+        ];
+    }
+
+    return $out;
+}
+
+/**
+ * @return array{id: int, name: string, slug: string}|null
+ */
+function headless_core_news_primary_category(WP_Post $post): ?array
+{
+    $terms = get_the_terms($post, 'category');
+    if (! is_array($terms) || $terms === []) {
+        return null;
+    }
+
+    $term = $terms[0];
+    if (! $term instanceof WP_Term) {
+        return null;
+    }
+
+    return [
+        'id' => (int) $term->term_id,
+        'name' => (string) $term->name,
+        'slug' => (string) $term->slug,
+    ];
+}
+
+/**
+ * @return list<array{id: int, name: string, slug: string}>
+ */
+function headless_core_news_categories_for_post(WP_Post $post): array
+{
+    $terms = get_the_terms($post, 'category');
+    if (! is_array($terms) || $terms === []) {
+        return [];
+    }
+
+    $out = [];
+    foreach ($terms as $term) {
+        if (! $term instanceof WP_Term) {
+            continue;
+        }
+        $out[] = [
+            'id' => (int) $term->term_id,
+            'name' => (string) $term->name,
+            'slug' => (string) $term->slug,
+        ];
+    }
+
+    return $out;
+}
+
+/**
+ * @return array{previous: array{slug: string, title: string, link: string}|null, next: array{slug: string, title: string, link: string}|null}
+ */
+function headless_core_news_adjacent_navigation(WP_Post $post): array
+{
+    $format = static function ($adjacent): ?array {
+        if (! $adjacent instanceof WP_Post || $adjacent->post_type !== 'post' || $adjacent->post_status !== 'publish') {
+            return null;
+        }
+
+        return [
+            'slug' => (string) $adjacent->post_name,
+            'title' => get_the_title($adjacent),
+            'link' => '/news/' . (string) $adjacent->post_name,
+        ];
+    };
+
+    $previous = get_adjacent_post(false, '', true);
+    $next = get_adjacent_post(false, '', false);
+
+    return [
+        'previous' => $format($previous),
+        'next' => $format($next),
+    ];
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function headless_core_format_news_post_card(WP_Post $post): array
+{
+    $imageUrl = '';
+    $thumbId = (int) get_post_thumbnail_id($post);
+    if ($thumbId > 0) {
+        $url = wp_get_attachment_image_url($thumbId, 'large');
+        if (is_string($url) && $url !== '') {
+            $imageUrl = $url;
+        }
+    }
+
+    $excerpt = trim((string) $post->post_excerpt);
+    if ($excerpt === '') {
+        $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
+    }
+
+    $authorId = (int) $post->post_author;
+    $authorName = (string) get_the_author_meta('display_name', $authorId);
+    if ($authorName === '') {
+        $nick = get_the_author_meta('nickname', $authorId);
+        $authorName = is_string($nick) && $nick !== '' ? $nick : __('Admin', 'headless-core');
+    }
+
+    $categories = headless_core_news_categories_for_post($post);
+    $primaryCategory = headless_core_news_primary_category($post);
+
+    return [
+        'id' => (int) $post->ID,
+        'slug' => (string) $post->post_name,
+        'title' => get_the_title($post),
+        'excerpt' => $excerpt,
+        'description' => $excerpt,
+        'imageUrl' => $imageUrl,
+        'author' => $authorName,
+        'commentCount' => (int) get_comments_number($post),
+        'categories' => $categories,
+        'primaryCategory' => $primaryCategory,
+        'date' => get_the_date((string) get_option('date_format'), $post),
+        'link' => '/news/' . (string) $post->post_name,
+    ];
+}
+
+/**
+ * @return WP_REST_Response
+ */
+function headless_core_rest_news_categories(): WP_REST_Response
+{
+    $cacheVersion = (string) get_option('headless_news_cache_ver', '1');
+    $cacheKey = 'categories_' . $cacheVersion . '_posts_only_v2';
+    $cached = headless_core_cache_get('news', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $payload = headless_core_news_categories_payload();
+    headless_core_cache_set('news', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @return WP_REST_Response
+ */
+function headless_core_rest_news(WP_REST_Request $request): WP_REST_Response
+{
+    $categoryId = max(0, (int) $request->get_param('category'));
+    $page = max(1, (int) $request->get_param('page'));
+    $perPage = (int) $request->get_param('per_page');
+    if ($perPage <= 0) {
+        $perPage = 9;
+    }
+    $perPage = min(24, max(1, $perPage));
+
+    $cacheVersion = (string) get_option('headless_news_cache_ver', '1');
+    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId . '_page_' . $page . '_pp_' . $perPage;
+    $cached = headless_core_cache_get('news', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $queryArgs = [
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'posts_per_page' => $perPage,
+        'paged' => $page,
+        'orderby' => 'date',
+        'order' => 'DESC',
+        'ignore_sticky_posts' => true,
+    ];
+    if ($categoryId > 0) {
+        $queryArgs['cat'] = $categoryId;
+    }
+
+    $query = new WP_Query($queryArgs);
+    $items = [];
+    if ($query->have_posts()) {
+        foreach ($query->posts as $post) {
+            if ($post instanceof WP_Post) {
+                $items[] = headless_core_format_news_post_card($post);
+            }
+        }
+    }
+
+    $total = (int) $query->found_posts;
+    $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+    wp_reset_postdata();
+
+    $payload = [
+        'items' => $items,
+        'pagination' => [
+            'page' => $page,
+            'perPage' => $perPage,
+            'total' => $total,
+            'totalPages' => max(1, $totalPages),
+        ],
+    ];
+
+    headless_core_cache_set('news', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @return WP_REST_Response|WP_Error
+ */
+function headless_core_rest_news_post(WP_REST_Request $request)
+{
+    $slug = sanitize_title((string) $request->get_param('slug'));
+    if ($slug === '' || $slug === 'categories') {
+        return new WP_Error('headless_news_invalid', __('News slug is required.', 'headless-core'), ['status' => 400]);
+    }
+
+    $cacheVersion = (string) get_option('headless_news_cache_ver', '1');
+    $cacheKey = 'single_' . $slug . '_' . $cacheVersion;
+    $cached = headless_core_cache_get('news', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $matches = get_posts([
+        'name' => $slug,
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'posts_per_page' => 1,
+    ]);
+    $post = is_array($matches) && isset($matches[0]) && $matches[0] instanceof WP_Post ? $matches[0] : null;
+    if (! $post instanceof WP_Post) {
+        return new WP_Error('headless_not_found', __('Post not found.', 'headless-core'), ['status' => 404]);
+    }
+
+    $hadGlobalPost = array_key_exists('post', $GLOBALS);
+    $previousGlobalPost = $hadGlobalPost ? $GLOBALS['post'] : null;
+    $GLOBALS['post'] = $post;
+
+    try {
+        $parsed = parse_blocks((string) $post->post_content);
+        $blocks = headless_core_normalize_blocks($parsed);
+        $navigation = headless_core_news_adjacent_navigation($post);
+    } finally {
+        if ($hadGlobalPost) {
+            $GLOBALS['post'] = $previousGlobalPost;
+        } else {
+            unset($GLOBALS['post']);
+        }
+    }
+
+    $card = headless_core_format_news_post_card($post);
+    $payload = array_merge($card, [
+        'blocks' => $blocks,
+        'commentsOpen' => (bool) comments_open($post),
+        'approvedComments' => headless_core_news_approved_comments((int) $post->ID),
+        'share' => headless_core_news_share_meta($post),
+        'navigation' => $navigation,
+    ]);
+
+    headless_core_cache_set('news', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
 }
