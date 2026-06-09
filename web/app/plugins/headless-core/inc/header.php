@@ -7,7 +7,6 @@ if (! defined('ABSPATH')) {
 }
 
 const HEADLESS_CORE_HEADER_CACHE_KEY = 'header_data';
-const HEADLESS_CORE_HEADER_TRANSIENT_TTL = 12 * HOUR_IN_SECONDS;
 
 /**
  * Register header CPT.
@@ -201,6 +200,33 @@ function headless_core_on_header_save_invalidate_and_enforce(int $postId): void
 }
 
 /**
+ * Invalidate header cache when Gutenberg sources are edited.
+ *
+ * The top bar block can be edited in places other than the `header` CPT (e.g. Site Editor template parts,
+ * reusable blocks, widgets). The REST endpoint should reflect those edits without waiting for long TTLs.
+ */
+add_action('save_post_wp_template_part', static function (int $postId, WP_Post $post): void {
+    if (wp_is_post_revision($postId) || $post->post_status === 'auto-draft') {
+        return;
+    }
+    headless_core_transient_delete_raw(HEADLESS_CORE_HEADER_CACHE_KEY);
+}, 10, 2);
+
+add_action('save_post_wp_template', static function (int $postId, WP_Post $post): void {
+    if (wp_is_post_revision($postId) || $post->post_status === 'auto-draft') {
+        return;
+    }
+    headless_core_transient_delete_raw(HEADLESS_CORE_HEADER_CACHE_KEY);
+}, 10, 2);
+
+add_action('save_post_wp_block', static function (int $postId, WP_Post $post): void {
+    if (wp_is_post_revision($postId) || $post->post_status === 'auto-draft') {
+        return;
+    }
+    headless_core_transient_delete_raw(HEADLESS_CORE_HEADER_CACHE_KEY);
+}, 10, 2);
+
+/**
  * Register header endpoint.
  */
 add_action('rest_api_init', static function (): void {
@@ -218,7 +244,9 @@ function headless_core_rest_header()
 {
     $cached = headless_core_transient_get_raw(HEADLESS_CORE_HEADER_CACHE_KEY);
     if (is_array($cached)) {
-        return new WP_REST_Response($cached, 200);
+        $res = new WP_REST_Response($cached, 200);
+        $res->header('X-Headless-Cache', 'hit');
+        return $res;
     }
 
     $postId = headless_core_get_or_create_header_post_id();
@@ -233,11 +261,100 @@ function headless_core_rest_header()
 
     $parsed = parse_blocks((string) $post->post_content);
     $data = headless_core_header_extract_data($parsed);
+
+    // If the `header` CPT doesn't contain the top bar block, fall back to the latest Gutenberg source
+    // that *does* contain it (e.g. template parts / reusable blocks).
+    if (! is_array($data['topbar'] ?? null) || $data['topbar'] === []) {
+        $fallbackTopbar = headless_core_find_latest_topbar_from_gutenberg();
+        if ($fallbackTopbar !== []) {
+            $data['topbar'] = $fallbackTopbar;
+        }
+    }
+
     $data = headless_core_header_merge_defaults($data);
 
-    headless_core_transient_set_raw(HEADLESS_CORE_HEADER_CACHE_KEY, $data, HEADLESS_CORE_HEADER_TRANSIENT_TTL);
+    // Cache the computed header payload, but keep TTL short so Gutenberg edits reflect quickly.
+    headless_core_transient_set_raw(HEADLESS_CORE_HEADER_CACHE_KEY, $data, headless_core_cache_ttl());
 
-    return new WP_REST_Response($data, 200);
+    $res = new WP_REST_Response($data, 200);
+    $res->header('X-Headless-Cache', 'miss');
+    return $res;
+}
+
+/**
+ * Recursively search blocks for a target block name and return its attrs.
+ *
+ * @param array<int, array<string, mixed>> $blocks
+ * @param non-empty-string                $targetName
+ * @return array<string, mixed>
+ */
+function headless_core_find_block_attrs_recursive(array $blocks, string $targetName): array
+{
+    foreach ($blocks as $block) {
+        if (! is_array($block)) {
+            continue;
+        }
+        $name = (string) ($block['blockName'] ?? '');
+        if ($name === $targetName) {
+            $attrs = $block['attrs'] ?? [];
+            return is_array($attrs) ? $attrs : [];
+        }
+
+        $inner = $block['innerBlocks'] ?? [];
+        if (is_array($inner) && $inner) {
+            $found = headless_core_find_block_attrs_recursive($inner, $targetName);
+            if ($found !== []) {
+                return $found;
+            }
+        }
+    }
+    return [];
+}
+
+/**
+ * Try to find the latest saved Gutenberg content that contains `custom/header-topbar`.
+ *
+ * This covers common Gutenberg storage locations (Site Editor templates/template parts, reusable blocks).
+ *
+ * @return array<string, mixed> Sanitized topbar attrs, or empty array if not found.
+ */
+function headless_core_find_latest_topbar_from_gutenberg(): array
+{
+    $needle = 'wp:custom/header-topbar';
+
+    $candidates = get_posts([
+        'post_type' => ['wp_template_part', 'wp_template', 'wp_block'],
+        'post_status' => ['publish', 'private', 'draft'],
+        'posts_per_page' => 10,
+        'orderby' => 'modified',
+        'order' => 'DESC',
+        's' => $needle,
+        'suppress_filters' => true,
+    ]);
+
+    if (! is_array($candidates) || ! $candidates) {
+        return [];
+    }
+
+    foreach ($candidates as $post) {
+        if (! $post instanceof WP_Post) {
+            continue;
+        }
+        $content = (string) $post->post_content;
+        if (strpos($content, $needle) === false) {
+            continue;
+        }
+
+        $parsed = parse_blocks($content);
+        $attrs = headless_core_find_block_attrs_recursive(is_array($parsed) ? $parsed : [], 'custom/header-topbar');
+        if ($attrs === []) {
+            continue;
+        }
+
+        return headless_core_header_sanitize_topbar($attrs);
+    }
+
+    return [];
 }
 
 /**
@@ -340,6 +457,15 @@ function headless_core_header_merge_non_empty(array $defaults, array $data): arr
             continue;
         }
         if (is_array($defaults[$key]) && is_array($val)) {
+            // For list arrays (e.g. links/locationItems), replace defaults instead of merging by index.
+            // Merging list arrays would otherwise truncate to the default length.
+            if (function_exists('array_is_list') && array_is_list($defaults[$key]) && array_is_list($val)) {
+                if ($val !== []) {
+                    $out[$key] = $val;
+                }
+                continue;
+            }
+
             $out[$key] = headless_core_header_merge_non_empty($defaults[$key], $val);
             continue;
         }
