@@ -21,15 +21,28 @@
     el('path', { d: 'M9 3h6l1 2h4v2H4V5h4l1-2zm0 6h2v12H9V9zm4 0h2v12h-2V9z' })
   );
 
-  var DEFAULT_BUTTONS = [
-    { label: 'GET A CALL BACK', url: '#', textColor: '#22abb5', borderColor: '#22abb5', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#22abb5', hoverBorderColor: '#22abb5', opensInNewTab: false, target: '' },
-    { label: 'JOIN PORTS SACCO', url: '/contact-us', textColor: '#ed6e2a', borderColor: '#ed6e2a', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#ed6e2a', hoverBorderColor: '#ed6e2a', opensInNewTab: false, target: '' }
-  ];
-  var DEFAULT_MENU_ITEMS = [
-    { label: 'GROUP', href: '#', opensInNewTab: false, target: '', linkId: 0, linkType: '' },
-    { label: 'BIASHARA', href: '#', opensInNewTab: false, target: '', linkId: 0, linkType: '' },
-    { label: 'FIXED DEPOSIT', href: '#', opensInNewTab: false, target: '', linkId: 0, linkType: '' }
-  ];
+  var EMPTY_BUTTON = {
+    label: '',
+    url: '',
+    textColor: '#22abb5',
+    borderColor: '#22abb5',
+    bgColor: '#ffffff',
+    hoverTextColor: '#ffffff',
+    hoverBgColor: '#22abb5',
+    hoverBorderColor: '#22abb5',
+    opensInNewTab: false,
+    target: '',
+    linkId: 0,
+    linkType: '',
+  };
+  var EMPTY_MENU_ITEM = {
+    label: '',
+    href: '',
+    opensInNewTab: false,
+    target: '',
+    linkId: 0,
+    linkType: '',
+  };
   var COLOR_CHOICES = ['#40c9bf', '#22abb5', '#ed6e2a', '#ffffff', '#000000', '#65605f', '#c8cee3', '#90D4D3'];
 
   var BANNER_POSITION_X_OPTIONS = [
@@ -109,20 +122,20 @@
   }
 
   function normalizeButtons(buttons) {
-    if (!Array.isArray(buttons) || !buttons.length) {
-      return DEFAULT_BUTTONS.map(function (btn) { return Object.assign({}, btn); });
+    if (!Array.isArray(buttons)) {
+      return [];
     }
-    return buttons.map(function (btn, i) {
-      var d = DEFAULT_BUTTONS[i] || { label: '', url: '#', textColor: '#22abb5', borderColor: '#22abb5', bgColor: '#ffffff', hoverTextColor: '#ffffff', hoverBgColor: '#22abb5', hoverBorderColor: '#22abb5', opensInNewTab: false, target: '' };
+    return buttons.map(function (btn) {
+      var d = EMPTY_BUTTON;
       return Object.assign({}, d, {
-        label: String((btn && btn.label) || d.label),
-        url: String((btn && btn.url) || d.url),
-        textColor: String((btn && btn.textColor) || d.textColor),
-        borderColor: String((btn && btn.borderColor) || d.borderColor),
-        bgColor: String((btn && btn.bgColor) || d.bgColor),
-        hoverTextColor: String((btn && btn.hoverTextColor) || d.hoverTextColor),
-        hoverBgColor: String((btn && btn.hoverBgColor) || d.hoverBgColor),
-        hoverBorderColor: String((btn && btn.hoverBorderColor) || d.hoverBorderColor),
+        label: btn && btn.label != null ? String(btn.label) : d.label,
+        url: btn && btn.url != null ? String(btn.url) : d.url,
+        textColor: btn && btn.textColor ? String(btn.textColor) : d.textColor,
+        borderColor: btn && btn.borderColor ? String(btn.borderColor) : d.borderColor,
+        bgColor: btn && btn.bgColor ? String(btn.bgColor) : d.bgColor,
+        hoverTextColor: btn && btn.hoverTextColor ? String(btn.hoverTextColor) : d.hoverTextColor,
+        hoverBgColor: btn && btn.hoverBgColor ? String(btn.hoverBgColor) : d.hoverBgColor,
+        hoverBorderColor: btn && btn.hoverBorderColor ? String(btn.hoverBorderColor) : d.hoverBorderColor,
         opensInNewTab: Boolean(btn && (btn.opensInNewTab || btn.target === '_blank')),
         target: btn && btn.target ? String(btn.target) : (btn && btn.opensInNewTab ? '_blank' : ''),
         linkId: btn && btn.linkId ? Number(btn.linkId) : 0,
@@ -133,12 +146,12 @@
 
   function normalizeMenuItems(items) {
     if (!Array.isArray(items)) {
-      return DEFAULT_MENU_ITEMS.map(function (item) { return Object.assign({}, item); });
+      return [];
     }
     return items.map(function (item) {
       return {
-        label: String((item && item.label) || ''),
-        href: String((item && item.href) || '#'),
+        label: item && item.label != null ? String(item.label) : '',
+        href: item && item.href != null ? String(item.href) : '',
         opensInNewTab: Boolean(item && (item.opensInNewTab || item.target === '_blank')),
         target: item && item.target ? String(item.target) : (item && item.opensInNewTab ? '_blank' : ''),
         linkId: item && item.linkId ? Number(item.linkId) : 0,
@@ -177,8 +190,8 @@
       menuTextColor: { type: 'string', default: '#65605f' },
       menuHoverTextColor: { type: 'string', default: '#ED6E2A' },
       menuHoverBackgroundColor: { type: 'string', default: '#eef2f8' },
-      buttons: { type: 'array', default: DEFAULT_BUTTONS },
-      menuItems: { type: 'array', default: DEFAULT_MENU_ITEMS },
+      buttons: { type: 'array', default: [] },
+      menuItems: { type: 'array', default: [] },
       showMenu: { type: 'boolean', default: true },
     },
     edit: function (props) {
@@ -194,20 +207,7 @@
 
       function addButton() {
         props.setAttributes({
-          buttons: buttons.concat([{
-            label: '',
-            url: '#',
-            textColor: '#22abb5',
-            borderColor: '#22abb5',
-            bgColor: '#ffffff',
-            hoverTextColor: '#ffffff',
-            hoverBgColor: '#22abb5',
-            hoverBorderColor: '#22abb5',
-            opensInNewTab: false,
-            target: '',
-            linkId: 0,
-            linkType: '',
-          }]),
+          buttons: buttons.concat([Object.assign({}, EMPTY_BUTTON)]),
         });
       }
 
@@ -224,14 +224,7 @@
 
       function addMenuItem() {
         props.setAttributes({
-          menuItems: menuItems.concat([{
-            label: '',
-            href: '#',
-            opensInNewTab: false,
-            target: '',
-            linkId: 0,
-            linkType: '',
-          }]),
+          menuItems: menuItems.concat([Object.assign({}, EMPTY_MENU_ITEM)]),
         });
       }
 
@@ -248,7 +241,7 @@
           null,
           el(
             PanelBody,
-            { title: __('Menu items', 'headless-core'), initialOpen: true },
+            { title: __('Menu', 'headless-core'), initialOpen: true },
             el(ToggleControl, {
               label: __('Show sub-navigation menu', 'headless-core'),
               checked: props.attributes.showMenu !== false,
@@ -256,60 +249,7 @@
               onChange: function (v) {
                 props.setAttributes({ showMenu: Boolean(v) });
               },
-            }),
-            menuItems.length === 0
-              ? el('p', { style: { color: '#666', marginTop: 0 } }, __('No menu items yet. Add links for the sub-navigation row.', 'headless-core'))
-              : null,
-            menuItems.map(function (item, index) {
-              return el(
-                'div',
-                { key: 'menu-inspector-' + index, style: { border: '1px solid #eee', padding: '10px', marginBottom: '10px', borderRadius: '8px' } },
-                el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
-                  el('strong', null, __('Menu item', 'headless-core') + ' ' + (index + 1)),
-                  el('div', { style: { display: 'flex', gap: '6px' } },
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
-                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)
-                  )
-                ),
-                el(TextControl, {
-                  label: __('Label', 'headless-core'),
-                  value: item.label,
-                  onChange: function (v) { patchMenuItem(index, { label: v }); },
-                }),
-                renderLinkControl(__('Link', 'headless-core'), item, 'href', function (patch) {
-                  patchMenuItem(index, patch);
-                })
-              );
-            }),
-            el(Button, { variant: 'secondary', onClick: addMenuItem }, '+ ', __('Add menu item', 'headless-core'))
-          ),
-          el(
-            PanelBody,
-            { title: __('Buttons', 'headless-core'), initialOpen: false },
-            buttons.map(function (btn, index) {
-              return el(
-                'div',
-                { key: 'btn-inspector-' + index, style: { border: '1px solid #eee', padding: '10px', marginBottom: '10px', borderRadius: '8px' } },
-                el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
-                  el('strong', null, __('Button', 'headless-core') + ' ' + (index + 1)),
-                  el('div', { style: { display: 'flex', gap: '6px' } },
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
-                    el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
-                    el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
-                  )
-                ),
-                el(TextControl, {
-                  label: __('Label', 'headless-core'),
-                  value: btn.label,
-                  onChange: function (v) { patchButton(index, { label: v }); },
-                }),
-                renderLinkControl(__('Link', 'headless-core'), btn, 'url', function (patch) {
-                  patchButton(index, patch);
-                })
-              );
-            }),
-            el(Button, { variant: 'secondary', onClick: addButton }, '+ ', __('Add button', 'headless-core'))
+            })
           ),
           el(
             PanelBody,
@@ -406,8 +346,63 @@
                   : null
               )
             ),
-            el('p', { style: { marginTop: '16px', fontSize: '13px', color: '#555' } },
-              __('Buttons:', 'headless-core') + ' ' + buttons.length + ' | ' + __('Menu items:', 'headless-core') + ' ' + menuItems.length + '. ' + __('Edit in the sidebar panels.', 'headless-core')
+            el('div', { style: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' } },
+              el('strong', null, __('Buttons', 'headless-core')),
+              buttons.length === 0
+                ? el('p', { style: { color: '#666', marginTop: '8px' } }, __('No buttons yet. Add CTA buttons with custom links.', 'headless-core'))
+                : null,
+              buttons.map(function (btn, index) {
+                return el(
+                  'div',
+                  { key: 'btn-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
+                  el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
+                    el('strong', null, __('Button', 'headless-core') + ' ' + (index + 1)),
+                    el('div', { style: { display: 'flex', gap: '6px' } },
+                      el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
+                      el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
+                      el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
+                    )
+                  ),
+                  el(TextControl, {
+                    label: __('Label', 'headless-core'),
+                    value: btn.label,
+                    onChange: function (v) { patchButton(index, { label: v }); },
+                  }),
+                  renderLinkControl(__('Link', 'headless-core'), btn, 'url', function (patch) {
+                    patchButton(index, patch);
+                  })
+                );
+              }),
+              el(Button, { variant: 'secondary', onClick: addButton, style: { marginTop: '10px' } }, '+ ', __('Add button', 'headless-core'))
+            ),
+            el('div', { style: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' } },
+              el('strong', null, __('Menu items', 'headless-core')),
+              menuItems.length === 0
+                ? el('p', { style: { color: '#666', marginTop: '8px' } }, __('No menu items yet. Add links for the sub-navigation row.', 'headless-core'))
+                : null,
+              menuItems.map(function (item, index) {
+                return el(
+                  'div',
+                  { key: 'menu-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
+                  el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
+                    el('strong', null, __('Menu item', 'headless-core') + ' ' + (index + 1)),
+                    el('div', { style: { display: 'flex', gap: '6px' } },
+                      el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
+                      el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
+                      el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)
+                    )
+                  ),
+                  el(TextControl, {
+                    label: __('Label', 'headless-core'),
+                    value: item.label,
+                    onChange: function (v) { patchMenuItem(index, { label: v }); },
+                  }),
+                  renderLinkControl(__('Link', 'headless-core'), item, 'href', function (patch) {
+                    patchMenuItem(index, patch);
+                  })
+                );
+              }),
+              el(Button, { variant: 'secondary', onClick: addMenuItem, style: { marginTop: '10px' } }, '+ ', __('Add menu item', 'headless-core'))
             )
           )
         ),

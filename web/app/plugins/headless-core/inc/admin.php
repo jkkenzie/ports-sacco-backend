@@ -10,6 +10,13 @@ const HEADLESS_CORE_OPTION_ENABLE_TRANSIENTS = 'headless_core_enable_transients'
 const HEADLESS_CORE_OPTION_RECAPTCHA_SECRET = 'headless_core_recaptcha_secret';
 const HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE = 'headless_core_recaptcha_min_score';
 
+if (! defined('HEADLESS_CORE_OPTION_YOUTUBE_API_KEY')) {
+    define('HEADLESS_CORE_OPTION_YOUTUBE_API_KEY', 'headless_core_youtube_api_key');
+}
+if (! defined('HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID')) {
+    define('HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID', 'headless_core_youtube_channel_id');
+}
+
 add_action('admin_menu', static function (): void {
     add_menu_page(
         __('Headless Core', 'headless-core'),
@@ -54,6 +61,22 @@ add_action('admin_init', static function (): void {
         },
         'default' => '',
     ]);
+
+    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_YOUTUBE_API_KEY, [
+        'type' => 'string',
+        'sanitize_callback' => static function ($value): string {
+            return trim((string) $value);
+        },
+        'default' => '',
+    ]);
+
+    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID, [
+        'type' => 'string',
+        'sanitize_callback' => static function ($value): string {
+            return headless_core_youtube_sanitize_channel_id((string) $value);
+        },
+        'default' => '',
+    ]);
 });
 
 /**
@@ -66,13 +89,15 @@ function headless_core_render_settings_page(): void
     }
 
     $activeTab = isset($_GET['tab']) ? sanitize_key((string) $_GET['tab']) : 'general';
-    if (! in_array($activeTab, ['general'], true)) {
+    if (! in_array($activeTab, ['general', 'youtube'], true)) {
         $activeTab = 'general';
     }
 
     $enabled = get_option(HEADLESS_CORE_OPTION_ENABLE_TRANSIENTS, '1') === '1';
     $recaptchaSecret = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET, '');
     $recaptchaMinScore = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE, '');
+    $youtubeApiKey = (string) get_option(HEADLESS_CORE_OPTION_YOUTUBE_API_KEY, '');
+    $youtubeChannelId = (string) get_option(HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID, '');
     ?>
     <div class="wrap">
         <h1><?php echo esc_html__('Headless Core Settings', 'headless-core'); ?></h1>
@@ -129,20 +154,27 @@ function headless_core_render_settings_page(): void
                     }
                 }
                 ready(function () {
-                    var btn = document.getElementById('headless-core-recaptcha-toggle');
-                    var input = document.getElementById('<?php echo esc_js(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>');
-                    if (!btn || !input) return;
-                    btn.addEventListener('click', function () {
-                        var isHidden = input.type === 'password';
-                        input.type = isHidden ? 'text' : 'password';
-                        btn.textContent = isHidden ? '<?php echo esc_js(__('Hide', 'headless-core')); ?>' : '<?php echo esc_js(__('Show', 'headless-core')); ?>';
-                    });
+                    function bindToggle(btnId, inputId) {
+                        var btn = document.getElementById(btnId);
+                        var input = document.getElementById(inputId);
+                        if (!btn || !input) return;
+                        btn.addEventListener('click', function () {
+                            var isHidden = input.type === 'password';
+                            input.type = isHidden ? 'text' : 'password';
+                            btn.textContent = isHidden ? '<?php echo esc_js(__('Hide', 'headless-core')); ?>' : '<?php echo esc_js(__('Show', 'headless-core')); ?>';
+                        });
+                    }
+                    bindToggle('headless-core-recaptcha-toggle', '<?php echo esc_js(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>');
+                    bindToggle('headless-core-youtube-toggle', '<?php echo esc_js(HEADLESS_CORE_OPTION_YOUTUBE_API_KEY); ?>');
                 });
             })();
         </script>
         <div class="nav-tab-wrapper" style="margin-bottom: 16px;">
             <a href="<?php echo esc_url(admin_url('admin.php?page=headless-core-settings&tab=general')); ?>" class="nav-tab <?php echo $activeTab === 'general' ? 'nav-tab-active' : ''; ?>">
                 <?php echo esc_html__('General Settings', 'headless-core'); ?>
+            </a>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=headless-core-settings&tab=youtube')); ?>" class="nav-tab <?php echo $activeTab === 'youtube' ? 'nav-tab-active' : ''; ?>">
+                <?php echo esc_html__('YouTube', 'headless-core'); ?>
             </a>
         </div>
 
@@ -222,6 +254,68 @@ function headless_core_render_settings_page(): void
                                 />
                                 <p class="description">
                                     <?php echo esc_html__('Optional. If empty, defaults to 0.5. Lower = easier to pass; higher = stricter.', 'headless-core'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p style="margin-top: 16px;">
+                    <?php submit_button(__('Save Settings', 'headless-core'), 'primary', 'submit', false); ?>
+                </p>
+            </form>
+        <?php elseif ($activeTab === 'youtube') : ?>
+            <form method="post" action="options.php">
+                <?php settings_fields('headless_core_settings_group'); ?>
+                <div style="max-width: 880px; background: #fff; border: 1px solid #dcdcde; border-radius: 10px; padding: 20px;">
+                    <h2 style="margin-top: 0;"><?php echo esc_html__('YouTube Data API', 'headless-core'); ?></h2>
+                    <p style="color: #50575e; margin-top: 6px;">
+                        <?php echo esc_html__('Connect your YouTube channel so the YouTube Grid block can display latest uploads on the headless frontend. The API key is stored server-side and never exposed to visitors.', 'headless-core'); ?>
+                    </p>
+                    <p style="color: #50575e;">
+                        <?php echo esc_html__('Create a key in Google Cloud Console and enable the YouTube Data API v3.', 'headless-core'); ?>
+                        <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener noreferrer">
+                            <?php echo esc_html__('Open Google Cloud Console', 'headless-core'); ?>
+                        </a>
+                    </p>
+                    <table class="form-table" role="presentation" style="margin-top: 8px;">
+                        <tbody>
+                        <tr>
+                            <th scope="row">
+                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_YOUTUBE_API_KEY); ?>"><?php echo esc_html__('YouTube API key', 'headless-core'); ?></label>
+                            </th>
+                            <td>
+                                <div style="display: flex; gap: 8px; align-items: center; max-width: 520px;">
+                                    <input
+                                        type="password"
+                                        id="<?php echo esc_attr(HEADLESS_CORE_OPTION_YOUTUBE_API_KEY); ?>"
+                                        name="<?php echo esc_attr(HEADLESS_CORE_OPTION_YOUTUBE_API_KEY); ?>"
+                                        value="<?php echo esc_attr($youtubeApiKey); ?>"
+                                        class="regular-text"
+                                        autocomplete="new-password"
+                                        style="flex: 1 1 auto;"
+                                    />
+                                    <button type="button" class="button" id="headless-core-youtube-toggle">
+                                        <?php echo esc_html__('Show', 'headless-core'); ?>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID); ?>"><?php echo esc_html__('Default channel ID or @handle', 'headless-core'); ?></label>
+                            </th>
+                            <td>
+                                <input
+                                    type="text"
+                                    id="<?php echo esc_attr(HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID); ?>"
+                                    name="<?php echo esc_attr(HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID); ?>"
+                                    value="<?php echo esc_attr($youtubeChannelId); ?>"
+                                    class="regular-text"
+                                    placeholder="UCxxxxxxxxxxxxxxxxxxxxxx or @YourChannel"
+                                />
+                                <p class="description">
+                                    <?php echo esc_html__('Find the channel ID on YouTube → channel page → About, or use the public @handle.', 'headless-core'); ?>
                                 </p>
                             </td>
                         </tr>

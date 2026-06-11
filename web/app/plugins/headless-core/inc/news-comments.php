@@ -44,6 +44,10 @@ add_action('rest_api_init', static function (): void {
                 'required' => false,
                 'type' => 'string',
             ],
+            '_wpnonce' => [
+                'required' => false,
+                'type' => 'string',
+            ],
         ],
     ]);
 });

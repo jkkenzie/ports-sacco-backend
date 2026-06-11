@@ -1102,7 +1102,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         $attrs['bannerImagePositionX'] = headless_core_sanitize_banner_position($posX, 'center');
         $attrs['bannerImagePositionY'] = headless_core_sanitize_banner_position($posY, 'bottom');
 
-        if (! isset($attrs['buttons']) || ! is_array($attrs['buttons']) || $attrs['buttons'] === []) {
+        if (! isset($attrs['buttons']) || ! is_array($attrs['buttons'])) {
             $legacyButtons = [];
             $legacyPrimaryText = isset($attrs['primaryCtaText']) ? trim((string) $attrs['primaryCtaText']) : '';
             $legacyPrimaryUrl = isset($attrs['primaryCtaUrl']) ? trim((string) $attrs['primaryCtaUrl']) : '';
@@ -1110,8 +1110,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             $legacySecondaryUrl = isset($attrs['secondaryCtaUrl']) ? trim((string) $attrs['secondaryCtaUrl']) : '';
             if ($legacyPrimaryText !== '' || $legacyPrimaryUrl !== '') {
                 $legacyButtons[] = [
-                    'label' => $legacyPrimaryText !== '' ? $legacyPrimaryText : 'GET A CALL BACK',
-                    'url' => $legacyPrimaryUrl !== '' ? $legacyPrimaryUrl : '#',
+                    'label' => $legacyPrimaryText,
+                    'url' => $legacyPrimaryUrl,
                     'textColor' => '#22abb5',
                     'borderColor' => '#22abb5',
                     'bgColor' => '#ffffff',
@@ -1122,8 +1122,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
             if ($legacySecondaryText !== '' || $legacySecondaryUrl !== '') {
                 $legacyButtons[] = [
-                    'label' => $legacySecondaryText !== '' ? $legacySecondaryText : 'JOIN PORTS SACCO',
-                    'url' => $legacySecondaryUrl !== '' ? $legacySecondaryUrl : '/contact-us',
+                    'label' => $legacySecondaryText,
+                    'url' => $legacySecondaryUrl,
                     'textColor' => '#ed6e2a',
                     'borderColor' => '#ed6e2a',
                     'bgColor' => '#ffffff',
@@ -1132,10 +1132,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                     'hoverBorderColor' => '#ed6e2a',
                 ];
             }
-            $attrs['buttons'] = $legacyButtons !== [] ? $legacyButtons : [
-                ['label' => 'GET A CALL BACK', 'url' => '#', 'textColor' => '#22abb5', 'borderColor' => '#22abb5', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#22abb5', 'hoverBorderColor' => '#22abb5'],
-                ['label' => 'JOIN PORTS SACCO', 'url' => '/contact-us', 'textColor' => '#ed6e2a', 'borderColor' => '#ed6e2a', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#ed6e2a', 'hoverBorderColor' => '#ed6e2a'],
-            ];
+            $attrs['buttons'] = $legacyButtons;
         } else {
             $normalizedButtons = [];
             foreach ($attrs['buttons'] as $button) {
@@ -1148,8 +1145,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                     continue;
                 }
                 $normalizedButtons[] = [
-                    'label' => $label !== '' ? $label : 'BUTTON',
-                    'url' => headless_core_menu_url_to_path($url !== '' ? $url : '#'),
+                    'label' => $label,
+                    'url' => $url !== '' ? headless_core_menu_url_to_path($url) : '',
                     'textColor' => headless_core_sanitize_color_string((string) ($button['textColor'] ?? ''), '#22abb5'),
                     'borderColor' => headless_core_sanitize_color_string((string) ($button['borderColor'] ?? ''), '#22abb5'),
                     'bgColor' => headless_core_sanitize_color_string((string) ($button['bgColor'] ?? ''), '#ffffff'),
@@ -1163,11 +1160,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         }
 
         if (! isset($attrs['menuItems']) || ! is_array($attrs['menuItems'])) {
-            $attrs['menuItems'] = [
-                ['label' => 'GROUP', 'href' => '#'],
-                ['label' => 'BIASHARA', 'href' => '#'],
-                ['label' => 'FIXED DEPOSIT', 'href' => '#'],
-            ];
+            $attrs['menuItems'] = [];
         } else {
             $normalizedMenuItems = [];
             foreach ($attrs['menuItems'] as $item) {
@@ -1180,8 +1173,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                     continue;
                 }
                 $normalizedMenuItems[] = [
-                    'label' => $label !== '' ? $label : 'MENU ITEM',
-                    'href' => headless_core_menu_url_to_path($href !== '' ? $href : '#'),
+                    'label' => $label,
+                    'href' => $href !== '' ? headless_core_menu_url_to_path($href) : '',
                     'target' => ! empty($item['opensInNewTab']) || (($item['target'] ?? '') === '_blank') ? '_blank' : '',
                 ];
             }
@@ -2839,6 +2832,189 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         $attrs['readMoreLabel'] = isset($attrs['readMoreLabel']) && trim((string) $attrs['readMoreLabel']) !== ''
             ? sanitize_text_field((string) $attrs['readMoreLabel'])
             : __('Read More', 'headless-core');
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/youtube-grid') {
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? sanitize_text_field((string) $attrs['title'])
+            : __('Our YouTube Channel', 'headless-core');
+        $attrs['intro'] = isset($attrs['intro']) ? sanitize_textarea_field((string) $attrs['intro']) : '';
+        $attrs['maxVideos'] = isset($attrs['maxVideos']) ? max(3, min(12, (int) $attrs['maxVideos'])) : 6;
+        $columns = isset($attrs['columns']) ? (int) $attrs['columns'] : 3;
+        $attrs['columns'] = in_array($columns, [2, 3, 4], true) ? $columns : 3;
+        $attrs['channelId'] = headless_core_youtube_sanitize_channel_id((string) ($attrs['channelId'] ?? ''));
+        $attrs['channelUrl'] = isset($attrs['channelUrl']) ? esc_url_raw((string) $attrs['channelUrl']) : '';
+        $attrs['viewChannelLabel'] = isset($attrs['viewChannelLabel']) && trim((string) $attrs['viewChannelLabel']) !== ''
+            ? sanitize_text_field((string) $attrs['viewChannelLabel'])
+            : __('Visit our YouTube channel', 'headless-core');
+        $attrs['accentColor'] = headless_core_sanitize_color_string(
+            isset($attrs['accentColor']) ? (string) $attrs['accentColor'] : '',
+            '#22acb6'
+        );
+        $attrs['showPublishedDate'] = ! isset($attrs['showPublishedDate']) || (bool) $attrs['showPublishedDate'];
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/downloads-grid') {
+        $attrs['sectionTitle'] = isset($attrs['sectionTitle']) && trim((string) $attrs['sectionTitle']) !== ''
+            ? sanitize_text_field((string) $attrs['sectionTitle'])
+            : __('Downloads', 'headless-core');
+        $attrs['sectionIntro'] = isset($attrs['sectionIntro']) ? sanitize_textarea_field((string) $attrs['sectionIntro']) : '';
+        $attrs['downloadLabel'] = isset($attrs['downloadLabel']) && trim((string) $attrs['downloadLabel']) !== ''
+            ? sanitize_text_field((string) $attrs['downloadLabel'])
+            : __('Download PDF', 'headless-core');
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#f8fafc'
+        );
+        $attrs['cardBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardBgColor']) ? (string) $attrs['cardBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['accentColor'] = headless_core_sanitize_color_string(
+            isset($attrs['accentColor']) ? (string) $attrs['accentColor'] : '',
+            '#22acb6'
+        );
+        $attrs['buttonHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverColor']) ? (string) $attrs['buttonHoverColor'] : '',
+            '#ee6e2a'
+        );
+        $attrs['headingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headingColor']) ? (string) $attrs['headingColor'] : '',
+            '#1e293b'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#334155'
+        );
+
+        $rowsIn = isset($attrs['rows']) && is_array($attrs['rows']) ? $attrs['rows'] : [];
+        $rowsOut = [];
+        foreach ($rowsIn as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $heading = isset($row['heading']) ? sanitize_text_field((string) $row['heading']) : '';
+            $itemsIn = isset($row['items']) && is_array($row['items']) ? $row['items'] : [];
+            $itemsOut = [];
+            foreach ($itemsIn as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $title = isset($item['title']) ? sanitize_text_field((string) $item['title']) : '';
+                $fileId = isset($item['fileId']) ? (int) $item['fileId'] : 0;
+                $fileUrl = isset($item['fileUrl']) ? esc_url_raw((string) $item['fileUrl']) : '';
+                if ($fileId > 0) {
+                    $attachmentUrl = wp_get_attachment_url($fileId);
+                    if (is_string($attachmentUrl) && $attachmentUrl !== '') {
+                        $fileUrl = esc_url_raw($attachmentUrl);
+                    }
+                }
+                if ($title === '' && $fileUrl === '') {
+                    continue;
+                }
+                $itemsOut[] = [
+                    'title' => $title,
+                    'fileId' => $fileId,
+                    'fileUrl' => $fileUrl,
+                ];
+                if (count($itemsOut) >= 48) {
+                    break;
+                }
+            }
+            if ($heading === '' && $itemsOut === []) {
+                continue;
+            }
+            $rowsOut[] = [
+                'heading' => $heading,
+                'items' => $itemsOut,
+            ];
+        }
+        $attrs['rows'] = $rowsOut;
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/faq-section') {
+        $attrs['sectionTitle'] = isset($attrs['sectionTitle']) && trim((string) $attrs['sectionTitle']) !== ''
+            ? sanitize_text_field((string) $attrs['sectionTitle'])
+            : __('Frequently Asked Questions', 'headless-core');
+        $attrs['sectionIntro'] = isset($attrs['sectionIntro']) ? sanitize_textarea_field((string) $attrs['sectionIntro']) : '';
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#f8fafc'
+        );
+        $attrs['cardBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardBgColor']) ? (string) $attrs['cardBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['accentColor'] = headless_core_sanitize_color_string(
+            isset($attrs['accentColor']) ? (string) $attrs['accentColor'] : '',
+            '#22acb6'
+        );
+        $attrs['groupHeadingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['groupHeadingColor']) ? (string) $attrs['groupHeadingColor'] : '',
+            '#1e293b'
+        );
+        $attrs['questionColor'] = headless_core_sanitize_color_string(
+            isset($attrs['questionColor']) ? (string) $attrs['questionColor'] : '',
+            '#1e293b'
+        );
+        $attrs['answerColor'] = headless_core_sanitize_color_string(
+            isset($attrs['answerColor']) ? (string) $attrs['answerColor'] : '',
+            '#475569'
+        );
+        $attrs['borderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['borderColor']) ? (string) $attrs['borderColor'] : '',
+            '#e2e8f0'
+        );
+        $attrs['hoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['hoverBgColor']) ? (string) $attrs['hoverBgColor'] : '',
+            '#f8fafc'
+        );
+        $attrs['iconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['iconColor']) ? (string) $attrs['iconColor'] : '',
+            '#22acb6'
+        );
+
+        $rowsIn = isset($attrs['rows']) && is_array($attrs['rows']) ? $attrs['rows'] : [];
+        $rowsOut = [];
+        foreach ($rowsIn as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $heading = isset($row['heading']) ? sanitize_text_field((string) $row['heading']) : '';
+            $itemsIn = isset($row['items']) && is_array($row['items']) ? $row['items'] : [];
+            $itemsOut = [];
+            foreach ($itemsIn as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $title = isset($item['title']) ? sanitize_text_field((string) $item['title']) : '';
+                $content = isset($item['content']) ? wp_kses_post((string) $item['content']) : '';
+                if ($title === '' && trim(wp_strip_all_tags($content)) === '') {
+                    continue;
+                }
+                $itemsOut[] = [
+                    'title' => $title,
+                    'content' => $content,
+                ];
+                if (count($itemsOut) >= 48) {
+                    break;
+                }
+            }
+            if ($heading === '' && $itemsOut === []) {
+                continue;
+            }
+            $rowsOut[] = [
+                'heading' => $heading,
+                'items' => $itemsOut,
+            ];
+        }
+        $attrs['rows'] = $rowsOut;
 
         return $attrs;
     }

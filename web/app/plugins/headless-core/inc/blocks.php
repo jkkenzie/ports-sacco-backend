@@ -294,6 +294,27 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-youtube-grid-editor',
+        HEADLESS_CORE_URL . 'blocks/youtube-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-downloads-grid-editor',
+        HEADLESS_CORE_URL . 'blocks/downloads-grid/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
+        'headless-custom-faq-section-editor',
+        HEADLESS_CORE_URL . 'blocks/faq-section/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-footer-contact-editor',
         HEADLESS_CORE_URL . 'blocks/footer-contact/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
@@ -862,18 +883,11 @@ add_action('init', static function (): void {
             'menuHoverBackgroundColor' => ['type' => 'string', 'default' => '#eef2f8'],
             'buttons' => [
                 'type' => 'array',
-                'default' => [
-                    ['label' => 'GET A CALL BACK', 'url' => '#', 'textColor' => '#22abb5', 'borderColor' => '#22abb5', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#22abb5', 'hoverBorderColor' => '#22abb5'],
-                    ['label' => 'JOIN PORTS SACCO', 'url' => '/contact-us', 'textColor' => '#ed6e2a', 'borderColor' => '#ed6e2a', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#ed6e2a', 'hoverBorderColor' => '#ed6e2a'],
-                ],
+                'default' => [],
             ],
             'menuItems' => [
                 'type' => 'array',
-                'default' => [
-                    ['label' => 'GROUP', 'href' => '#'],
-                    ['label' => 'BIASHARA', 'href' => '#'],
-                    ['label' => 'FIXED DEPOSIT', 'href' => '#'],
-                ],
+                'default' => [],
             ],
             'showMenu' => ['type' => 'boolean', 'default' => true],
         ],
@@ -1465,6 +1479,67 @@ add_action('init', static function (): void {
         'attributes' => [
             'perPage' => ['type' => 'number', 'default' => 9],
             'readMoreLabel' => ['type' => 'string', 'default' => 'Read More'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/youtube-grid', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-youtube-grid-editor',
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'Our YouTube Channel'],
+            'intro' => ['type' => 'string', 'default' => 'Watch our latest videos, updates, and stories from Ports SACCO.'],
+            'maxVideos' => ['type' => 'number', 'default' => 6],
+            'columns' => ['type' => 'number', 'default' => 3],
+            'channelId' => ['type' => 'string', 'default' => ''],
+            'channelUrl' => ['type' => 'string', 'default' => ''],
+            'viewChannelLabel' => ['type' => 'string', 'default' => 'Visit our YouTube channel'],
+            'accentColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'showPublishedDate' => ['type' => 'boolean', 'default' => true],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/downloads-grid', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-downloads-grid-editor',
+        'attributes' => [
+            'sectionTitle' => ['type' => 'string', 'default' => 'Downloads'],
+            'sectionIntro' => ['type' => 'string', 'default' => 'Access our forms, reports, and policy documents below.'],
+            'downloadLabel' => ['type' => 'string', 'default' => 'Download PDF'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#f8fafc'],
+            'cardBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'accentColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'buttonHoverColor' => ['type' => 'string', 'default' => '#ee6e2a'],
+            'headingColor' => ['type' => 'string', 'default' => '#1e293b'],
+            'titleColor' => ['type' => 'string', 'default' => '#334155'],
+            'rows' => ['type' => 'array', 'default' => []],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/faq-section', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-faq-section-editor',
+        'attributes' => [
+            'sectionTitle' => ['type' => 'string', 'default' => 'Frequently Asked Questions'],
+            'sectionIntro' => ['type' => 'string', 'default' => 'Find answers to common questions about our products and services.'],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#f8fafc'],
+            'cardBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'accentColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'groupHeadingColor' => ['type' => 'string', 'default' => '#1e293b'],
+            'questionColor' => ['type' => 'string', 'default' => '#1e293b'],
+            'answerColor' => ['type' => 'string', 'default' => '#475569'],
+            'borderColor' => ['type' => 'string', 'default' => '#e2e8f0'],
+            'hoverBgColor' => ['type' => 'string', 'default' => '#f8fafc'],
+            'iconColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'rows' => ['type' => 'array', 'default' => []],
         ],
         'render_callback' => static function (): string {
             return '';
