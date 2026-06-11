@@ -6,7 +6,6 @@
   var RichText = blockEditor.RichText;
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
-  var headlessLink = window.headlessCoreEditor || {};
   var PanelBody = components.PanelBody;
   var Button = components.Button;
   var BaseControl = components.BaseControl;
@@ -21,20 +20,30 @@
     el('path', { d: 'M9 3h6l1 2h4v2H4V5h4l1-2zm0 6h2v12H9V9zm4 0h2v12h-2V9z' })
   );
 
-  var EMPTY_BUTTON = {
-    label: '',
-    url: '',
+  var ODD_BUTTON_COLORS = {
     textColor: '#22abb5',
     borderColor: '#22abb5',
     bgColor: '#ffffff',
     hoverTextColor: '#ffffff',
     hoverBgColor: '#22abb5',
     hoverBorderColor: '#22abb5',
+  };
+  var EVEN_BUTTON_COLORS = {
+    textColor: '#ed6e2a',
+    borderColor: '#ed6e2a',
+    bgColor: '#ffffff',
+    hoverTextColor: '#ffffff',
+    hoverBgColor: '#ed6e2a',
+    hoverBorderColor: '#ed6e2a',
+  };
+  var EMPTY_BUTTON = Object.assign({
+    label: '',
+    url: '',
     opensInNewTab: false,
     target: '',
     linkId: 0,
     linkType: '',
-  };
+  }, ODD_BUTTON_COLORS);
   var EMPTY_MENU_ITEM = {
     label: '',
     href: '',
@@ -103,18 +112,19 @@
     );
   }
 
-  function renderLinkControl(label, item, urlKey, onChange) {
-    if (headlessLink.renderLinkControl) {
-      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
-    }
+  function renderUrlField(label, item, urlKey, onChange) {
     return el(TextControl, {
       label: label,
       value: String((item && item[urlKey]) || ''),
+      placeholder: __('https://example.com or /page-slug', 'headless-core'),
       onChange: function (v) {
         var patch = {};
         patch[urlKey] = String(v || '');
         if (urlKey === 'href') {
           patch.url = patch[urlKey];
+        }
+        if (urlKey === 'url') {
+          patch.href = patch[urlKey];
         }
         onChange(patch);
       },
@@ -125,8 +135,10 @@
     if (!Array.isArray(buttons)) {
       return [];
     }
-    return buttons.map(function (btn) {
-      var d = EMPTY_BUTTON;
+    return buttons.filter(function (btn) {
+      return btn && typeof btn === 'object';
+    }).map(function (btn, index) {
+      var d = Object.assign({}, EMPTY_BUTTON, index % 2 === 0 ? ODD_BUTTON_COLORS : EVEN_BUTTON_COLORS);
       return Object.assign({}, d, {
         label: btn && btn.label != null ? String(btn.label) : d.label,
         url: btn && btn.url != null ? String(btn.url) : d.url,
@@ -148,16 +160,97 @@
     if (!Array.isArray(items)) {
       return [];
     }
-    return items.map(function (item) {
+    return items.filter(function (item) {
+      return item && typeof item === 'object';
+    }).map(function (item) {
+      var href = item.href != null ? String(item.href) : (item.url != null ? String(item.url) : '');
       return {
-        label: item && item.label != null ? String(item.label) : '',
-        href: item && item.href != null ? String(item.href) : '',
+        label: item.label != null ? String(item.label) : '',
+        href: href,
         opensInNewTab: Boolean(item && (item.opensInNewTab || item.target === '_blank')),
         target: item && item.target ? String(item.target) : (item && item.opensInNewTab ? '_blank' : ''),
         linkId: item && item.linkId ? Number(item.linkId) : 0,
         linkType: item && item.linkType ? String(item.linkType) : '',
       };
     });
+  }
+
+  function colorPaletteChoices() {
+    return COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; });
+  }
+
+  function buttonColorsFromList(buttons, parity) {
+    var defaults = parity === 0 ? ODD_BUTTON_COLORS : EVEN_BUTTON_COLORS;
+    var match = null;
+    for (var i = 0; i < buttons.length; i++) {
+      if (i % 2 === parity) {
+        match = buttons[i];
+        break;
+      }
+    }
+    if (!match) {
+      return Object.assign({}, defaults);
+    }
+    return {
+      textColor: match.textColor || defaults.textColor,
+      borderColor: match.borderColor || defaults.borderColor,
+      bgColor: match.bgColor || defaults.bgColor,
+      hoverTextColor: match.hoverTextColor || defaults.hoverTextColor,
+      hoverBgColor: match.hoverBgColor || defaults.hoverBgColor,
+      hoverBorderColor: match.hoverBorderColor || defaults.hoverBorderColor,
+    };
+  }
+
+  function applyButtonColorsToParity(buttons, parity, colorPatch) {
+    return buttons.map(function (btn, index) {
+      if (index % 2 !== parity) {
+        return btn;
+      }
+      return Object.assign({}, btn, colorPatch);
+    });
+  }
+
+  function renderButtonColorControls(colors, defaults, onChange) {
+    return el(
+      'div',
+      null,
+      el(BaseControl, { label: __('Text color', 'headless-core') }),
+      el(ColorPalette, {
+        value: colors.textColor,
+        colors: colorPaletteChoices(),
+        onChange: function (c) { onChange({ textColor: c || defaults.textColor }); },
+      }),
+      el(BaseControl, { label: __('Border color', 'headless-core') }),
+      el(ColorPalette, {
+        value: colors.borderColor,
+        colors: colorPaletteChoices(),
+        onChange: function (c) { onChange({ borderColor: c || defaults.borderColor }); },
+      }),
+      el(BaseControl, { label: __('Background color', 'headless-core') }),
+      el(ColorPalette, {
+        value: colors.bgColor,
+        colors: colorPaletteChoices(),
+        onChange: function (c) { onChange({ bgColor: c || defaults.bgColor }); },
+      }),
+      el(BaseControl, { label: __('Hover text color', 'headless-core') }),
+      el(ColorPalette, {
+        value: colors.hoverTextColor,
+        colors: colorPaletteChoices(),
+        onChange: function (c) { onChange({ hoverTextColor: c || defaults.hoverTextColor }); },
+      }),
+      el(BaseControl, { label: __('Hover background color', 'headless-core') }),
+      el(ColorPalette, {
+        value: colors.hoverBgColor,
+        colors: colorPaletteChoices(),
+        onChange: function (c) { onChange({ hoverBgColor: c || defaults.hoverBgColor }); },
+      }),
+      el(BaseControl, { label: __('Hover border color', 'headless-core') }),
+      el(ColorPalette, {
+        value: colors.hoverBorderColor,
+        colors: colorPaletteChoices(),
+        onChange: function (c) { onChange({ hoverBorderColor: c || defaults.hoverBorderColor }); },
+      })
+    );
   }
 
   function moveRow(list, index, dir) {
@@ -196,8 +289,9 @@
     },
     edit: function (props) {
       var blockProps = useBlockProps({ className: 'headless-page-hero-content-block' });
-      var buttons = normalizeButtons(props.attributes.buttons);
-      var menuItems = normalizeMenuItems(props.attributes.menuItems);
+      var attrs = props.attributes || {};
+      var buttons = normalizeButtons(attrs.buttons);
+      var menuItems = normalizeMenuItems(attrs.menuItems);
 
       function patchButton(index, patch) {
         var next = buttons.slice();
@@ -206,10 +300,25 @@
       }
 
       function addButton() {
+        var nextIndex = buttons.length;
+        var template = Object.assign(
+          {},
+          EMPTY_BUTTON,
+          nextIndex % 2 === 0 ? ODD_BUTTON_COLORS : EVEN_BUTTON_COLORS
+        );
         props.setAttributes({
-          buttons: buttons.concat([Object.assign({}, EMPTY_BUTTON)]),
+          buttons: buttons.concat([template]),
         });
       }
+
+      function patchButtonColorsByParity(parity, patch) {
+        props.setAttributes({
+          buttons: applyButtonColorsToParity(buttons, parity, patch),
+        });
+      }
+
+      var oddButtonColors = buttonColorsFromList(buttons, 0);
+      var evenButtonColors = buttonColorsFromList(buttons, 1);
 
       function removeButton(index) {
         var next = buttons.filter(function (_, i) { return i !== index; });
@@ -244,7 +353,7 @@
             { title: __('Menu', 'headless-core'), initialOpen: true },
             el(ToggleControl, {
               label: __('Show sub-navigation menu', 'headless-core'),
-              checked: props.attributes.showMenu !== false,
+              checked: attrs.showMenu !== false,
               help: __('Turn off to hide menu links on the frontend while keeping the same layout space for the banner.', 'headless-core'),
               onChange: function (v) {
                 props.setAttributes({ showMenu: Boolean(v) });
@@ -253,46 +362,66 @@
           ),
           el(
             PanelBody,
+            { title: __('Button colors (1st, 3rd, …)', 'headless-core'), initialOpen: false },
+            el('p', { style: { marginTop: 0, color: '#666', fontSize: '12px' } },
+              __('Applies to buttons at odd positions in the list (1st, 3rd, 5th, …).', 'headless-core')
+            ),
+            renderButtonColorControls(oddButtonColors, ODD_BUTTON_COLORS, function (patch) {
+              patchButtonColorsByParity(0, patch);
+            })
+          ),
+          el(
+            PanelBody,
+            { title: __('Button colors (2nd, 4th, …)', 'headless-core'), initialOpen: false },
+            el('p', { style: { marginTop: 0, color: '#666', fontSize: '12px' } },
+              __('Applies to buttons at even positions in the list (2nd, 4th, 6th, …).', 'headless-core')
+            ),
+            renderButtonColorControls(evenButtonColors, EVEN_BUTTON_COLORS, function (patch) {
+              patchButtonColorsByParity(1, patch);
+            })
+          ),
+          el(
+            PanelBody,
             { title: __('Colors', 'headless-core'), initialOpen: false },
             el(BaseControl, { label: __('Background color (fallback when no image)', 'headless-core') }),
             el(ColorPalette, {
-              value: props.attributes.backgroundColor || '#22ABB5',
+              value: attrs.backgroundColor || '#22ABB5',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (nextColor) { props.setAttributes({ backgroundColor: nextColor || '#22ABB5' }); }
             }),
             el(BaseControl, { label: __('Title Color', 'headless-core') }),
             el(ColorPalette, {
-              value: props.attributes.titleColor || '#22ABB5',
+              value: attrs.titleColor || '#22ABB5',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (nextColor) { props.setAttributes({ titleColor: nextColor || '#22ABB5' }); }
             }),
             el(BaseControl, { label: __('Menu Background Color', 'headless-core') }),
             el(ColorPalette, {
-              value: props.attributes.navBackgroundColor || '#eef2f8',
+              value: attrs.navBackgroundColor || '#eef2f8',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (nextColor) { props.setAttributes({ navBackgroundColor: nextColor || '#eef2f8' }); }
             }),
             el(BaseControl, { label: __('Menu Border Color', 'headless-core') }),
             el(ColorPalette, {
-              value: props.attributes.navBorderColor || '#c8cee3',
+              value: attrs.navBorderColor || '#c8cee3',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (nextColor) { props.setAttributes({ navBorderColor: nextColor || '#c8cee3' }); }
             }),
             el(BaseControl, { label: __('Menu Text Color', 'headless-core') }),
             el(ColorPalette, {
-              value: props.attributes.menuTextColor || '#65605f',
+              value: attrs.menuTextColor || '#65605f',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (nextColor) { props.setAttributes({ menuTextColor: nextColor || '#65605f' }); }
             }),
             el(BaseControl, { label: __('Menu Hover Text Color', 'headless-core') }),
             el(ColorPalette, {
-              value: props.attributes.menuHoverTextColor || '#ED6E2A',
+              value: attrs.menuHoverTextColor || '#ED6E2A',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (nextColor) { props.setAttributes({ menuHoverTextColor: nextColor || '#ED6E2A' }); }
             }),
             el(BaseControl, { label: __('Menu Hover Background Color', 'headless-core') }),
             el(ColorPalette, {
-              value: props.attributes.menuHoverBackgroundColor || '#eef2f8',
+              value: attrs.menuHoverBackgroundColor || '#eef2f8',
               colors: COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
               onChange: function (nextColor) { props.setAttributes({ menuHoverBackgroundColor: nextColor || '#eef2f8' }); }
             })
@@ -303,25 +432,25 @@
           { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' } },
           el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
             el('h3', { style: { margin: 0, marginBottom: '10px' } }, __('Page Hero Content', 'headless-core')),
-            el(TextControl, { label: __('Title', 'headless-core'), value: props.attributes.title, onChange: function (v) { props.setAttributes({ title: v }); } }),
-            el(TextareaControl, { label: __('Intro Text', 'headless-core'), value: props.attributes.intro, onChange: function (v) { props.setAttributes({ intro: v }); } }),
+            el(TextControl, { label: __('Title', 'headless-core'), value: attrs.title || '', onChange: function (v) { props.setAttributes({ title: v }); } }),
+            el(TextareaControl, { label: __('Intro Text', 'headless-core'), value: attrs.intro || '', onChange: function (v) { props.setAttributes({ intro: v }); } }),
             el('div', { style: { marginTop: '8px' } },
               el('strong', null, __('Banner image', 'headless-core')),
-              props.attributes.bannerImageUrl
-                ? el('img', { src: props.attributes.bannerImageUrl, alt: '', style: { width: '100%', maxHeight: '160px', objectFit: 'cover', marginTop: '8px', borderRadius: '6px' } })
+              attrs.bannerImageUrl
+                ? el('img', { src: attrs.bannerImageUrl, alt: '', style: { width: '100%', maxHeight: '160px', objectFit: 'cover', marginTop: '8px', borderRadius: '6px' } })
                 : null,
-              props.attributes.bannerImageUrl
+              attrs.bannerImageUrl
                 ? el('div', { style: { marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' } },
                     renderBannerPositionControl(
                       __('Banner image position X', 'headless-core'),
-                      props.attributes.bannerImagePositionX,
+                      attrs.bannerImagePositionX,
                       BANNER_POSITION_X_OPTIONS,
                       'center',
                       function (v) { props.setAttributes({ bannerImagePositionX: v }); }
                     ),
                     renderBannerPositionControl(
                       __('Banner image position Y', 'headless-core'),
-                      props.attributes.bannerImagePositionY,
+                      attrs.bannerImagePositionY,
                       BANNER_POSITION_Y_OPTIONS,
                       'bottom',
                       function (v) { props.setAttributes({ bannerImagePositionY: v }); }
@@ -332,16 +461,16 @@
                 el(MediaUploadCheck, null,
                   el(MediaUpload, {
                     allowedTypes: ['image'],
-                    value: props.attributes.bannerImageId || 0,
+                    value: attrs.bannerImageId || 0,
                     onSelect: function (media) {
                       props.setAttributes({ bannerImageId: media && media.id ? media.id : 0, bannerImageUrl: media && media.url ? media.url : '' });
                     },
                     render: function (obj) {
-                      return el(Button, { variant: 'secondary', onClick: obj.open }, props.attributes.bannerImageId ? __('Replace Banner', 'headless-core') : __('Select Banner', 'headless-core'));
+                      return el(Button, { variant: 'secondary', onClick: obj.open }, attrs.bannerImageId ? __('Replace Banner', 'headless-core') : __('Select Banner', 'headless-core'));
                     }
                   })
                 ),
-                props.attributes.bannerImageId
+                attrs.bannerImageId
                   ? el(Button, { variant: 'tertiary', isDestructive: true, onClick: function () { props.setAttributes({ bannerImageId: 0, bannerImageUrl: '' }); } }, trashSvg)
                   : null
               )
@@ -368,12 +497,14 @@
                     value: btn.label,
                     onChange: function (v) { patchButton(index, { label: v }); },
                   }),
-                  renderLinkControl(__('Link', 'headless-core'), btn, 'url', function (patch) {
+                  renderUrlField(__('Link', 'headless-core'), btn, 'url', function (patch) {
                     patchButton(index, patch);
                   })
                 );
               }),
-              el(Button, { variant: 'secondary', onClick: addButton, style: { marginTop: '10px' } }, '+ ', __('Add button', 'headless-core'))
+              el('div', { style: { marginTop: '10px' } },
+                el(Button, { variant: 'secondary', onClick: addButton }, '+ ', __('Add button', 'headless-core'))
+              )
             ),
             el('div', { style: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' } },
               el('strong', null, __('Menu items', 'headless-core')),
@@ -397,20 +528,22 @@
                     value: item.label,
                     onChange: function (v) { patchMenuItem(index, { label: v }); },
                   }),
-                  renderLinkControl(__('Link', 'headless-core'), item, 'href', function (patch) {
+                  renderUrlField(__('Link', 'headless-core'), item, 'href', function (patch) {
                     patchMenuItem(index, patch);
                   })
                 );
               }),
-              el(Button, { variant: 'secondary', onClick: addMenuItem, style: { marginTop: '10px' } }, '+ ', __('Add menu item', 'headless-core'))
+              el('div', { style: { marginTop: '10px' } },
+                el(Button, { variant: 'secondary', onClick: addMenuItem }, '+ ', __('Add menu item', 'headless-core'))
+              )
             )
           )
         ),
         el(
           'div',
           { style: { padding: '1rem', border: '1px dashed #ccc', borderRadius: '4px', marginTop: '8px' } },
-          el('strong', null, props.attributes.title || __('Page Hero', 'headless-core')),
-          props.attributes.intro ? el('p', { style: { marginTop: '8px' } }, props.attributes.intro) : null,
+          el('strong', null, attrs.title || __('Page Hero', 'headless-core')),
+          attrs.intro ? el('p', { style: { marginTop: '8px' } }, attrs.intro) : null,
           menuItems.length > 0
             ? el('p', { style: { marginTop: '8px', fontSize: '12px' } }, menuItems.map(function (m) { return m.label; }).filter(Boolean).join(' · '))
             : null,
