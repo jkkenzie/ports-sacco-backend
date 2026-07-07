@@ -287,6 +287,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-events-archive-editor',
+        HEADLESS_CORE_URL . 'blocks/events-archive/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-news-grid-editor',
         HEADLESS_CORE_URL . 'blocks/news-grid/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components'],
@@ -1068,6 +1075,13 @@ add_action('init', static function (): void {
             'googlePlayImageId' => ['type' => 'number', 'default' => 0],
             'googlePlayImageUrl' => ['type' => 'string', 'default' => ''],
             'googlePlayLinkUrl' => ['type' => 'string', 'default' => ''],
+            'googlePlayLinks' => [
+                'type' => 'array',
+                'default' => [
+                    ['label' => 'M-Port Cash', 'url' => ''],
+                    ['label' => 'Sacco Account', 'url' => ''],
+                ],
+            ],
             'appStoreImageId' => ['type' => 'number', 'default' => 0],
             'appStoreImageUrl' => ['type' => 'string', 'default' => ''],
             'appStoreLinkUrl' => ['type' => 'string', 'default' => ''],
@@ -1467,6 +1481,23 @@ add_action('init', static function (): void {
         'editor_script' => 'headless-custom-events-grid-editor',
         'attributes' => [
             'categoryId' => ['type' => 'number', 'default' => 0],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    register_block_type('custom/events-archive', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-events-archive-editor',
+        'attributes' => [
+            'title' => ['type' => 'string', 'default' => 'News & Events'],
+            'intro' => [
+                'type' => 'string',
+                'default' => 'Stay up to date with the latest happenings, community initiatives, and milestones at Ports SACCO.',
+            ],
+            'categoryId' => ['type' => 'number', 'default' => 0],
+            'emptyMessage' => ['type' => 'string', 'default' => 'No events available right now.'],
         ],
         'render_callback' => static function (): string {
             return '';

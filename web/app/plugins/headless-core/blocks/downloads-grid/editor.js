@@ -8,6 +8,7 @@
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var Button = components.Button;
   var TextControl = components.TextControl;
+  var ToggleControl = components.ToggleControl;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
@@ -26,7 +27,7 @@
     '#e2e8f0',
   ];
 
-  var DEFAULT_ITEM = { title: '', fileId: 0, fileUrl: '' };
+  var DEFAULT_ITEM = { title: '', fileId: 0, fileUrl: '', showDeadline: false, deadline: '' };
 
   var DEFAULT_ROWS = [
     {
@@ -46,7 +47,7 @@
   ];
 
   function defaultItem() {
-    return { title: '', fileId: 0, fileUrl: '' };
+    return { title: '', fileId: 0, fileUrl: '', showDeadline: false, deadline: '' };
   }
 
   function normalizeItem(item) {
@@ -55,6 +56,8 @@
       title: String(row.title != null ? row.title : ''),
       fileId: row.fileId ? parseInt(row.fileId, 10) || 0 : 0,
       fileUrl: String(row.fileUrl != null ? row.fileUrl : ''),
+      showDeadline: !!row.showDeadline,
+      deadline: String(row.deadline != null ? row.deadline : ''),
     };
   }
 
@@ -475,6 +478,24 @@
                       setRows(patchItem(rows, rowIndex, itemIndex, { title: v }));
                     },
                   }),
+                  el(ToggleControl, {
+                    label: __('Show deadline', 'headless-core'),
+                    checked: !!item.showDeadline,
+                    onChange: function (v) {
+                      setRows(patchItem(rows, rowIndex, itemIndex, { showDeadline: !!v }));
+                    },
+                  }),
+                  item.showDeadline
+                    ? el(TextControl, {
+                      label: __('Deadline', 'headless-core'),
+                      value: item.deadline || '',
+                      placeholder: __('e.g. 31 December 2026', 'headless-core'),
+                      onChange: function (v) {
+                        setRows(patchItem(rows, rowIndex, itemIndex, { deadline: v }));
+                      },
+                      help: __('Shown on the frontend when enabled.', 'headless-core'),
+                    })
+                    : null,
                   renderPdfField(item, function (patch) {
                     setRows(patchItem(rows, rowIndex, itemIndex, patch));
                   })

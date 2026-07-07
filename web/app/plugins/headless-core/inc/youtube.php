@@ -147,7 +147,7 @@ function headless_core_youtube_fetch_videos(string $channelId, int $max): array
                 'id' => '',
                 'url' => '',
             ],
-            'error' => __('YouTube API key is not configured.', 'headless-core'),
+            'error' => __('Videos will be added soon.', 'headless-core'),
         ];
     }
 
