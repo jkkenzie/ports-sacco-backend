@@ -16,7 +16,7 @@ if (! defined('ABSPATH')) {
 
 define('HEADLESS_CORE_PATH', plugin_dir_path(__FILE__));
 define('HEADLESS_CORE_URL', plugin_dir_url(__FILE__));
-define('HEADLESS_CORE_VERSION', '1.0.70');
+define('HEADLESS_CORE_VERSION', '1.0.72');
 
 require_once HEADLESS_CORE_PATH . 'inc/cache.php';
 require_once HEADLESS_CORE_PATH . 'inc/cors.php';
@@ -27,6 +27,8 @@ require_once HEADLESS_CORE_PATH . 'inc/news-comments.php';
 require_once HEADLESS_CORE_PATH . 'inc/youtube.php';
 require_once HEADLESS_CORE_PATH . 'inc/migration.php';
 require_once HEADLESS_CORE_PATH . 'inc/blocks.php';
+require_once HEADLESS_CORE_PATH . 'inc/seo.php';
+require_once HEADLESS_CORE_PATH . 'inc/sitemap.php';
 require_once HEADLESS_CORE_PATH . 'inc/footer.php';
 require_once HEADLESS_CORE_PATH . 'inc/header.php';
 require_once HEADLESS_CORE_PATH . 'inc/team.php';
@@ -67,4 +69,10 @@ register_activation_hook(__FILE__, 'headless_core_on_activation');
 function headless_core_on_activation(): void
 {
     headless_core_run_migration();
+
+    if (function_exists('headless_core_sitemap_add_rewrite_rules')) {
+        headless_core_sitemap_add_rewrite_rules();
+    }
+    delete_option('headless_core_sitemap_rewrite_v');
+    flush_rewrite_rules(false);
 }

@@ -89,7 +89,7 @@ function headless_core_render_settings_page(): void
     }
 
     $activeTab = isset($_GET['tab']) ? sanitize_key((string) $_GET['tab']) : 'general';
-    if (! in_array($activeTab, ['general', 'youtube'], true)) {
+    if (! in_array($activeTab, ['general', 'youtube', 'seo'], true)) {
         $activeTab = 'general';
     }
 
@@ -175,6 +175,9 @@ function headless_core_render_settings_page(): void
             </a>
             <a href="<?php echo esc_url(admin_url('admin.php?page=headless-core-settings&tab=youtube')); ?>" class="nav-tab <?php echo $activeTab === 'youtube' ? 'nav-tab-active' : ''; ?>">
                 <?php echo esc_html__('YouTube', 'headless-core'); ?>
+            </a>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=headless-core-settings&tab=seo')); ?>" class="nav-tab <?php echo $activeTab === 'seo' ? 'nav-tab-active' : ''; ?>">
+                <?php echo esc_html__('SEO', 'headless-core'); ?>
             </a>
         </div>
 
@@ -326,7 +329,175 @@ function headless_core_render_settings_page(): void
                     <?php submit_button(__('Save Settings', 'headless-core'), 'primary', 'submit', false); ?>
                 </p>
             </form>
+        <?php elseif ($activeTab === 'seo') : ?>
+            <?php headless_core_render_seo_settings_tab(); ?>
         <?php endif; ?>
     </div>
+    <?php
+}
+
+/**
+ * Render the SEO global defaults tab.
+ */
+function headless_core_render_seo_settings_tab(): void
+{
+    wp_enqueue_media();
+
+    $siteName = (string) get_option(HEADLESS_CORE_SEO_OPT_SITE_NAME, '');
+    $titleTemplate = (string) get_option(HEADLESS_CORE_SEO_OPT_TITLE_TEMPLATE, '');
+    $separator = (string) get_option(HEADLESS_CORE_SEO_OPT_SEPARATOR, '');
+    $defaultDescription = (string) get_option(HEADLESS_CORE_SEO_OPT_DEFAULT_DESCRIPTION, '');
+    $twitterSite = (string) get_option(HEADLESS_CORE_SEO_OPT_TWITTER_SITE, '');
+    $frontendUrl = (string) get_option(HEADLESS_CORE_SEO_OPT_FRONTEND_URL, '');
+    $orgName = (string) get_option(HEADLESS_CORE_SEO_OPT_ORG_NAME, '');
+    $orgSameAs = (string) get_option(HEADLESS_CORE_SEO_OPT_ORG_SAME_AS, '');
+    $defaultImageId = (int) get_option(HEADLESS_CORE_SEO_OPT_DEFAULT_OG_IMAGE, 0);
+    $orgLogoId = (int) get_option(HEADLESS_CORE_SEO_OPT_ORG_LOGO, 0);
+    $defaultImageUrl = $defaultImageId > 0 ? (string) wp_get_attachment_image_url($defaultImageId, 'medium') : '';
+    $orgLogoUrl = $orgLogoId > 0 ? (string) wp_get_attachment_image_url($orgLogoId, 'medium') : '';
+    ?>
+    <form method="post" action="options.php">
+        <?php settings_fields('headless_core_settings_group'); ?>
+        <div style="max-width: 880px; background: #fff; border: 1px solid #dcdcde; border-radius: 10px; padding: 20px;">
+            <h2 style="margin-top: 0;"><?php echo esc_html__('Global SEO Defaults', 'headless-core'); ?></h2>
+            <p style="color: #50575e; margin-top: 6px;">
+                <?php echo esc_html__('These defaults are used whenever a page or item does not define its own SEO values. Per-page SEO is edited in the sidebar of each page/post.', 'headless-core'); ?>
+            </p>
+            <table class="form-table" role="presentation">
+                <tbody>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_SITE_NAME); ?>"><?php echo esc_html__('Site name', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_SITE_NAME); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_SITE_NAME); ?>" value="<?php echo esc_attr($siteName); ?>" placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>" />
+                        <p class="description"><?php echo esc_html__('Used in title templates and Open Graph. Defaults to your WordPress site title.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_TITLE_TEMPLATE); ?>"><?php echo esc_html__('Title template', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_TITLE_TEMPLATE); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_TITLE_TEMPLATE); ?>" value="<?php echo esc_attr($titleTemplate); ?>" placeholder="%title% %sep% %sitename%" />
+                        <p class="description"><?php echo esc_html__('Tokens: %title%, %sitename%, %sep%. Example: %title% %sep% %sitename%', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_SEPARATOR); ?>"><?php echo esc_html__('Title separator', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="small-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_SEPARATOR); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_SEPARATOR); ?>" value="<?php echo esc_attr($separator); ?>" placeholder="|" />
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_DEFAULT_DESCRIPTION); ?>"><?php echo esc_html__('Default meta description', 'headless-core'); ?></label></th>
+                    <td>
+                        <textarea class="large-text" rows="3" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_DEFAULT_DESCRIPTION); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_DEFAULT_DESCRIPTION); ?>"><?php echo esc_textarea($defaultDescription); ?></textarea>
+                        <p class="description"><?php echo esc_html__('Fallback description when a page has none and none can be derived from its content.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label><?php echo esc_html__('Default share image', 'headless-core'); ?></label></th>
+                    <td>
+                        <div class="hc-seo-media" data-target="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_DEFAULT_OG_IMAGE); ?>">
+                            <input type="hidden" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_DEFAULT_OG_IMAGE); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_DEFAULT_OG_IMAGE); ?>" value="<?php echo esc_attr((string) $defaultImageId); ?>" />
+                            <img class="hc-seo-media-preview" src="<?php echo esc_url($defaultImageUrl); ?>" alt="" style="max-width: 220px; height: auto; display: <?php echo $defaultImageUrl !== '' ? 'block' : 'none'; ?>; border: 1px solid #dcdcde; border-radius: 6px; margin-bottom: 8px;" />
+                            <button type="button" class="button hc-seo-media-select"><?php echo esc_html__('Select image', 'headless-core'); ?></button>
+                            <button type="button" class="button hc-seo-media-clear" style="<?php echo $defaultImageId > 0 ? '' : 'display:none;'; ?>"><?php echo esc_html__('Remove', 'headless-core'); ?></button>
+                        </div>
+                        <p class="description"><?php echo esc_html__('Recommended 1200×630px. Used for Open Graph/Twitter when no page image is available.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_TWITTER_SITE); ?>"><?php echo esc_html__('Twitter/X handle', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_TWITTER_SITE); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_TWITTER_SITE); ?>" value="<?php echo esc_attr($twitterSite); ?>" placeholder="@portsacco" />
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_FRONTEND_URL); ?>"><?php echo esc_html__('Frontend site URL', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="url" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_FRONTEND_URL); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_FRONTEND_URL); ?>" value="<?php echo esc_attr($frontendUrl); ?>" placeholder="<?php echo esc_attr(home_url('/')); ?>" />
+                        <p class="description"><?php echo esc_html__('Public URL of the React site. Used to build canonical and og:url links. Defaults to the WordPress home URL.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+            </tbody>
+            </table>
+
+            <hr style="margin: 22px 0; border: 0; border-top: 1px solid #e5e7eb;" />
+            <h2 style="margin-top: 0;"><?php echo esc_html__('Organization (structured data)', 'headless-core'); ?></h2>
+            <p style="color: #50575e; margin-top: 6px;">
+                <?php echo esc_html__('Powers the Organization JSON-LD emitted on every page.', 'headless-core'); ?>
+            </p>
+            <table class="form-table" role="presentation">
+                <tbody>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_NAME); ?>"><?php echo esc_html__('Organization name', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_NAME); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_NAME); ?>" value="<?php echo esc_attr($orgName); ?>" placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>" />
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label><?php echo esc_html__('Organization logo', 'headless-core'); ?></label></th>
+                    <td>
+                        <div class="hc-seo-media" data-target="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_LOGO); ?>">
+                            <input type="hidden" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_LOGO); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_LOGO); ?>" value="<?php echo esc_attr((string) $orgLogoId); ?>" />
+                            <img class="hc-seo-media-preview" src="<?php echo esc_url($orgLogoUrl); ?>" alt="" style="max-width: 220px; height: auto; display: <?php echo $orgLogoUrl !== '' ? 'block' : 'none'; ?>; border: 1px solid #dcdcde; border-radius: 6px; margin-bottom: 8px;" />
+                            <button type="button" class="button hc-seo-media-select"><?php echo esc_html__('Select image', 'headless-core'); ?></button>
+                            <button type="button" class="button hc-seo-media-clear" style="<?php echo $orgLogoId > 0 ? '' : 'display:none;'; ?>"><?php echo esc_html__('Remove', 'headless-core'); ?></button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_SAME_AS); ?>"><?php echo esc_html__('Social profile URLs', 'headless-core'); ?></label></th>
+                    <td>
+                        <textarea class="large-text" rows="4" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_SAME_AS); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_ORG_SAME_AS); ?>" placeholder="https://facebook.com/portsacco&#10;https://twitter.com/portsacco"><?php echo esc_textarea($orgSameAs); ?></textarea>
+                        <p class="description"><?php echo esc_html__('One URL per line (Facebook, X/Twitter, LinkedIn, Instagram, YouTube). Added as sameAs in structured data.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p style="margin-top: 16px;">
+            <?php submit_button(__('Save Settings', 'headless-core'), 'primary', 'submit', false); ?>
+        </p>
+    </form>
+    <script>
+        (function () {
+            var frame = null;
+            var activeWrap = null;
+            document.querySelectorAll('.hc-seo-media').forEach(function (wrap) {
+                var input = wrap.querySelector('input[type="hidden"]');
+                var preview = wrap.querySelector('.hc-seo-media-preview');
+                var selectBtn = wrap.querySelector('.hc-seo-media-select');
+                var clearBtn = wrap.querySelector('.hc-seo-media-clear');
+
+                selectBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    activeWrap = wrap;
+                    if (frame) { frame.open(); return; }
+                    frame = wp.media({ title: '<?php echo esc_js(__('Select image', 'headless-core')); ?>', multiple: false, library: { type: 'image' } });
+                    frame.on('select', function () {
+                        var att = frame.state().get('selection').first().toJSON();
+                        var w = activeWrap;
+                        if (!w) return;
+                        var i = w.querySelector('input[type="hidden"]');
+                        var p = w.querySelector('.hc-seo-media-preview');
+                        var c = w.querySelector('.hc-seo-media-clear');
+                        i.value = att.id;
+                        var url = (att.sizes && att.sizes.medium) ? att.sizes.medium.url : att.url;
+                        p.src = url;
+                        p.style.display = 'block';
+                        c.style.display = '';
+                    });
+                    frame.open();
+                });
+
+                clearBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    input.value = '0';
+                    preview.src = '';
+                    preview.style.display = 'none';
+                    clearBtn.style.display = 'none';
+                });
+            });
+        })();
+    </script>
     <?php
 }

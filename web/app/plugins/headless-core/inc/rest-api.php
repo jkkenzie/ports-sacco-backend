@@ -330,6 +330,7 @@ function headless_core_build_page_response(string $slug)
         'slug' => headless_core_page_route_slug($post),
         'title' => get_the_title($post),
         'blocks' => $blocks,
+        'seo' => headless_core_build_seo($post, $blocks),
     ];
 
     if ($useCache) {
@@ -4283,6 +4284,7 @@ function headless_core_rest_savings_product(WP_REST_Request $request)
         'title' => get_the_title($post),
         'imageUrl' => $imageUrl,
         'blocks' => $blocks,
+        'seo' => headless_core_build_seo($post, $blocks),
     ];
 
     headless_core_cache_set('savings_products', $cacheKey, $payload);
@@ -4412,6 +4414,7 @@ function headless_core_rest_loan_product(WP_REST_Request $request)
         'title' => get_the_title($post),
         'imageUrl' => $imageUrl,
         'blocks' => $blocks,
+        'seo' => headless_core_build_seo($post, $blocks),
     ];
 
     headless_core_cache_set('loan_products', $cacheKey, $payload);
@@ -4622,6 +4625,7 @@ function headless_core_rest_service(WP_REST_Request $request)
         'title' => get_the_title($post),
         'imageUrl' => $imageUrl,
         'blocks' => $blocks,
+        'seo' => headless_core_build_seo($post, $blocks),
     ];
 
     headless_core_cache_set('services', $cacheKey, $payload);
@@ -4731,6 +4735,7 @@ function headless_core_rest_event(WP_REST_Request $request)
         'blocks' => $blocks,
         'share' => headless_core_event_share_meta($post),
         'navigation' => $navigation,
+        'seo' => headless_core_build_seo($post, $blocks),
     ]);
 
     headless_core_cache_set('events', $cacheKey, $payload);
@@ -5451,6 +5456,7 @@ function headless_core_rest_news_post(WP_REST_Request $request)
         'approvedComments' => headless_core_news_approved_comments((int) $post->ID),
         'share' => headless_core_news_share_meta($post),
         'navigation' => $navigation,
+        'seo' => headless_core_build_seo($post, $blocks),
     ]);
 
     headless_core_cache_set('news', $cacheKey, $payload);
