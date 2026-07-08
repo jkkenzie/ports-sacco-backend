@@ -8,12 +8,13 @@
  * respect the per-page `noindex` flag set in the SEO sidebar.
  *
  * Served through WordPress at:
- *   /sitemap.xml            → sitemap index
+ *   /sitemap.xml            → sitemap index (needs .htaccess → sitemap.php)
  *   /sitemap-<type>.xml     → per content-type sitemap
- *   /robots.txt             → robots file (virtual, via robots_txt filter)
+ *   /sitemap.php            → physical entry (works without .htaccess aliases)
+ *   /wp-json/custom/v1/seo/sitemap → REST fallback (always works)
+ *   /robots.txt             → robots file (needs .htaccess → robots.php)
  *
- * The site's root .htaccess excludes these paths from the SPA fallback so the
- * requests reach WordPress.
+ * See web/.htaccess.example for production Apache rules.
  */
 
 declare(strict_types=1);
@@ -100,6 +101,76 @@ add_action('template_redirect', static function (): void {
     exit;
 }, 0);
 
+add_action('rest_api_init', static function (): void {
+    register_rest_route('custom/v1', '/seo/sitemap', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (): void {
+            headless_core_sitemap_render('index', 'headless_core_sitemap_rest_sub_loc');
+            exit;
+        },
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('custom/v1', '/seo/sitemap/(?P<type>[a-z0-9_-]+)', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request): void {
+            $type = sanitize_key((string) $request->get_param('type'));
+            if ($type === '') {
+                status_header(400);
+                header('Content-Type: text/plain; charset=UTF-8');
+                echo 'Invalid sitemap type.';
+                exit;
+            }
+            headless_core_sitemap_render($type);
+            exit;
+        },
+        'permission_callback' => '__return_true',
+        'args' => [
+            'type' => [
+                'required' => true,
+                'type' => 'string',
+            ],
+        ],
+    ]);
+
+    register_rest_route('custom/v1', '/seo/robots', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (): void {
+            $public = (bool) get_option('blog_public');
+            status_header(200);
+            header('Content-Type: text/plain; charset=UTF-8');
+            header('X-Robots-Tag: noindex', true);
+            echo headless_core_robots_txt_content($public);
+            exit;
+        },
+        'permission_callback' => '__return_true',
+    ]);
+});
+
+/**
+ * Public sitemap URL for robots.txt (prefers /sitemap.php — works without .htaccess aliases).
+ */
+function headless_core_sitemap_public_url(): string
+{
+    return headless_core_seo_frontend_base() . '/sitemap.php';
+}
+
+/**
+ * REST sub-sitemap loc for the sitemap index served via /wp-json/custom/v1/seo/sitemap.
+ */
+function headless_core_sitemap_rest_sub_loc(string $slug): string
+{
+    return rest_url('custom/v1/seo/sitemap/' . $slug);
+}
+
+/**
+ * @param callable(string): string|null $subSitemapLoc
+ */
+function headless_core_sitemap_php_sub_loc(string $slug): string
+{
+    return headless_core_seo_frontend_base() . '/sitemap.php?type=' . rawurlencode($slug);
+}
+
 /* -------------------------------------------------------------------------
  * Rendering
  * ---------------------------------------------------------------------- */
@@ -121,27 +192,45 @@ function headless_core_sitemap_cache_signature(): string
 }
 
 /**
- * Output the requested sitemap and terminate.
+ * Fetch sitemap XML (cached). Returns empty string when not found.
+ *
+ * @param callable(string): string|null $subSitemapLoc Used for index child sitemap URLs only.
  */
-function headless_core_sitemap_render(string $type): void
+function headless_core_sitemap_get_xml(string $type, ?callable $subSitemapLoc = null): string
 {
-    $cacheKey = 'hc_sitemap_' . sanitize_key($type) . '_' . md5(headless_core_sitemap_cache_signature());
+    $cacheKey = 'hc_sitemap_' . sanitize_key($type) . '_' . md5(headless_core_sitemap_cache_signature() . '|' . ($subSitemapLoc ? 'custom' : 'pretty'));
     $xml = headless_core_transient_get_raw($cacheKey);
 
-    if (! is_string($xml) || $xml === '') {
-        $xml = $type === 'index'
-            ? headless_core_sitemap_build_index()
-            : headless_core_sitemap_build_type($type);
+    if (is_string($xml) && $xml !== '') {
+        return $xml;
+    }
 
-        if ($xml === '') {
-            status_header(404);
-            header('Content-Type: text/plain; charset=UTF-8');
-            echo 'Sitemap not found.';
+    $xml = $type === 'index'
+        ? headless_core_sitemap_build_index($subSitemapLoc)
+        : headless_core_sitemap_build_type($type);
 
-            return;
-        }
-
+    if ($xml !== '') {
         headless_core_transient_set_raw($cacheKey, $xml, HOUR_IN_SECONDS);
+    }
+
+    return $xml;
+}
+
+/**
+ * Output the requested sitemap and terminate.
+ *
+ * @param callable(string): string|null $subSitemapLoc Used for index child sitemap URLs only.
+ */
+function headless_core_sitemap_render(string $type, ?callable $subSitemapLoc = null): void
+{
+    $xml = headless_core_sitemap_get_xml($type, $subSitemapLoc);
+
+    if ($xml === '') {
+        status_header(404);
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo 'Sitemap not found.';
+
+        return;
     }
 
     status_header(200);
@@ -152,8 +241,10 @@ function headless_core_sitemap_render(string $type): void
 
 /**
  * Build the sitemap index referencing each non-empty per-type sitemap.
+ *
+ * @param callable(string): string|null $subSitemapLoc
  */
-function headless_core_sitemap_build_index(): string
+function headless_core_sitemap_build_index(?callable $subSitemapLoc = null): string
 {
     $base = headless_core_seo_frontend_base();
 
@@ -171,8 +262,14 @@ function headless_core_sitemap_build_index(): string
             }
         }
 
+        if ($subSitemapLoc !== null) {
+            $loc = $subSitemapLoc($slug);
+        } else {
+            $loc = $base . '/sitemap-' . $slug . '.xml';
+        }
+
         $entries[] = [
-            'loc' => $base . '/sitemap-' . $slug . '.xml',
+            'loc' => $loc,
             'lastmod' => $lastmod,
         ];
     }
@@ -300,6 +397,11 @@ function headless_core_sitemap_is_indexable(int $postId): bool
  * robots.txt
  * ---------------------------------------------------------------------- */
 
+function headless_core_robots_txt_content(bool $public): string
+{
+    return (string) apply_filters('robots_txt', '', $public);
+}
+
 add_filter('robots_txt', static function ($output, $public): string {
     $base = headless_core_seo_frontend_base();
 
@@ -317,7 +419,7 @@ add_filter('robots_txt', static function ($output, $public): string {
         'Disallow: /wp-json/',
         'Disallow: /wp/wp-admin/',
         '',
-        'Sitemap: ' . $base . '/sitemap.xml',
+        'Sitemap: ' . headless_core_sitemap_public_url(),
         '',
     ];
 
