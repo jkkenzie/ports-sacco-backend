@@ -3,7 +3,7 @@
 # IMPORTANT: Rules that route to WordPress or sitemap.php MUST appear BEFORE
 # the React SPA catch-all, or /sitemap.xml and /robots.txt will load the app.
 
-DirectoryIndex index.php frontend/index.html
+DirectoryIndex app.php frontend/index.html
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
@@ -30,10 +30,15 @@ RewriteCond %{REQUEST_URI} !^/wp-includes [NC]
 RewriteCond %{REQUEST_URI} !^/wp-api\.php$ [NC]
 RewriteCond %{REQUEST_URI} !^/sitemap\.php$ [NC]
 RewriteCond %{REQUEST_URI} !^/robots\.php$ [NC]
+RewriteCond %{REQUEST_URI} !^/app\.php$ [NC]
+# Homepage is a directory request, so the !-d catch-all below never matches /.
+# Route it explicitly so app.php can inject SEO (same as every other page).
+RewriteRule ^$ /app.php [L,E=HC_ROUTE:/]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-# All other routes → React SPA
-RewriteRule ^.*$ /frontend/index.html [L]
+# All other routes → React SPA (via app.php, which injects SEO <head> then serves the shell)
+# E=HC_ROUTE preserves the original path for SEO resolution on cPanel/Apache.
+RewriteRule ^(.*)$ /app.php [L,E=HC_ROUTE:/$1]
 </IfModule>
 
 # BEGIN WordPress
