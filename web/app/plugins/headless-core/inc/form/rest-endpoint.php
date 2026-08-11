@@ -40,6 +40,11 @@ function ports_form_rest_submit(WP_REST_Request $request)
         return new WP_Error('form_spam', __('Submission rejected.', 'headless-core'), ['status' => 400]);
     }
 
+    $turnstile = headless_core_verify_turnstile_from_request($request);
+    if (is_wp_error($turnstile)) {
+        return $turnstile;
+    }
+
     $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
     $rateKey = 'form_rate_' . md5($ip) . '_' . $slug;
     $count = (int) get_transient($rateKey);
@@ -101,7 +106,7 @@ function ports_form_normalize_request_values(array $body): array
 {
     $values = [];
     foreach ($body as $key => $value) {
-        if (! is_string($key) || in_array($key, ['_gotcha', 'form_slug', '_wpnonce'], true)) {
+        if (! is_string($key) || in_array($key, ['_gotcha', 'form_slug', '_wpnonce', 'turnstileToken', 'cf-turnstile-response'], true)) {
             continue;
         }
         $values[$key] = $value;

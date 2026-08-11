@@ -45,6 +45,11 @@ function headless_core_rest_newsletter_subscribe(WP_REST_Request $request)
         ], 200);
     }
 
+    $turnstile = headless_core_verify_turnstile_from_request($request);
+    if (is_wp_error($turnstile)) {
+        return $turnstile;
+    }
+
     if (! class_exists('NewsletterSubscription')) {
         return new WP_Error(
             'newsletter_missing',

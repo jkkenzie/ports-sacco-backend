@@ -249,8 +249,7 @@ add_action('rest_api_init', static function (): void {
             'message' => ['required' => false, 'type' => 'string'],
             'form' => ['required' => false, 'type' => 'string'],
             'company' => ['required' => false, 'type' => 'string'], // honeypot
-            'recaptchaToken' => ['required' => true, 'type' => 'string'],
-            'recaptchaAction' => ['required' => false, 'type' => 'string'],
+            'turnstileToken' => ['required' => false, 'type' => 'string'],
         ],
     ]);
 });
@@ -5028,8 +5027,6 @@ function headless_core_rest_contact_submit(WP_REST_Request $request)
     $amount = trim((string) $request->get_param('amount'));
     $message = trim((string) $request->get_param('message'));
     $form = trim((string) $request->get_param('form'));
-    $recaptchaToken = trim((string) $request->get_param('recaptchaToken'));
-    $recaptchaAction = trim((string) $request->get_param('recaptchaAction'));
 
     // Honeypot: bots fill hidden fields.
     $company = trim((string) $request->get_param('company'));
@@ -5037,52 +5034,9 @@ function headless_core_rest_contact_submit(WP_REST_Request $request)
         return new WP_REST_Response(['ok' => true], 200);
     }
 
-    if ($recaptchaToken === '') {
-        return new WP_Error('headless_recaptcha_required', __('Verification failed. Please try again.', 'headless-core'), ['status' => 403]);
-    }
-
-    $recaptchaSecret = getenv('HEADLESS_RECAPTCHA_SECRET');
-    if (! is_string($recaptchaSecret) || trim($recaptchaSecret) === '') {
-        $recaptchaSecret = (string) get_option('headless_core_recaptcha_secret', '');
-    }
-    if (trim((string) $recaptchaSecret) === '') {
-        return new WP_Error('headless_recaptcha_misconfigured', __('Verification is not configured.', 'headless-core'), ['status' => 500]);
-    }
-
-    $expectedAction = $recaptchaAction !== '' ? $recaptchaAction : 'contact_submit';
-    $minScoreRaw = getenv('HEADLESS_RECAPTCHA_MIN_SCORE');
-    if (! is_string($minScoreRaw) || $minScoreRaw === '') {
-        $minScoreRaw = (string) get_option('headless_core_recaptcha_min_score', '');
-    }
-    $minScore = is_string($minScoreRaw) && $minScoreRaw !== '' ? (float) $minScoreRaw : 0.5;
-    if ($minScore <= 0 || $minScore > 1) {
-        $minScore = 0.5;
-    }
-
-    $verify = wp_remote_post('https://www.google.com/recaptcha/api/siteverify', [
-        'timeout' => 8,
-        'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
-        'body' => [
-            'secret' => trim($recaptchaSecret),
-            'response' => $recaptchaToken,
-            'remoteip' => $ip,
-        ],
-    ]);
-    if (is_wp_error($verify)) {
-        return new WP_Error('headless_recaptcha_unavailable', __('Verification failed. Please try again.', 'headless-core'), ['status' => 503]);
-    }
-    $body = wp_remote_retrieve_body($verify);
-    $payload = is_string($body) && $body !== '' ? json_decode($body, true) : null;
-    if (! is_array($payload) || empty($payload['success'])) {
-        return new WP_Error('headless_recaptcha_failed', __('Verification failed. Please try again.', 'headless-core'), ['status' => 403]);
-    }
-    $action = isset($payload['action']) ? (string) $payload['action'] : '';
-    if ($expectedAction !== '' && $action !== '' && $action !== $expectedAction) {
-        return new WP_Error('headless_recaptcha_failed', __('Verification failed. Please try again.', 'headless-core'), ['status' => 403]);
-    }
-    $score = isset($payload['score']) ? (float) $payload['score'] : 0.0;
-    if ($score < $minScore) {
-        return new WP_Error('headless_recaptcha_failed', __('Verification failed. Please try again.', 'headless-core'), ['status' => 403]);
+    $turnstile = headless_core_verify_turnstile_from_request($request);
+    if (is_wp_error($turnstile)) {
+        return $turnstile;
     }
 
     if ($name === '' || $email === '' || $phone === '') {

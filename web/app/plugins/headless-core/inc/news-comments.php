@@ -203,6 +203,11 @@ function headless_core_rest_news_comment_submit(WP_REST_Request $request)
         ], 200);
     }
 
+    $turnstile = headless_core_verify_turnstile_from_request($request);
+    if (is_wp_error($turnstile)) {
+        return $turnstile;
+    }
+
     $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
     $rateKey = 'headless_news_comment_rl_' . md5($ip);
     $count = (int) get_transient($rateKey);

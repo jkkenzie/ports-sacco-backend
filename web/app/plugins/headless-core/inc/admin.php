@@ -7,9 +7,7 @@ if (! defined('ABSPATH')) {
 }
 
 const HEADLESS_CORE_OPTION_ENABLE_TRANSIENTS = 'headless_core_enable_transients';
-const HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY = 'headless_core_recaptcha_site_key';
-const HEADLESS_CORE_OPTION_RECAPTCHA_SECRET = 'headless_core_recaptcha_secret';
-const HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE = 'headless_core_recaptcha_min_score';
+// Turnstile option constants live in inc/turnstile.php.
 
 if (! defined('HEADLESS_CORE_OPTION_YOUTUBE_API_KEY')) {
     define('HEADLESS_CORE_OPTION_YOUTUBE_API_KEY', 'headless_core_youtube_api_key');
@@ -39,7 +37,15 @@ add_action('admin_init', static function (): void {
         'default' => '1',
     ]);
 
-    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY, [
+    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_TURNSTILE_ENABLED, [
+        'type' => 'string',
+        'sanitize_callback' => static function ($value): string {
+            return ((string) $value === '1') ? '1' : '0';
+        },
+        'default' => '0',
+    ]);
+
+    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_TURNSTILE_SITE_KEY, [
         'type' => 'string',
         'sanitize_callback' => static function ($value): string {
             return trim((string) $value);
@@ -47,26 +53,10 @@ add_action('admin_init', static function (): void {
         'default' => '',
     ]);
 
-    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_RECAPTCHA_SECRET, [
+    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_TURNSTILE_SECRET, [
         'type' => 'string',
         'sanitize_callback' => static function ($value): string {
             return trim((string) $value);
-        },
-        'default' => '',
-    ]);
-
-    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE, [
-        'type' => 'string',
-        'sanitize_callback' => static function ($value): string {
-            $raw = trim((string) $value);
-            if ($raw === '') {
-                return '';
-            }
-            $num = (float) $raw;
-            if ($num <= 0 || $num > 1) {
-                return '';
-            }
-            return rtrim(rtrim(number_format($num, 2, '.', ''), '0'), '.');
         },
         'default' => '',
     ]);
@@ -103,9 +93,9 @@ function headless_core_render_settings_page(): void
     }
 
     $enabled = get_option(HEADLESS_CORE_OPTION_ENABLE_TRANSIENTS, '1') === '1';
-    $recaptchaSiteKey = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY, '');
-    $recaptchaSecret = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET, '');
-    $recaptchaMinScore = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE, '');
+    $turnstileEnabled = get_option(HEADLESS_CORE_OPTION_TURNSTILE_ENABLED, '0') === '1';
+    $turnstileSiteKey = (string) get_option(HEADLESS_CORE_OPTION_TURNSTILE_SITE_KEY, '');
+    $turnstileSecret = (string) get_option(HEADLESS_CORE_OPTION_TURNSTILE_SECRET, '');
     $youtubeApiKey = (string) get_option(HEADLESS_CORE_OPTION_YOUTUBE_API_KEY, '');
     $youtubeChannelId = (string) get_option(HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID, '');
     ?>
@@ -174,7 +164,7 @@ function headless_core_render_settings_page(): void
                             btn.textContent = isHidden ? '<?php echo esc_js(__('Hide', 'headless-core')); ?>' : '<?php echo esc_js(__('Show', 'headless-core')); ?>';
                         });
                     }
-                    bindToggle('headless-core-recaptcha-toggle', '<?php echo esc_js(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>');
+                    bindToggle('headless-core-turnstile-toggle', '<?php echo esc_js(HEADLESS_CORE_OPTION_TURNSTILE_SECRET); ?>');
                     bindToggle('headless-core-youtube-toggle', '<?php echo esc_js(HEADLESS_CORE_OPTION_YOUTUBE_API_KEY); ?>');
                 });
             })();
@@ -216,42 +206,62 @@ function headless_core_render_settings_page(): void
                     </div>
 
                     <hr style="margin: 22px 0; border: 0; border-top: 1px solid #e5e7eb;" />
-                    <h2 style="margin-top: 0;"><?php echo esc_html__('Bot protection (reCAPTCHA v3)', 'headless-core'); ?></h2>
+                    <h2 style="margin-top: 0;"><?php echo esc_html__('Bot protection (Cloudflare Turnstile)', 'headless-core'); ?></h2>
                     <p style="color: #50575e; margin-top: 6px;">
-                        <?php echo esc_html__('Protects public form submissions (Contact + Apply). The site key is public and served to the React app; the secret key stays server-side only.', 'headless-core'); ?>
+                        <?php echo esc_html__('Off by default. Forms always use WordPress nonce + honeypot. When enabled with both keys, Turnstile runs seamlessly on public form submissions.', 'headless-core'); ?>
                     </p>
+
+                    <div style="display: flex; align-items: center; gap: 14px; margin-top: 18px; margin-bottom: 12px;">
+                        <label class="headless-core-switch" aria-label="<?php echo esc_attr__('Enable Cloudflare Turnstile', 'headless-core'); ?>">
+                            <input type="hidden" name="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_ENABLED); ?>" value="0" />
+                            <input type="checkbox" name="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_ENABLED); ?>" value="1" <?php checked($turnstileEnabled); ?> />
+                            <span class="headless-core-switch-track"></span>
+                            <span class="headless-core-switch-thumb"></span>
+                        </label>
+                        <div>
+                            <strong><?php echo esc_html__('Enable Cloudflare Turnstile', 'headless-core'); ?></strong>
+                            <div style="margin-top: 4px; color: #50575e;">
+                                <?php
+                                echo $turnstileEnabled
+                                    ? esc_html__('Enabled. Forms will request a Turnstile token when site + secret keys are set.', 'headless-core')
+                                    : esc_html__('Disabled. Forms rely on nonce + honeypot only.', 'headless-core');
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+
                     <table class="form-table" role="presentation" style="margin-top: 8px;">
                         <tbody>
                         <tr>
                             <th scope="row">
-                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY); ?>"><?php echo esc_html__('reCAPTCHA Site Key', 'headless-core'); ?></label>
+                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_SITE_KEY); ?>"><?php echo esc_html__('Turnstile Site Key', 'headless-core'); ?></label>
                             </th>
                             <td>
                                 <input
                                     type="text"
-                                    id="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY); ?>"
-                                    name="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY); ?>"
-                                    value="<?php echo esc_attr($recaptchaSiteKey); ?>"
+                                    id="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_SITE_KEY); ?>"
+                                    name="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_SITE_KEY); ?>"
+                                    value="<?php echo esc_attr($turnstileSiteKey); ?>"
                                     class="regular-text"
                                     autocomplete="off"
                                     style="max-width: 520px;"
                                 />
                                 <p class="description">
-                                    <?php echo esc_html__('Google reCAPTCHA v3 site key (public). Exposed to the frontend via /wp-json/custom/v1/nonce.', 'headless-core'); ?>
+                                    <?php echo esc_html__('Public widget site key from Cloudflare Turnstile. Exposed to the frontend via /wp-json/custom/v1/nonce when enabled.', 'headless-core'); ?>
                                 </p>
                             </td>
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"><?php echo esc_html__('reCAPTCHA Secret Key', 'headless-core'); ?></label>
+                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_SECRET); ?>"><?php echo esc_html__('Turnstile Secret Key', 'headless-core'); ?></label>
                             </th>
                             <td>
                                 <div style="display: flex; gap: 8px; align-items: center; max-width: 520px;">
                                     <input
                                         type="password"
-                                        id="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"
-                                        name="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"
-                                        value="<?php echo esc_attr($recaptchaSecret); ?>"
+                                        id="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_SECRET); ?>"
+                                        name="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_SECRET); ?>"
+                                        value="<?php echo esc_attr($turnstileSecret); ?>"
                                         class="regular-text"
                                         autocomplete="new-password"
                                         style="flex: 1 1 auto;"
@@ -259,33 +269,14 @@ function headless_core_render_settings_page(): void
                                     <button
                                         type="button"
                                         class="button"
-                                        id="headless-core-recaptcha-toggle"
-                                        aria-controls="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"
+                                        id="headless-core-turnstile-toggle"
+                                        aria-controls="<?php echo esc_attr(HEADLESS_CORE_OPTION_TURNSTILE_SECRET); ?>"
                                     >
                                         <?php echo esc_html__('Show', 'headless-core'); ?>
                                     </button>
                                 </div>
                                 <p class="description">
-                                    <?php echo esc_html__('Google reCAPTCHA v3 secret key. Server-side only — never put the site key here.', 'headless-core'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">
-                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE); ?>"><?php echo esc_html__('Minimum score (0–1)', 'headless-core'); ?></label>
-                            </th>
-                            <td>
-                                <input
-                                    type="text"
-                                    id="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE); ?>"
-                                    name="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE); ?>"
-                                    value="<?php echo esc_attr($recaptchaMinScore); ?>"
-                                    class="small-text"
-                                    inputmode="decimal"
-                                    placeholder="0.5"
-                                />
-                                <p class="description">
-                                    <?php echo esc_html__('Optional. If empty, defaults to 0.5. Lower = easier to pass; higher = stricter.', 'headless-core'); ?>
+                                    <?php echo esc_html__('Server-side only. Create keys in Cloudflare Dashboard → Turnstile.', 'headless-core'); ?>
                                 </p>
                             </td>
                         </tr>
