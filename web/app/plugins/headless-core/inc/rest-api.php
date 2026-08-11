@@ -5128,9 +5128,34 @@ function headless_core_rest_contact_submit(WP_REST_Request $request)
         $headers[] = 'Reply-To: ' . $email;
     }
 
+    $mailError = null;
+    $onMailFailed = static function ($error) use (&$mailError): void {
+        if ($error instanceof WP_Error) {
+            $mailError = $error;
+        }
+    };
+    add_action('wp_mail_failed', $onMailFailed);
+
     $sent = wp_mail($to, $subject, $body, $headers);
+
+    remove_action('wp_mail_failed', $onMailFailed);
+
     if (! $sent) {
-        return new WP_Error('headless_mail_failed', __('Failed to send message.', 'headless-core'), ['status' => 500]);
+        $detail = $mailError instanceof WP_Error ? $mailError->get_error_message() : '';
+        $message = __('Failed to send message. Please try again later or contact us by phone.', 'headless-core');
+        if (is_string($detail) && $detail !== '') {
+            // Keep the public message generic; log the transport detail for debugging.
+            error_log('[headless_contact] wp_mail failed: ' . $detail);
+        }
+
+        return new WP_Error(
+            'headless_mail_failed',
+            $message,
+            [
+                'status' => 500,
+                'mailer' => $mailError instanceof WP_Error ? $mailError->get_error_code() : 'unknown',
+            ]
+        );
     }
 
     return new WP_REST_Response(['ok' => true], 200);
