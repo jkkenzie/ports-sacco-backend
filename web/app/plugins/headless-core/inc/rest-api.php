@@ -189,6 +189,47 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
+    register_rest_route('custom/v1', '/news', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_news',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'category' => [
+                'required' => false,
+                'type' => 'integer',
+            ],
+            'page' => [
+                'required' => false,
+                'type' => 'integer',
+                'minimum' => 1,
+            ],
+            'per_page' => [
+                'required' => false,
+                'type' => 'integer',
+                'minimum' => 1,
+                'maximum' => 24,
+            ],
+        ],
+    ]);
+
+    register_rest_route('custom/v1', '/news/categories', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_news_categories',
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('custom/v1', '/news/(?P<slug>[a-z0-9\-_]+)', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'headless_core_rest_news_post',
+        'permission_callback' => '__return_true',
+        'args' => [
+            'slug' => [
+                'required' => true,
+                'type' => 'string',
+            ],
+        ],
+    ]);
+
     register_rest_route('custom/v1', '/contact', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'headless_core_rest_contact_submit',
@@ -289,6 +330,7 @@ function headless_core_build_page_response(string $slug)
         'slug' => headless_core_page_route_slug($post),
         'title' => get_the_title($post),
         'blocks' => $blocks,
+        'seo' => headless_core_build_seo($post, $blocks),
     ];
 
     if ($useCache) {
@@ -784,6 +826,53 @@ function headless_core_about_us_help_merge_defaults(array $attrs): array
 }
 
 /**
+ * Sanitize a single CSS margin/padding value for core rich-text blocks.
+ */
+function headless_core_sanitize_css_spacing(string $value): string
+{
+    $value = trim(sanitize_text_field($value));
+    if ($value === '' || $value === '0' || strcasecmp($value, 'auto') === 0) {
+        return $value;
+    }
+
+    if (preg_match('/^-?\d+(\.\d+)?(px|rem|em|%|vh|vw)$/i', $value)) {
+        return strtolower($value);
+    }
+
+    return '';
+}
+
+/**
+ * @param array<string, mixed> $attrs
+ * @return array<string, mixed>
+ */
+function headless_core_apply_core_rich_text_spacing_attrs(array $attrs): array
+{
+    foreach ([
+        'marginTop',
+        'marginRight',
+        'marginBottom',
+        'marginLeft',
+        'paddingTop',
+        'paddingRight',
+        'paddingBottom',
+        'paddingLeft',
+    ] as $key) {
+        if (! array_key_exists($key, $attrs)) {
+            continue;
+        }
+        $sanitized = headless_core_sanitize_css_spacing((string) $attrs[$key]);
+        if ($sanitized === '') {
+            unset($attrs[$key]);
+            continue;
+        }
+        $attrs[$key] = $sanitized;
+    }
+
+    return $attrs;
+}
+
+/**
  * Accepts hex colors and rgb(r, g, b).
  */
 function headless_core_sanitize_color_string(string $value, string $fallback): string
@@ -1014,7 +1103,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         $attrs['bannerImagePositionX'] = headless_core_sanitize_banner_position($posX, 'center');
         $attrs['bannerImagePositionY'] = headless_core_sanitize_banner_position($posY, 'bottom');
 
-        if (! isset($attrs['buttons']) || ! is_array($attrs['buttons']) || $attrs['buttons'] === []) {
+        if (! isset($attrs['buttons']) || ! is_array($attrs['buttons'])) {
             $legacyButtons = [];
             $legacyPrimaryText = isset($attrs['primaryCtaText']) ? trim((string) $attrs['primaryCtaText']) : '';
             $legacyPrimaryUrl = isset($attrs['primaryCtaUrl']) ? trim((string) $attrs['primaryCtaUrl']) : '';
@@ -1022,8 +1111,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             $legacySecondaryUrl = isset($attrs['secondaryCtaUrl']) ? trim((string) $attrs['secondaryCtaUrl']) : '';
             if ($legacyPrimaryText !== '' || $legacyPrimaryUrl !== '') {
                 $legacyButtons[] = [
-                    'label' => $legacyPrimaryText !== '' ? $legacyPrimaryText : 'GET A CALL BACK',
-                    'url' => $legacyPrimaryUrl !== '' ? $legacyPrimaryUrl : '#',
+                    'label' => $legacyPrimaryText,
+                    'url' => $legacyPrimaryUrl,
                     'textColor' => '#22abb5',
                     'borderColor' => '#22abb5',
                     'bgColor' => '#ffffff',
@@ -1034,8 +1123,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
             if ($legacySecondaryText !== '' || $legacySecondaryUrl !== '') {
                 $legacyButtons[] = [
-                    'label' => $legacySecondaryText !== '' ? $legacySecondaryText : 'JOIN PORTS SACCO',
-                    'url' => $legacySecondaryUrl !== '' ? $legacySecondaryUrl : '/contact-us',
+                    'label' => $legacySecondaryText,
+                    'url' => $legacySecondaryUrl,
                     'textColor' => '#ed6e2a',
                     'borderColor' => '#ed6e2a',
                     'bgColor' => '#ffffff',
@@ -1044,10 +1133,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                     'hoverBorderColor' => '#ed6e2a',
                 ];
             }
-            $attrs['buttons'] = $legacyButtons !== [] ? $legacyButtons : [
-                ['label' => 'GET A CALL BACK', 'url' => '#', 'textColor' => '#22abb5', 'borderColor' => '#22abb5', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#22abb5', 'hoverBorderColor' => '#22abb5'],
-                ['label' => 'JOIN PORTS SACCO', 'url' => '/contact-us', 'textColor' => '#ed6e2a', 'borderColor' => '#ed6e2a', 'bgColor' => '#ffffff', 'hoverTextColor' => '#ffffff', 'hoverBgColor' => '#ed6e2a', 'hoverBorderColor' => '#ed6e2a'],
-            ];
+            $attrs['buttons'] = $legacyButtons;
         } else {
             $normalizedButtons = [];
             foreach ($attrs['buttons'] as $button) {
@@ -1060,8 +1146,8 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                     continue;
                 }
                 $normalizedButtons[] = [
-                    'label' => $label !== '' ? $label : 'BUTTON',
-                    'url' => headless_core_menu_url_to_path($url !== '' ? $url : '#'),
+                    'label' => $label,
+                    'url' => $url !== '' ? headless_core_menu_url_to_path($url) : '',
                     'textColor' => headless_core_sanitize_color_string((string) ($button['textColor'] ?? ''), '#22abb5'),
                     'borderColor' => headless_core_sanitize_color_string((string) ($button['borderColor'] ?? ''), '#22abb5'),
                     'bgColor' => headless_core_sanitize_color_string((string) ($button['bgColor'] ?? ''), '#ffffff'),
@@ -1075,11 +1161,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         }
 
         if (! isset($attrs['menuItems']) || ! is_array($attrs['menuItems'])) {
-            $attrs['menuItems'] = [
-                ['label' => 'GROUP', 'href' => '#'],
-                ['label' => 'BIASHARA', 'href' => '#'],
-                ['label' => 'FIXED DEPOSIT', 'href' => '#'],
-            ];
+            $attrs['menuItems'] = [];
         } else {
             $normalizedMenuItems = [];
             foreach ($attrs['menuItems'] as $item) {
@@ -1092,13 +1174,15 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                     continue;
                 }
                 $normalizedMenuItems[] = [
-                    'label' => $label !== '' ? $label : 'MENU ITEM',
-                    'href' => headless_core_menu_url_to_path($href !== '' ? $href : '#'),
+                    'label' => $label,
+                    'href' => $href !== '' ? headless_core_menu_url_to_path($href) : '',
                     'target' => ! empty($item['opensInNewTab']) || (($item['target'] ?? '') === '_blank') ? '_blank' : '',
                 ];
             }
             $attrs['menuItems'] = $normalizedMenuItems;
         }
+
+        $attrs['showMenu'] = ! isset($attrs['showMenu']) || (bool) $attrs['showMenu'];
 
         return $attrs;
     }
@@ -1755,7 +1839,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
     if ($name === 'core/paragraph') {
         $attrs['content'] = headless_core_plain_text_from_parsed_block($block, $attrs);
 
-        return $attrs;
+        return headless_core_apply_core_rich_text_spacing_attrs($attrs);
     }
 
     if ($name === 'core/freeform' || $name === 'core/html') {
@@ -1784,7 +1868,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
         }
 
-        return $attrs;
+        return headless_core_apply_core_rich_text_spacing_attrs($attrs);
     }
 
     if ($name === 'core/list-item') {
@@ -2744,6 +2828,219 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         return $attrs;
     }
 
+    if ($name === 'custom/news-grid') {
+        $attrs['perPage'] = isset($attrs['perPage']) ? max(1, min(24, (int) $attrs['perPage'])) : 9;
+        $attrs['readMoreLabel'] = isset($attrs['readMoreLabel']) && trim((string) $attrs['readMoreLabel']) !== ''
+            ? sanitize_text_field((string) $attrs['readMoreLabel'])
+            : __('Read More', 'headless-core');
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/youtube-grid') {
+        $attrs['title'] = isset($attrs['title']) && trim((string) $attrs['title']) !== ''
+            ? sanitize_text_field((string) $attrs['title'])
+            : __('PortsSacco YouTube Channel', 'headless-core');
+        $attrs['intro'] = isset($attrs['intro']) ? sanitize_textarea_field((string) $attrs['intro']) : '';
+        $attrs['maxVideos'] = isset($attrs['maxVideos']) ? max(3, min(12, (int) $attrs['maxVideos'])) : 6;
+        $columns = isset($attrs['columns']) ? (int) $attrs['columns'] : 3;
+        $attrs['columns'] = in_array($columns, [2, 3, 4], true) ? $columns : 3;
+        $attrs['channelId'] = headless_core_youtube_sanitize_channel_id((string) ($attrs['channelId'] ?? ''));
+        $attrs['channelUrl'] = isset($attrs['channelUrl']) ? esc_url_raw((string) $attrs['channelUrl']) : '';
+        $attrs['viewChannelLabel'] = isset($attrs['viewChannelLabel']) && trim((string) $attrs['viewChannelLabel']) !== ''
+            ? sanitize_text_field((string) $attrs['viewChannelLabel'])
+            : __('Visit our YouTube channel', 'headless-core');
+        $attrs['accentColor'] = headless_core_sanitize_color_string(
+            isset($attrs['accentColor']) ? (string) $attrs['accentColor'] : '',
+            '#22acb6'
+        );
+        $attrs['showPublishedDate'] = ! isset($attrs['showPublishedDate']) || (bool) $attrs['showPublishedDate'];
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/downloads-grid') {
+        $attrs['sectionTitle'] = isset($attrs['sectionTitle']) && trim((string) $attrs['sectionTitle']) !== ''
+            ? sanitize_text_field((string) $attrs['sectionTitle'])
+            : __('Downloads', 'headless-core');
+        $attrs['sectionIntro'] = isset($attrs['sectionIntro']) ? sanitize_textarea_field((string) $attrs['sectionIntro']) : '';
+        $attrs['downloadLabel'] = isset($attrs['downloadLabel']) && trim((string) $attrs['downloadLabel']) !== ''
+            ? sanitize_text_field((string) $attrs['downloadLabel'])
+            : __('Download PDF', 'headless-core');
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#f8fafc'
+        );
+        $attrs['cardBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardBgColor']) ? (string) $attrs['cardBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['accentColor'] = headless_core_sanitize_color_string(
+            isset($attrs['accentColor']) ? (string) $attrs['accentColor'] : '',
+            '#22acb6'
+        );
+        $attrs['buttonHoverColor'] = headless_core_sanitize_color_string(
+            isset($attrs['buttonHoverColor']) ? (string) $attrs['buttonHoverColor'] : '',
+            '#ee6e2a'
+        );
+        $attrs['headingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['headingColor']) ? (string) $attrs['headingColor'] : '',
+            '#1e293b'
+        );
+        $attrs['titleColor'] = headless_core_sanitize_color_string(
+            isset($attrs['titleColor']) ? (string) $attrs['titleColor'] : '',
+            '#334155'
+        );
+
+        $rowsIn = isset($attrs['rows']) && is_array($attrs['rows']) ? $attrs['rows'] : [];
+        $rowsOut = [];
+        foreach ($rowsIn as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $heading = isset($row['heading']) ? sanitize_text_field((string) $row['heading']) : '';
+            $itemsIn = isset($row['items']) && is_array($row['items']) ? $row['items'] : [];
+            $itemsOut = [];
+            foreach ($itemsIn as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $title = isset($item['title']) ? sanitize_text_field((string) $item['title']) : '';
+                $fileId = isset($item['fileId']) ? (int) $item['fileId'] : 0;
+                $fileUrl = isset($item['fileUrl']) ? esc_url_raw((string) $item['fileUrl']) : '';
+                if ($fileId > 0) {
+                    $attachmentUrl = wp_get_attachment_url($fileId);
+                    if (is_string($attachmentUrl) && $attachmentUrl !== '') {
+                        $fileUrl = esc_url_raw($attachmentUrl);
+                    }
+                }
+                if ($title === '' && $fileUrl === '') {
+                    continue;
+                }
+                $showDeadline = isset($item['showDeadline']) ? (bool) $item['showDeadline'] : false;
+                $deadline = isset($item['deadline']) ? sanitize_text_field((string) $item['deadline']) : '';
+                $itemsOut[] = [
+                    'title' => $title,
+                    'fileId' => $fileId,
+                    'fileUrl' => $fileUrl,
+                    'showDeadline' => $showDeadline,
+                    'deadline' => $deadline,
+                ];
+                if (count($itemsOut) >= 48) {
+                    break;
+                }
+            }
+            if ($heading === '' && $itemsOut === []) {
+                continue;
+            }
+            $rowsOut[] = [
+                'heading' => $heading,
+                'items' => $itemsOut,
+            ];
+        }
+        $attrs['rows'] = $rowsOut;
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/faq-section') {
+        $attrs['sectionTitle'] = isset($attrs['sectionTitle']) && trim((string) $attrs['sectionTitle']) !== ''
+            ? sanitize_text_field((string) $attrs['sectionTitle'])
+            : __('Frequently Asked Questions', 'headless-core');
+        $attrs['sectionIntro'] = isset($attrs['sectionIntro']) ? sanitize_textarea_field((string) $attrs['sectionIntro']) : '';
+        $attrs['sectionBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['sectionBgColor']) ? (string) $attrs['sectionBgColor'] : '',
+            '#f8fafc'
+        );
+        $attrs['cardBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['cardBgColor']) ? (string) $attrs['cardBgColor'] : '',
+            '#ffffff'
+        );
+        $attrs['accentColor'] = headless_core_sanitize_color_string(
+            isset($attrs['accentColor']) ? (string) $attrs['accentColor'] : '',
+            '#22acb6'
+        );
+        $attrs['groupHeadingColor'] = headless_core_sanitize_color_string(
+            isset($attrs['groupHeadingColor']) ? (string) $attrs['groupHeadingColor'] : '',
+            '#1e293b'
+        );
+        $attrs['questionColor'] = headless_core_sanitize_color_string(
+            isset($attrs['questionColor']) ? (string) $attrs['questionColor'] : '',
+            '#1e293b'
+        );
+        $attrs['answerColor'] = headless_core_sanitize_color_string(
+            isset($attrs['answerColor']) ? (string) $attrs['answerColor'] : '',
+            '#475569'
+        );
+        $attrs['borderColor'] = headless_core_sanitize_color_string(
+            isset($attrs['borderColor']) ? (string) $attrs['borderColor'] : '',
+            '#e2e8f0'
+        );
+        $attrs['hoverBgColor'] = headless_core_sanitize_color_string(
+            isset($attrs['hoverBgColor']) ? (string) $attrs['hoverBgColor'] : '',
+            '#f8fafc'
+        );
+        $attrs['iconColor'] = headless_core_sanitize_color_string(
+            isset($attrs['iconColor']) ? (string) $attrs['iconColor'] : '',
+            '#22acb6'
+        );
+
+        $rowsIn = isset($attrs['rows']) && is_array($attrs['rows']) ? $attrs['rows'] : [];
+        $rowsOut = [];
+        foreach ($rowsIn as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $heading = isset($row['heading']) ? sanitize_text_field((string) $row['heading']) : '';
+            $itemsIn = isset($row['items']) && is_array($row['items']) ? $row['items'] : [];
+            $itemsOut = [];
+            foreach ($itemsIn as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $title = isset($item['title']) ? sanitize_text_field((string) $item['title']) : '';
+                $content = isset($item['content']) ? wp_kses_post((string) $item['content']) : '';
+                if ($title === '' && trim(wp_strip_all_tags($content)) === '') {
+                    continue;
+                }
+                $itemsOut[] = [
+                    'title' => $title,
+                    'content' => $content,
+                ];
+                if (count($itemsOut) >= 48) {
+                    break;
+                }
+            }
+            if ($heading === '' && $itemsOut === []) {
+                continue;
+            }
+            $rowsOut[] = [
+                'heading' => $heading,
+                'items' => $itemsOut,
+            ];
+        }
+        $attrs['rows'] = $rowsOut;
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/events-grid') {
+        $attrs['categoryId'] = isset($attrs['categoryId']) ? max(0, (int) $attrs['categoryId']) : 0;
+
+        return $attrs;
+    }
+
+    if ($name === 'custom/events-archive') {
+        $attrs['title'] = isset($attrs['title']) ? sanitize_text_field((string) $attrs['title']) : '';
+        $attrs['intro'] = isset($attrs['intro']) ? sanitize_textarea_field((string) $attrs['intro']) : '';
+        $attrs['categoryId'] = isset($attrs['categoryId']) ? max(0, (int) $attrs['categoryId']) : 0;
+        $attrs['emptyMessage'] = isset($attrs['emptyMessage']) && trim((string) $attrs['emptyMessage']) !== ''
+            ? sanitize_text_field((string) $attrs['emptyMessage'])
+            : __('No events available right now.', 'headless-core');
+
+        return $attrs;
+    }
+
     if ($name === 'custom/events-carousel') {
         if (isset($attrs['anchor'])) {
             $anchor = sanitize_title((string) $attrs['anchor']);
@@ -3096,6 +3393,32 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
         }
         $attrs['googlePlayLinkUrl'] = isset($attrs['googlePlayLinkUrl']) ? trim((string) $attrs['googlePlayLinkUrl']) : '';
+
+        $googlePlayLinks = [];
+        if (isset($attrs['googlePlayLinks']) && is_array($attrs['googlePlayLinks'])) {
+            foreach ($attrs['googlePlayLinks'] as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $url = esc_url_raw(trim((string) ($row['url'] ?? '')));
+                if ($url === '') {
+                    continue;
+                }
+                $label = sanitize_text_field(trim((string) ($row['label'] ?? '')));
+                $googlePlayLinks[] = [
+                    'label' => $label !== '' ? $label : __('Google Play', 'headless-core'),
+                    'url' => $url,
+                ];
+            }
+        }
+        if ($googlePlayLinks === [] && $attrs['googlePlayLinkUrl'] !== '') {
+            $googlePlayLinks[] = [
+                'label' => __('Google Play', 'headless-core'),
+                'url' => esc_url_raw($attrs['googlePlayLinkUrl']),
+            ];
+        }
+        $attrs['googlePlayLinks'] = $googlePlayLinks;
+        $attrs['googlePlayLinkUrl'] = $googlePlayLinks !== [] ? (string) $googlePlayLinks[0]['url'] : '';
 
         $asId = isset($attrs['appStoreImageId']) ? (int) $attrs['appStoreImageId'] : 0;
         $attrs['appStoreImageId'] = $asId;
@@ -3792,6 +4115,19 @@ function headless_core_normalize_blocks(array $parsed): array
 }
 
 /**
+ * Whether a CPT post has headless detail content (normalized Gutenberg blocks).
+ */
+function headless_core_post_has_blocks(WP_Post $post): bool
+{
+    $parsed = parse_blocks((string) $post->post_content);
+    if ($parsed === []) {
+        return false;
+    }
+
+    return headless_core_normalize_blocks($parsed) !== [];
+}
+
+/**
  * @param WP_REST_Request $request
  * @return WP_REST_Response|WP_Error
  */
@@ -3841,7 +4177,7 @@ function headless_core_rest_savings_products(WP_REST_Request $request): WP_REST_
     $perPage = max(0, min(100, $perPage));
     $cacheVersion = (string) get_option('headless_savings_products_cache_ver', '1');
     $limitKey = $perPage > 0 ? (string) $perPage : 'all';
-    $cacheKey = 'list_' . $cacheVersion . '_pp_' . $limitKey;
+    $cacheKey = 'list_v2_' . $cacheVersion . '_pp_' . $limitKey;
     $cached = headless_core_cache_get('savings_products', $cacheKey);
     if (is_array($cached)) {
         return new WP_REST_Response($cached, 200);
@@ -3877,13 +4213,16 @@ function headless_core_rest_savings_products(WP_REST_Request $request): WP_REST_
             $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
         }
 
+        $hasDetailPage = headless_core_post_has_blocks($post);
+
         $payload[] = [
             'id' => (int) $post->ID,
             'slug' => (string) $post->post_name,
             'title' => get_the_title($post),
             'description' => $excerpt,
             'imageUrl' => $imageUrl,
-            'link' => '/savings-products/' . (string) $post->post_name,
+            'hasDetailPage' => $hasDetailPage,
+            'link' => $hasDetailPage ? '/savings-products/' . (string) $post->post_name : '',
         ];
     }
 
@@ -3945,6 +4284,7 @@ function headless_core_rest_savings_product(WP_REST_Request $request)
         'title' => get_the_title($post),
         'imageUrl' => $imageUrl,
         'blocks' => $blocks,
+        'seo' => headless_core_build_seo($post, $blocks),
     ];
 
     headless_core_cache_set('savings_products', $cacheKey, $payload);
@@ -3963,7 +4303,7 @@ function headless_core_rest_loan_products(WP_REST_Request $request): WP_REST_Res
     $perPage = max(0, min(100, $perPage));
     $cacheVersion = (string) get_option('headless_loan_products_cache_ver', '1');
     $limitKey = $perPage > 0 ? (string) $perPage : 'all';
-    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId . '_pp_' . $limitKey;
+    $cacheKey = 'list_v2_' . $cacheVersion . '_cat_' . $categoryId . '_pp_' . $limitKey;
     $cached = headless_core_cache_get('loan_products', $cacheKey);
     if (is_array($cached)) {
         return new WP_REST_Response($cached, 200);
@@ -4003,13 +4343,16 @@ function headless_core_rest_loan_products(WP_REST_Request $request): WP_REST_Res
             $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
         }
 
+        $hasDetailPage = headless_core_post_has_blocks($post);
+
         $payload[] = [
             'id' => (int) $post->ID,
             'slug' => (string) $post->post_name,
             'title' => get_the_title($post),
             'description' => $excerpt,
             'imageUrl' => $imageUrl,
-            'link' => '/loan-products/' . (string) $post->post_name,
+            'hasDetailPage' => $hasDetailPage,
+            'link' => $hasDetailPage ? '/loan-products/' . (string) $post->post_name : '',
         ];
     }
 
@@ -4071,6 +4414,7 @@ function headless_core_rest_loan_product(WP_REST_Request $request)
         'title' => get_the_title($post),
         'imageUrl' => $imageUrl,
         'blocks' => $blocks,
+        'seo' => headless_core_build_seo($post, $blocks),
     ];
 
     headless_core_cache_set('loan_products', $cacheKey, $payload);
@@ -4170,7 +4514,7 @@ function headless_core_rest_services(WP_REST_Request $request): WP_REST_Response
     $perPage = max(0, min(100, $perPage));
     $cacheVersion = (string) get_option('headless_services_cache_ver', '1');
     $limitKey = $perPage > 0 ? (string) $perPage : 'all';
-    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId . '_pp_' . $limitKey;
+    $cacheKey = 'list_v2_' . $cacheVersion . '_cat_' . $categoryId . '_pp_' . $limitKey;
     $cached = headless_core_cache_get('services', $cacheKey);
     if (is_array($cached)) {
         return new WP_REST_Response($cached, 200);
@@ -4210,13 +4554,16 @@ function headless_core_rest_services(WP_REST_Request $request): WP_REST_Response
             $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
         }
 
+        $hasDetailPage = headless_core_post_has_blocks($post);
+
         $payload[] = [
             'id' => (int) $post->ID,
             'slug' => (string) $post->post_name,
             'title' => get_the_title($post),
             'description' => $excerpt,
             'imageUrl' => $imageUrl,
-            'link' => '/services/' . (string) $post->post_name,
+            'hasDetailPage' => $hasDetailPage,
+            'link' => $hasDetailPage ? '/services/' . (string) $post->post_name : '',
         ];
     }
 
@@ -4278,6 +4625,7 @@ function headless_core_rest_service(WP_REST_Request $request)
         'title' => get_the_title($post),
         'imageUrl' => $imageUrl,
         'blocks' => $blocks,
+        'seo' => headless_core_build_seo($post, $blocks),
     ];
 
     headless_core_cache_set('services', $cacheKey, $payload);
@@ -4322,41 +4670,19 @@ function headless_core_rest_events(WP_REST_Request $request): WP_REST_Response
             continue;
         }
 
-        $imageUrl = '';
-        $thumbId = (int) get_post_thumbnail_id($post);
-        if ($thumbId > 0) {
-            $url = wp_get_attachment_image_url($thumbId, 'large');
-            if (is_string($url) && $url !== '') {
-                $imageUrl = $url;
-            }
-        }
-
-        $excerpt = trim((string) $post->post_excerpt);
-        if ($excerpt === '') {
-            $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
-        }
-
-        $authorId = (int) $post->post_author;
-        $authorName = (string) get_the_author_meta('display_name', $authorId);
-        if ($authorName === '') {
-            $nick = get_the_author_meta('nickname', $authorId);
-            $authorName = is_string($nick) && $nick !== '' ? $nick : '';
-        }
-        if (! is_string($authorName) || $authorName === '') {
-            $authorName = __('Admin', 'headless-core');
-        }
-
-        $dateFormatted = get_the_date((string) get_option('date_format'), $post);
-
+        $card = headless_core_format_event_card($post);
         $payload[] = [
-            'id' => (int) $post->ID,
-            'slug' => (string) $post->post_name,
-            'title' => get_the_title($post),
-            'description' => $excerpt,
-            'imageUrl' => $imageUrl,
-            'link' => '/events/' . (string) $post->post_name,
-            'date' => $dateFormatted,
-            'author' => $authorName,
+            'id' => (int) ($card['id'] ?? 0),
+            'slug' => (string) ($card['slug'] ?? ''),
+            'title' => (string) ($card['title'] ?? ''),
+            'description' => (string) ($card['description'] ?? ''),
+            'imageUrl' => (string) ($card['imageUrl'] ?? ''),
+            'link' => (string) ($card['link'] ?? ''),
+            'date' => (string) ($card['date'] ?? ''),
+            'author' => (string) ($card['author'] ?? ''),
+            'categories' => is_array($card['categories'] ?? null) ? $card['categories'] : [],
+            'primaryCategory' => $card['primaryCategory'] ?? null,
+            'hasDetailPage' => true,
         ];
     }
 
@@ -4377,7 +4703,7 @@ function headless_core_rest_event(WP_REST_Request $request)
     }
 
     $cacheVersion = (string) get_option('headless_events_cache_ver', '1');
-    $cacheKey = 'single_' . $slug . '_' . $cacheVersion;
+    $cacheKey = 'single_v2_' . $slug . '_' . $cacheVersion;
     $cached = headless_core_cache_get('events', $cacheKey);
     if (is_array($cached)) {
         return new WP_REST_Response($cached, 200);
@@ -4395,6 +4721,7 @@ function headless_core_rest_event(WP_REST_Request $request)
     try {
         $parsed = parse_blocks((string) $post->post_content);
         $blocks = headless_core_normalize_blocks($parsed);
+        $navigation = headless_core_event_adjacent_navigation($post);
     } finally {
         if ($hadGlobalPost) {
             $GLOBALS['post'] = $previousGlobalPost;
@@ -4403,6 +4730,49 @@ function headless_core_rest_event(WP_REST_Request $request)
         }
     }
 
+    $card = headless_core_format_event_card($post);
+    $payload = array_merge($card, [
+        'blocks' => $blocks,
+        'share' => headless_core_event_share_meta($post),
+        'navigation' => $navigation,
+        'seo' => headless_core_build_seo($post, $blocks),
+    ]);
+
+    headless_core_cache_set('events', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @return array<int, array{id: int, name: string, slug: string}>
+ */
+function headless_core_event_categories_for_post(WP_Post $post): array
+{
+    $terms = get_the_terms($post, 'category');
+    if (! is_array($terms)) {
+        return [];
+    }
+
+    $out = [];
+    foreach ($terms as $term) {
+        if (! $term instanceof WP_Term) {
+            continue;
+        }
+        $out[] = [
+            'id' => (int) $term->term_id,
+            'name' => (string) $term->name,
+            'slug' => (string) $term->slug,
+        ];
+    }
+
+    return $out;
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function headless_core_format_event_card(WP_Post $post): array
+{
     $imageUrl = '';
     $thumbId = (int) get_post_thumbnail_id($post);
     if ($thumbId > 0) {
@@ -4412,17 +4782,87 @@ function headless_core_rest_event(WP_REST_Request $request)
         }
     }
 
-    $payload = [
+    $excerpt = trim((string) $post->post_excerpt);
+    if ($excerpt === '') {
+        $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
+    }
+
+    $authorId = (int) $post->post_author;
+    $authorName = (string) get_the_author_meta('display_name', $authorId);
+    if ($authorName === '') {
+        $nick = get_the_author_meta('nickname', $authorId);
+        $authorName = is_string($nick) && $nick !== '' ? $nick : __('Admin', 'headless-core');
+    }
+
+    $categories = headless_core_event_categories_for_post($post);
+    $primaryCategory = $categories !== [] ? $categories[0] : null;
+
+    return [
         'id' => (int) $post->ID,
         'slug' => (string) $post->post_name,
         'title' => get_the_title($post),
+        'excerpt' => $excerpt,
+        'description' => $excerpt,
         'imageUrl' => $imageUrl,
-        'blocks' => $blocks,
+        'author' => $authorName,
+        'categories' => $categories,
+        'primaryCategory' => $primaryCategory,
+        'date' => get_the_date((string) get_option('date_format'), $post),
+        'link' => '/events/' . (string) $post->post_name,
     ];
+}
 
-    headless_core_cache_set('events', $cacheKey, $payload);
+/**
+ * @return array{title: string, description: string, imageUrl: string, path: string}
+ */
+function headless_core_event_share_meta(WP_Post $post): array
+{
+    $card = headless_core_format_event_card($post);
 
-    return new WP_REST_Response($payload, 200);
+    return [
+        'title' => (string) ($card['title'] ?? get_the_title($post)),
+        'description' => (string) ($card['excerpt'] ?? ''),
+        'imageUrl' => (string) ($card['imageUrl'] ?? ''),
+        'path' => '/events/' . (string) $post->post_name,
+    ];
+}
+
+/**
+ * @return array{previous: array{slug: string, title: string, link: string}|null, next: array{slug: string, title: string, link: string}|null}
+ */
+function headless_core_event_adjacent_navigation(WP_Post $post): array
+{
+    $format = static function ($adjacent): ?array {
+        if (! $adjacent instanceof WP_Post || $adjacent->post_type !== 'event' || $adjacent->post_status !== 'publish') {
+            return null;
+        }
+
+        return [
+            'slug' => (string) $adjacent->post_name,
+            'title' => get_the_title($adjacent),
+            'link' => '/events/' . (string) $adjacent->post_name,
+        ];
+    };
+
+    $hadGlobalPost = array_key_exists('post', $GLOBALS);
+    $previousGlobalPost = $hadGlobalPost ? $GLOBALS['post'] : null;
+    $GLOBALS['post'] = $post;
+
+    try {
+        $previous = get_adjacent_post(false, '', true);
+        $next = get_adjacent_post(false, '', false);
+    } finally {
+        if ($hadGlobalPost) {
+            $GLOBALS['post'] = $previousGlobalPost;
+        } else {
+            unset($GLOBALS['post']);
+        }
+    }
+
+    return [
+        'previous' => $format($previous),
+        'next' => $format($next),
+    ];
 }
 
 /**
@@ -4688,4 +5128,338 @@ function headless_core_rest_contact_submit(WP_REST_Request $request)
     }
 
     return new WP_REST_Response(['ok' => true], 200);
+}
+
+/**
+ * Categories that should never appear in the news archive filter.
+ */
+function headless_core_news_is_excluded_category(int $termId, string $slug): bool
+{
+    if ($termId <= 0) {
+        return true;
+    }
+
+    $defaultCategoryId = (int) get_option('default_category', 1);
+    if ($termId === $defaultCategoryId) {
+        return true;
+    }
+
+    return sanitize_title($slug) === 'uncategorized';
+}
+
+/**
+ * Categories assigned to published blog posts only (excludes team/event/etc. shared taxonomy noise).
+ *
+ * @return list<array{id: int, name: string, slug: string, count: int}>
+ */
+function headless_core_news_categories_payload(): array
+{
+    global $wpdb;
+
+    $publishedCount = (int) wp_count_posts('post')->publish;
+    $out = [
+        [
+            'id' => 0,
+            'name' => __('All', 'headless-core'),
+            'slug' => '',
+            'count' => $publishedCount,
+        ],
+    ];
+
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are safe ($wpdb->*)
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT t.term_id, t.name, t.slug, COUNT(DISTINCT p.ID) AS post_count
+            FROM {$wpdb->terms} AS t
+            INNER JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id AND tt.taxonomy = %s
+            INNER JOIN {$wpdb->term_relationships} AS tr ON tt.term_taxonomy_id = tr.term_taxonomy_id
+            INNER JOIN {$wpdb->posts} AS p ON tr.object_id = p.ID
+            WHERE p.post_type = %s AND p.post_status = %s
+            GROUP BY t.term_id, t.name, t.slug
+            HAVING post_count > 0
+            ORDER BY t.name ASC",
+            'category',
+            'post',
+            'publish'
+        ),
+        ARRAY_A
+    );
+
+    if (! is_array($rows)) {
+        return $out;
+    }
+
+    foreach ($rows as $row) {
+        $termId = (int) ($row['term_id'] ?? 0);
+        $slug = (string) ($row['slug'] ?? '');
+        if (headless_core_news_is_excluded_category($termId, $slug)) {
+            continue;
+        }
+
+        $out[] = [
+            'id' => $termId,
+            'name' => (string) ($row['name'] ?? ''),
+            'slug' => $slug,
+            'count' => (int) ($row['post_count'] ?? 0),
+        ];
+    }
+
+    return $out;
+}
+
+/**
+ * @return array{id: int, name: string, slug: string}|null
+ */
+function headless_core_news_primary_category(WP_Post $post): ?array
+{
+    $terms = get_the_terms($post, 'category');
+    if (! is_array($terms) || $terms === []) {
+        return null;
+    }
+
+    $term = $terms[0];
+    if (! $term instanceof WP_Term) {
+        return null;
+    }
+
+    return [
+        'id' => (int) $term->term_id,
+        'name' => (string) $term->name,
+        'slug' => (string) $term->slug,
+    ];
+}
+
+/**
+ * @return list<array{id: int, name: string, slug: string}>
+ */
+function headless_core_news_categories_for_post(WP_Post $post): array
+{
+    $terms = get_the_terms($post, 'category');
+    if (! is_array($terms) || $terms === []) {
+        return [];
+    }
+
+    $out = [];
+    foreach ($terms as $term) {
+        if (! $term instanceof WP_Term) {
+            continue;
+        }
+        $out[] = [
+            'id' => (int) $term->term_id,
+            'name' => (string) $term->name,
+            'slug' => (string) $term->slug,
+        ];
+    }
+
+    return $out;
+}
+
+/**
+ * @return array{previous: array{slug: string, title: string, link: string}|null, next: array{slug: string, title: string, link: string}|null}
+ */
+function headless_core_news_adjacent_navigation(WP_Post $post): array
+{
+    $format = static function ($adjacent): ?array {
+        if (! $adjacent instanceof WP_Post || $adjacent->post_type !== 'post' || $adjacent->post_status !== 'publish') {
+            return null;
+        }
+
+        return [
+            'slug' => (string) $adjacent->post_name,
+            'title' => get_the_title($adjacent),
+            'link' => '/news/' . (string) $adjacent->post_name,
+        ];
+    };
+
+    $previous = get_adjacent_post(false, '', true);
+    $next = get_adjacent_post(false, '', false);
+
+    return [
+        'previous' => $format($previous),
+        'next' => $format($next),
+    ];
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function headless_core_format_news_post_card(WP_Post $post): array
+{
+    $imageUrl = '';
+    $thumbId = (int) get_post_thumbnail_id($post);
+    if ($thumbId > 0) {
+        $url = wp_get_attachment_image_url($thumbId, 'large');
+        if (is_string($url) && $url !== '') {
+            $imageUrl = $url;
+        }
+    }
+
+    $excerpt = trim((string) $post->post_excerpt);
+    if ($excerpt === '') {
+        $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 28);
+    }
+
+    $authorId = (int) $post->post_author;
+    $authorName = (string) get_the_author_meta('display_name', $authorId);
+    if ($authorName === '') {
+        $nick = get_the_author_meta('nickname', $authorId);
+        $authorName = is_string($nick) && $nick !== '' ? $nick : __('Admin', 'headless-core');
+    }
+
+    $categories = headless_core_news_categories_for_post($post);
+    $primaryCategory = headless_core_news_primary_category($post);
+
+    return [
+        'id' => (int) $post->ID,
+        'slug' => (string) $post->post_name,
+        'title' => get_the_title($post),
+        'excerpt' => $excerpt,
+        'description' => $excerpt,
+        'imageUrl' => $imageUrl,
+        'author' => $authorName,
+        'commentCount' => (int) get_comments_number($post),
+        'categories' => $categories,
+        'primaryCategory' => $primaryCategory,
+        'date' => get_the_date((string) get_option('date_format'), $post),
+        'link' => '/news/' . (string) $post->post_name,
+    ];
+}
+
+/**
+ * @return WP_REST_Response
+ */
+function headless_core_rest_news_categories(): WP_REST_Response
+{
+    $cacheVersion = (string) get_option('headless_news_cache_ver', '1');
+    $cacheKey = 'categories_' . $cacheVersion . '_posts_only_v2';
+    $cached = headless_core_cache_get('news', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $payload = headless_core_news_categories_payload();
+    headless_core_cache_set('news', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @return WP_REST_Response
+ */
+function headless_core_rest_news(WP_REST_Request $request): WP_REST_Response
+{
+    $categoryId = max(0, (int) $request->get_param('category'));
+    $page = max(1, (int) $request->get_param('page'));
+    $perPage = (int) $request->get_param('per_page');
+    if ($perPage <= 0) {
+        $perPage = 9;
+    }
+    $perPage = min(24, max(1, $perPage));
+
+    $cacheVersion = (string) get_option('headless_news_cache_ver', '1');
+    $cacheKey = 'list_' . $cacheVersion . '_cat_' . $categoryId . '_page_' . $page . '_pp_' . $perPage;
+    $cached = headless_core_cache_get('news', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $queryArgs = [
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'posts_per_page' => $perPage,
+        'paged' => $page,
+        'orderby' => 'date',
+        'order' => 'DESC',
+        'ignore_sticky_posts' => true,
+    ];
+    if ($categoryId > 0) {
+        $queryArgs['cat'] = $categoryId;
+    }
+
+    $query = new WP_Query($queryArgs);
+    $items = [];
+    if ($query->have_posts()) {
+        foreach ($query->posts as $post) {
+            if ($post instanceof WP_Post) {
+                $items[] = headless_core_format_news_post_card($post);
+            }
+        }
+    }
+
+    $total = (int) $query->found_posts;
+    $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+    wp_reset_postdata();
+
+    $payload = [
+        'items' => $items,
+        'pagination' => [
+            'page' => $page,
+            'perPage' => $perPage,
+            'total' => $total,
+            'totalPages' => max(1, $totalPages),
+        ],
+    ];
+
+    headless_core_cache_set('news', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
+ * @return WP_REST_Response|WP_Error
+ */
+function headless_core_rest_news_post(WP_REST_Request $request)
+{
+    $slug = sanitize_title((string) $request->get_param('slug'));
+    if ($slug === '' || $slug === 'categories') {
+        return new WP_Error('headless_news_invalid', __('News slug is required.', 'headless-core'), ['status' => 400]);
+    }
+
+    $cacheVersion = (string) get_option('headless_news_cache_ver', '1');
+    $cacheKey = 'single_' . $slug . '_' . $cacheVersion;
+    $cached = headless_core_cache_get('news', $cacheKey);
+    if (is_array($cached)) {
+        return new WP_REST_Response($cached, 200);
+    }
+
+    $matches = get_posts([
+        'name' => $slug,
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'posts_per_page' => 1,
+    ]);
+    $post = is_array($matches) && isset($matches[0]) && $matches[0] instanceof WP_Post ? $matches[0] : null;
+    if (! $post instanceof WP_Post) {
+        return new WP_Error('headless_not_found', __('Post not found.', 'headless-core'), ['status' => 404]);
+    }
+
+    $hadGlobalPost = array_key_exists('post', $GLOBALS);
+    $previousGlobalPost = $hadGlobalPost ? $GLOBALS['post'] : null;
+    $GLOBALS['post'] = $post;
+
+    try {
+        $parsed = parse_blocks((string) $post->post_content);
+        $blocks = headless_core_normalize_blocks($parsed);
+        $navigation = headless_core_news_adjacent_navigation($post);
+    } finally {
+        if ($hadGlobalPost) {
+            $GLOBALS['post'] = $previousGlobalPost;
+        } else {
+            unset($GLOBALS['post']);
+        }
+    }
+
+    $card = headless_core_format_news_post_card($post);
+    $payload = array_merge($card, [
+        'blocks' => $blocks,
+        'commentsOpen' => (bool) comments_open($post),
+        'approvedComments' => headless_core_news_approved_comments((int) $post->ID),
+        'share' => headless_core_news_share_meta($post),
+        'navigation' => $navigation,
+        'seo' => headless_core_build_seo($post, $blocks),
+    ]);
+
+    headless_core_cache_set('news', $cacheKey, $payload);
+
+    return new WP_REST_Response($payload, 200);
 }

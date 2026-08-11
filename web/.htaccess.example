@@ -1,0 +1,54 @@
+# Copy relevant sections into web/.htaccess on each server (web/.htaccess is gitignored).
+#
+# IMPORTANT: Rules that route to WordPress or sitemap.php MUST appear BEFORE
+# the React SPA catch-all, or /sitemap.xml and /robots.txt will load the app.
+
+DirectoryIndex app.php frontend/index.html
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# React bundle path fix
+RewriteCond %{REQUEST_URI} ^/assets/(.+)$ [NC]
+RewriteRule ^assets/(.+)$ /frontend/assets/$1 [L]
+
+# REST API → wp-api.php (no theme)
+RewriteCond %{REQUEST_URI} ^/(wp-json|wp/wp-json) [NC]
+RewriteRule ^.*$ wp-api.php [L]
+
+# SEO: pretty URLs → physical PHP entry points (works without WP rewrite rules)
+RewriteRule ^sitemap\.xml$ sitemap.php [L,QSA]
+RewriteRule ^sitemap-([a-z0-9_-]+)\.xml$ sitemap.php?type=$1 [L,QSA]
+RewriteRule ^robots\.txt$ robots.php [L]
+
+# Pass WordPress admin, API, core files through to WordPress
+RewriteCond %{REQUEST_URI} !^/wp/ [NC]
+RewriteCond %{REQUEST_URI} !^/wp-admin [NC]
+RewriteCond %{REQUEST_URI} !^/wp-json [NC]
+RewriteCond %{REQUEST_URI} !^/wp-content [NC]
+RewriteCond %{REQUEST_URI} !^/wp-includes [NC]
+RewriteCond %{REQUEST_URI} !^/wp-api\.php$ [NC]
+RewriteCond %{REQUEST_URI} !^/sitemap\.php$ [NC]
+RewriteCond %{REQUEST_URI} !^/robots\.php$ [NC]
+RewriteCond %{REQUEST_URI} !^/app\.php$ [NC]
+# Homepage is a directory request, so the !-d catch-all below never matches /.
+# Route it explicitly so app.php can inject SEO (same as every other page).
+RewriteRule ^$ /app.php [L,E=HC_ROUTE:/]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# All other routes → React SPA (via app.php, which injects SEO <head> then serves the shell)
+# E=HC_ROUTE preserves the original path for SEO resolution on cPanel/Apache.
+RewriteRule ^(.*)$ /app.php [L,E=HC_ROUTE:/$1]
+</IfModule>
+
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress

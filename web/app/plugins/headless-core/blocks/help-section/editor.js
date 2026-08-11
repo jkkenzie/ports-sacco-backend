@@ -245,9 +245,21 @@
             },
           }),
           c.ctaMode === 'link'
-            ? renderUrlField(__('Link URL', 'headless-core'), c, 'ctaUrl', function (patch) {
-                setCards(patchCard(cards, index, patch));
-              })
+            ? el(
+                Fragment,
+                null,
+                renderUrlField(__('Card link URL', 'headless-core'), c, 'ctaUrl', function (patch) {
+                  setCards(patchCard(cards, index, patch));
+                }),
+                el(
+                  'p',
+                  { style: { margin: '0 0 12px', fontSize: '11px', color: '#646970' } },
+                  __(
+                    'Clicking the card (outside phone/email) opens this URL. Phone and email stay as separate call and mail links.',
+                    'headless-core'
+                  )
+                )
+              )
             : null,
           c.ctaMode === 'whatsapp'
             ? renderUrlField(__('WhatsApp link URL', 'headless-core'), c, 'whatsappUrl', function (patch) {
