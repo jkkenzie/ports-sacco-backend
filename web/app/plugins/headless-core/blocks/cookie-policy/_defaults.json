@@ -1,0 +1,43 @@
+{
+  "sectionTitle": "Cookie Policy",
+  "sectionIntro": "<p>Ports DT Sacco (\"us\", \"we\", or \"our\") is a Sacco regulated by SASRA to offer financial services. We operate the www.portsacco.co.ke website, which provides more information of us and our various products and services (collectively, the \"Services\").</p><p>Our website uses cookies when you access our Services over the Internet. We explain which types of cookies we use, why and when we use them. Before we can use some - but not all - of these cookies, we need your consent.</p><p>We encourage you to familiarize yourself with our Data Privacy Policy which outlines your rights in relation to our collection and use of your personal information. To the extent permitted by the applicable law, by accessing or using our Services, you accept the data practices and terms detailed in this Cookie Policy. Please note that the acceptance of cookies is not a requirement for visiting the website.</p>",
+  "sections": [
+    {
+      "id": "cp-what-are-cookies",
+      "title": "What are cookies?",
+      "content": "<p>Cookies are harmless text files that websites place on the computers and mobile devices of people who visit those websites. These text files allow a website to remember your device and how you interacted with the website.</p>",
+      "bullets": [],
+      "contentAfter": ""
+    },
+    {
+      "id": "cp-types",
+      "title": "Types of cookies that we use",
+      "content": "<p>We use first- or third-party cookies. First-party cookies are owned and created by the website for which we are responsible. Third-party cookies are owned and created by an independent company, usually a company providing a service to the owners of the website.</p><p>The cookies used on our Services may be categorized as:</p>",
+      "bullets": [
+        "Basic performance - 'necessary' or 'essential' cookies. We use essential cookies to operate the core functions of our website. We do not require your consent to use these cookies, but you may be able to block these cookies for yourself on your device/browser. However, without these cookies, our site is unlikely to work as you would expect.",
+        "Help us to improve - 'analytics' cookies. Analytics cookies are used by us for statistical analysis purposes. This helps us to understand how visitors use and move around our website, which inform improvements and adaptions to our website to best meet our visitors' needs by, for example, making the most popular features the easiest to find and access or ensuring that our site works properly on the devices and technologies that our visitors use.",
+        "Social media cookies. We may configure social media plug-ins on our website to only set cookies on devices used by logged-in members of those social media platforms. For example, we may advertise the services that we provide and job opportunities on certain third-party websites such as LinkedIn. We use cookies from those third parties' sites on our own website to: provide us with anonymized demographics and browsing activity information of the logged-in visitors to our own website; help us to tailor our advertising on the websites of those third parties to previous logged-in visitors to certain pages of our own site; and help us measure the effectiveness of our advertising."
+      ],
+      "contentAfter": "<p>We will only set analytics and social media cookies where you have provided us with your consent. Where we process your personal information using these types of cookies, we do so on the basis of that consent. Please note that rejecting our analytics cookies will prevent us from collecting the data described above to improve our site for you and other visitors. However, the performance and functionality of our site will not be affected.</p>"
+    },
+    {
+      "id": "cp-examples",
+      "title": "Examples of information we collect",
+      "content": "<p>The following are some examples of information that we collect and how we may use it:</p>",
+      "bullets": [
+        "To recognize new and visitors",
+        "To improve our website and better understand your visits on our platforms.",
+        "To integrate with third party social media websites",
+        "To evaluate our sites' advertising and promotional effectiveness (we own the anonymous data collected and don't share it with third parties)"
+      ],
+      "contentAfter": ""
+    },
+    {
+      "id": "cp-manage",
+      "title": "How to manage cookies using your browser",
+      "content": "<p>All recent versions of popular browsers give you a level of control over cookies. You can set your browser to accept or reject all, or certain, cookies by following the instructions provided by your browser (usually located within the 'Settings', 'Privacy and Security' section).</p><p>If you use your browser settings to block all cookies, which would include blocking our 'basic performance' / essential cookies, you may not be able to access all or parts of our site.</p>",
+      "bullets": [],
+      "contentAfter": ""
+    }
+  ]
+}

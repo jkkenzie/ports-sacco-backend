@@ -340,6 +340,24 @@ add_action('init', static function (): void {
         }
     }
     wp_register_script(
+        'headless-custom-cookie-policy-editor',
+        HEADLESS_CORE_URL . 'blocks/cookie-policy/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    $cookie_policy_defaults_path = HEADLESS_CORE_PATH . 'blocks/cookie-policy/_defaults.json';
+    if (is_readable($cookie_policy_defaults_path)) {
+        $cookie_policy_defaults = json_decode((string) file_get_contents($cookie_policy_defaults_path), true);
+        if (is_array($cookie_policy_defaults)) {
+            wp_localize_script(
+                'headless-custom-cookie-policy-editor',
+                'headlessCookiePolicyDefaults',
+                $cookie_policy_defaults
+            );
+        }
+    }
+    wp_register_script(
         'headless-custom-footer-contact-editor',
         HEADLESS_CORE_URL . 'blocks/footer-contact/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
@@ -1630,6 +1648,47 @@ add_action('init', static function (): void {
             'bodyColor' => ['type' => 'string', 'default' => '#334155'],
             'borderColor' => ['type' => 'string', 'default' => '#e2e8f0'],
             'sections' => ['type' => 'array', 'default' => $privacy_policy_attr_defaults['sections']],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    $cookie_policy_attr_defaults = [
+        'sectionTitle' => 'Cookie Policy',
+        'sectionIntro' => '',
+        'sections' => [],
+    ];
+    $cookie_policy_defaults_file = HEADLESS_CORE_PATH . 'blocks/cookie-policy/_defaults.json';
+    if (is_readable($cookie_policy_defaults_file)) {
+        $decoded_cookie_defaults = json_decode((string) file_get_contents($cookie_policy_defaults_file), true);
+        if (is_array($decoded_cookie_defaults)) {
+            if (! empty($decoded_cookie_defaults['sectionTitle'])) {
+                $cookie_policy_attr_defaults['sectionTitle'] = (string) $decoded_cookie_defaults['sectionTitle'];
+            }
+            if (isset($decoded_cookie_defaults['sectionIntro'])) {
+                $cookie_policy_attr_defaults['sectionIntro'] = (string) $decoded_cookie_defaults['sectionIntro'];
+            }
+            if (! empty($decoded_cookie_defaults['sections']) && is_array($decoded_cookie_defaults['sections'])) {
+                $cookie_policy_attr_defaults['sections'] = $decoded_cookie_defaults['sections'];
+            }
+        }
+    }
+
+    register_block_type('custom/cookie-policy', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-cookie-policy-editor',
+        'attributes' => [
+            'sectionTitle' => ['type' => 'string', 'default' => $cookie_policy_attr_defaults['sectionTitle']],
+            'sectionIntro' => ['type' => 'string', 'default' => $cookie_policy_attr_defaults['sectionIntro']],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardBgColor' => ['type' => 'string', 'default' => '#f8fafc'],
+            'accentColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'headingColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'titleColor' => ['type' => 'string', 'default' => '#1e293b'],
+            'bodyColor' => ['type' => 'string', 'default' => '#334155'],
+            'borderColor' => ['type' => 'string', 'default' => '#e2e8f0'],
+            'sections' => ['type' => 'array', 'default' => $cookie_policy_attr_defaults['sections']],
         ],
         'render_callback' => static function (): string {
             return '';
