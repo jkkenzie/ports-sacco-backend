@@ -58,24 +58,14 @@ add_action('phpmailer_init', static function (PHPMailer\PHPMailer\PHPMailer $php
     $phpmailer->SMTPSecure = '';
     $phpmailer->SMTPAutoTLS = false;
 
-    $formFrom = $GLOBALS['ports_form_mail_from'] ?? null;
-    if (is_array($formFrom)) {
-        $fromEmail = sanitize_email((string) ($formFrom['email'] ?? ''));
-        $fromName = sanitize_text_field((string) ($formFrom['name'] ?? ''));
-        if ($fromEmail !== '' && is_email($fromEmail)) {
-            $phpmailer->setFrom($fromEmail, $fromName !== '' ? $fromName : $fromEmail, false);
-        }
-
-        return;
-    }
-
+    // Local From for MailHog only (production delivery uses iYi SMTP Mail / Graph).
     $fromEmail = sanitize_email((string) ports_form_env('HEADLESS_FORM_FROM_EMAIL', ''));
     if ($fromEmail === '') {
         $fromEmail = sanitize_email((string) get_option('admin_email'));
     }
     $fromName = (string) ports_form_env('HEADLESS_FORM_FROM_NAME', (string) get_bloginfo('name'));
-    if ($fromEmail !== '' && $fromName !== '') {
-        $phpmailer->setFrom($fromEmail, $fromName, false);
+    if ($fromEmail !== '' && is_email($fromEmail)) {
+        $phpmailer->setFrom($fromEmail, $fromName !== '' ? $fromName : $fromEmail, false);
     }
 });
 

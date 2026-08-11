@@ -200,44 +200,11 @@ function ports_form_render_settings_page(): void
                 <?php settings_fields(PORTS_FORM_OPTION_GROUP); ?>
                 <h2><?php echo esc_html__('New Member Registration', 'headless-core'); ?></h2>
                 <p class="description">
-                    <?php echo esc_html__('Admin and applicant From addresses override the form export. Admin To overrides the recipient in the form export when set.', 'headless-core'); ?>
+                    <?php echo esc_html__('Delivery (From mailbox) is handled by your site mailer plugin — e.g. iYi SMTP Mail / Microsoft Graph. Configure From Email there. These settings only control notification recipients (To) and optional Reply-To behaviour from the form templates.', 'headless-core'); ?>
                 </p>
 
                 <table class="form-table" role="presentation">
                     <tbody>
-                    <tr>
-                        <th scope="row">
-                            <label for="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_EMAIL); ?>">
-                                <?php echo esc_html__('Admin notification — From email', 'headless-core'); ?>
-                            </label>
-                        </th>
-                        <td>
-                            <input type="email"
-                                   id="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_EMAIL); ?>"
-                                   name="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_EMAIL); ?>"
-                                   value="<?php echo esc_attr($registrationEmail); ?>"
-                                   class="regular-text"
-                                   placeholder="<?php echo esc_attr((string) get_option('admin_email')); ?>" />
-                            <p class="description">
-                                <?php echo esc_html__('Used when notifying site admins about a new registration submission.', 'headless-core'); ?>
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <label for="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_NAME); ?>">
-                                <?php echo esc_html__('Admin notification — From name', 'headless-core'); ?>
-                            </label>
-                        </th>
-                        <td>
-                            <input type="text"
-                                   id="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_NAME); ?>"
-                                   name="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_NAME); ?>"
-                                   value="<?php echo esc_attr($registrationName); ?>"
-                                   class="regular-text"
-                                   placeholder="<?php echo esc_attr((string) get_bloginfo('name')); ?>" />
-                        </td>
-                    </tr>
                     <tr>
                         <th scope="row">
                             <label for="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_TO_EMAIL); ?>">
@@ -258,8 +225,41 @@ function ports_form_render_settings_page(): void
                     </tr>
                     <tr>
                         <th scope="row">
+                            <label for="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_EMAIL); ?>">
+                                <?php echo esc_html__('Legacy — Admin From email (unused when iYi SMTP Mail is active)', 'headless-core'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input type="email"
+                                   id="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_EMAIL); ?>"
+                                   name="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_EMAIL); ?>"
+                                   value="<?php echo esc_attr($registrationEmail); ?>"
+                                   class="regular-text"
+                                   placeholder="<?php echo esc_attr((string) get_option('admin_email')); ?>" />
+                            <p class="description">
+                                <?php echo esc_html__('Kept for backwards compatibility. With iYi SMTP Mail (force From), the Graph mailbox From Email is used instead.', 'headless-core'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_NAME); ?>">
+                                <?php echo esc_html__('Legacy — Admin From name (unused when iYi SMTP Mail is active)', 'headless-core'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input type="text"
+                                   id="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_NAME); ?>"
+                                   name="<?php echo esc_attr(PORTS_FORM_OPTION_REGISTRATION_FROM_NAME); ?>"
+                                   value="<?php echo esc_attr($registrationName); ?>"
+                                   class="regular-text"
+                                   placeholder="<?php echo esc_attr((string) get_bloginfo('name')); ?>" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
                             <label for="<?php echo esc_attr(PORTS_FORM_OPTION_CLIENT_FROM_EMAIL); ?>">
-                                <?php echo esc_html__('Applicant email — From email', 'headless-core'); ?>
+                                <?php echo esc_html__('Legacy — Applicant From email (unused when iYi SMTP Mail is active)', 'headless-core'); ?>
                             </label>
                         </th>
                         <td>
@@ -270,14 +270,14 @@ function ports_form_render_settings_page(): void
                                    class="regular-text"
                                    placeholder="<?php echo esc_attr($registrationEmail ?: (string) get_option('admin_email')); ?>" />
                             <p class="description">
-                                <?php echo esc_html__('Used for confirmation emails sent to the person who submitted the registration form.', 'headless-core'); ?>
+                                <?php echo esc_html__('Applicant confirmation emails still send via wp_mail; From comes from iYi SMTP Mail when enabled.', 'headless-core'); ?>
                             </p>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row">
                             <label for="<?php echo esc_attr(PORTS_FORM_OPTION_CLIENT_FROM_NAME); ?>">
-                                <?php echo esc_html__('Applicant email — From name', 'headless-core'); ?>
+                                <?php echo esc_html__('Legacy — Applicant From name (unused when iYi SMTP Mail is active)', 'headless-core'); ?>
                             </label>
                         </th>
                         <td>

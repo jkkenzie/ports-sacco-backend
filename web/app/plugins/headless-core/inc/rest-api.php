@@ -5119,8 +5119,14 @@ function headless_core_rest_contact_submit(WP_REST_Request $request)
 
     $headers = [
         'Content-Type: text/plain; charset=UTF-8',
-        'Reply-To: ' . $name . ' <' . $email . '>',
     ];
+    // Reply-To only — sender mailbox is owned by the site mailer (iYi SMTP Mail / Graph).
+    $replyName = trim(str_replace(["\r", "\n", '<', '>'], '', $name));
+    if ($replyName !== '') {
+        $headers[] = sprintf('Reply-To: %s <%s>', $replyName, $email);
+    } else {
+        $headers[] = 'Reply-To: ' . $email;
+    }
 
     $sent = wp_mail($to, $subject, $body, $headers);
     if (! $sent) {

@@ -11,31 +11,12 @@ require_once HEADLESS_CORE_PATH . 'inc/form/settings.php';
 require_once HEADLESS_CORE_PATH . 'inc/form/submission-storage.php';
 require_once HEADLESS_CORE_PATH . 'inc/form/email-template.php';
 
-add_action('phpmailer_init', 'ports_form_phpmailer_apply_from', 999);
-
-/**
- * Ensure form submission emails use the configured From address (overrides SMTP plugins / defaults).
- *
- * @param PHPMailer\PHPMailer\PHPMailer $phpmailer
- */
-function ports_form_phpmailer_apply_from(PHPMailer\PHPMailer\PHPMailer $phpmailer): void
-{
-    $formFrom = $GLOBALS['ports_form_mail_from'] ?? null;
-    if (! is_array($formFrom)) {
-        return;
-    }
-
-    $fromEmail = sanitize_email((string) ($formFrom['email'] ?? ''));
-    $fromName = sanitize_text_field((string) ($formFrom['name'] ?? ''));
-    if ($fromEmail === '' || ! is_email($fromEmail)) {
-        return;
-    }
-
-    $phpmailer->setFrom($fromEmail, $fromName !== '' ? $fromName : $fromEmail, false);
-}
-
 /**
  * Send notification emails after submission meta and snapshot are persisted.
+ *
+ * Delivery (SMTP / Microsoft Graph) is owned by the active WordPress mailer plugin
+ * (e.g. iYi SMTP Mail via pre_wp_mail). Forms only set recipients, subject, body,
+ * Reply-To, and attachments — never a hard-coded From address.
  */
 function ports_form_dispatch_submission_notifications(int $postId): void
 {
@@ -146,26 +127,13 @@ function ports_form_send_submission_notifications(int $postId, WP_Post $post): v
             );
         }
 
-        $sender = $isClientNotification
-            ? ports_form_get_client_sender()
-            : ports_form_get_registration_sender();
-
-        $fromName = $sender['name'];
-        $fromEmail = $sender['email'];
         $replyTo = ports_form_sanitize_email_list(
             ports_form_replace_email_placeholders((string) ($notification['replyto'] ?? ''), $context)
         );
 
-        if ($fromEmail === '' || ! is_email($fromEmail)) {
-            $fromEmail = sanitize_email((string) get_option('admin_email'));
-        }
-        if ($fromName === '') {
-            $fromName = (string) get_bloginfo('name');
-        }
-
+        // Do not set From: — iYi SMTP Mail (or any wp_mail transport) owns the sender mailbox.
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            sprintf('From: %s <%s>', $fromName, $fromEmail),
         ];
 
         if ($replyTo !== '') {
@@ -190,14 +158,8 @@ function ports_form_send_submission_notifications(int $postId, WP_Post $post): v
             $body = ports_form_build_admin_email_html($postId, $slug, $context, $heading, $introMessage);
         }
 
-        $GLOBALS['ports_form_mail_from'] = [
-            'email' => $fromEmail,
-            'name' => $fromName,
-        ];
-
         $ok = wp_mail($to, $subject, $body, $headers, $attachments);
 
-        unset($GLOBALS['ports_form_mail_from']);
         if (! $ok) {
             error_log('[FORM_MAILER_ERROR] Failed to send notification to ' . $to . ' for submission #' . $postId);
         } else {
