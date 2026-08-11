@@ -322,6 +322,24 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-privacy-policy-editor',
+        HEADLESS_CORE_URL . 'blocks/privacy-policy/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    $privacy_policy_defaults_path = HEADLESS_CORE_PATH . 'blocks/privacy-policy/_defaults.json';
+    if (is_readable($privacy_policy_defaults_path)) {
+        $privacy_policy_defaults = json_decode((string) file_get_contents($privacy_policy_defaults_path), true);
+        if (is_array($privacy_policy_defaults)) {
+            wp_localize_script(
+                'headless-custom-privacy-policy-editor',
+                'headlessPrivacyPolicyDefaults',
+                $privacy_policy_defaults
+            );
+        }
+    }
+    wp_register_script(
         'headless-custom-footer-contact-editor',
         HEADLESS_CORE_URL . 'blocks/footer-contact/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data'],
@@ -1571,6 +1589,47 @@ add_action('init', static function (): void {
             'hoverBgColor' => ['type' => 'string', 'default' => '#f8fafc'],
             'iconColor' => ['type' => 'string', 'default' => '#22acb6'],
             'rows' => ['type' => 'array', 'default' => []],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    $privacy_policy_attr_defaults = [
+        'sectionTitle' => 'PORTS SACCO Privacy Policy',
+        'sectionIntro' => 'We respect your right to privacy, and we guard it jealously. In this respect, this Privacy Policy sets out details of the personal data the SACCO collects, processes and for what purposes. This Policy should be read alongside, and in addition to, the Data Protection Policy and therefore read it carefully. The policy applies to all customers, suppliers, agents, and all visitors frequenting any of the SACCOs premises.',
+        'sections' => [],
+    ];
+    $privacy_policy_defaults_file = HEADLESS_CORE_PATH . 'blocks/privacy-policy/_defaults.json';
+    if (is_readable($privacy_policy_defaults_file)) {
+        $decoded_privacy_defaults = json_decode((string) file_get_contents($privacy_policy_defaults_file), true);
+        if (is_array($decoded_privacy_defaults)) {
+            if (! empty($decoded_privacy_defaults['sectionTitle'])) {
+                $privacy_policy_attr_defaults['sectionTitle'] = (string) $decoded_privacy_defaults['sectionTitle'];
+            }
+            if (isset($decoded_privacy_defaults['sectionIntro'])) {
+                $privacy_policy_attr_defaults['sectionIntro'] = (string) $decoded_privacy_defaults['sectionIntro'];
+            }
+            if (! empty($decoded_privacy_defaults['sections']) && is_array($decoded_privacy_defaults['sections'])) {
+                $privacy_policy_attr_defaults['sections'] = $decoded_privacy_defaults['sections'];
+            }
+        }
+    }
+
+    register_block_type('custom/privacy-policy', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-privacy-policy-editor',
+        'attributes' => [
+            'sectionTitle' => ['type' => 'string', 'default' => $privacy_policy_attr_defaults['sectionTitle']],
+            'sectionIntro' => ['type' => 'string', 'default' => $privacy_policy_attr_defaults['sectionIntro']],
+            'sectionBgColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'cardBgColor' => ['type' => 'string', 'default' => '#f8fafc'],
+            'accentColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'headingColor' => ['type' => 'string', 'default' => '#22acb6'],
+            'titleColor' => ['type' => 'string', 'default' => '#1e293b'],
+            'bodyColor' => ['type' => 'string', 'default' => '#334155'],
+            'borderColor' => ['type' => 'string', 'default' => '#e2e8f0'],
+            'sections' => ['type' => 'array', 'default' => $privacy_policy_attr_defaults['sections']],
         ],
         'render_callback' => static function (): string {
             return '';
