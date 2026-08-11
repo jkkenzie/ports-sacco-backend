@@ -526,36 +526,13 @@ WhatsApp  →  Twilio  →  POST /wp-json/chat/v1/twilio-webhook
 
 ## 11. Project deployment plan
 
-### Future workflow
+Full build and deploy docs (submodule workflow, `npm run build`, publishing `dist`, server pull) live in the Bedrock root [README.md](../../../../README.md).
 
-**Frontend changes → commit & push inside `web/frontend` only**
+Short version:
 
-```bash
-cd web/frontend
-git add .
-git commit -m "Update frontend"
-git push
-```
-
-**Update Bedrock pointer → commit & push in Bedrock repo**
-
-```bash
-cd ../../
-git add web/frontend
-git commit -m "Update frontend submodule reference"
-git push
-```
-
-**Server / production pull**
-
-```bash
-git pull
-git submodule update --init --recursive --remote
-cd web/frontend
-npm install
-npm run build
-```
+1. Commit + push inside `web/frontend`, then update and push the Bedrock `web/frontend` submodule pointer.
+2. On the server: `git pull` → `git submodule update --init --recursive` → `composer install` → `npm run build` in `web/frontend` → copy `dist` into the Apache paths (see root README).
 
 ---
 
-For a short overview and quick start, see [README.md](README.md).
+For Chat Engine quick start, see [README.md](README.md).
