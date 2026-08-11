@@ -15,12 +15,26 @@ add_action('rest_api_init', static function (): void {
 });
 
 /**
+ * Public reCAPTCHA v3 site key for the React SPA (safe to expose).
+ */
+function headless_core_get_recaptcha_site_key(): string
+{
+    $fromEnv = getenv('HEADLESS_RECAPTCHA_SITE_KEY');
+    if (is_string($fromEnv) && trim($fromEnv) !== '') {
+        return trim($fromEnv);
+    }
+
+    return trim((string) get_option('headless_core_recaptcha_site_key', ''));
+}
+
+/**
  * @return WP_REST_Response
  */
 function headless_core_rest_nonce(): WP_REST_Response
 {
     return new WP_REST_Response([
         'nonce' => wp_create_nonce('wp_rest'),
+        'recaptchaSiteKey' => headless_core_get_recaptcha_site_key(),
     ], 200);
 }
 

@@ -7,6 +7,7 @@ if (! defined('ABSPATH')) {
 }
 
 const HEADLESS_CORE_OPTION_ENABLE_TRANSIENTS = 'headless_core_enable_transients';
+const HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY = 'headless_core_recaptcha_site_key';
 const HEADLESS_CORE_OPTION_RECAPTCHA_SECRET = 'headless_core_recaptcha_secret';
 const HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE = 'headless_core_recaptcha_min_score';
 
@@ -36,6 +37,14 @@ add_action('admin_init', static function (): void {
             return ((string) $value === '1') ? '1' : '0';
         },
         'default' => '1',
+    ]);
+
+    register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY, [
+        'type' => 'string',
+        'sanitize_callback' => static function ($value): string {
+            return trim((string) $value);
+        },
+        'default' => '',
     ]);
 
     register_setting('headless_core_settings_group', HEADLESS_CORE_OPTION_RECAPTCHA_SECRET, [
@@ -94,6 +103,7 @@ function headless_core_render_settings_page(): void
     }
 
     $enabled = get_option(HEADLESS_CORE_OPTION_ENABLE_TRANSIENTS, '1') === '1';
+    $recaptchaSiteKey = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY, '');
     $recaptchaSecret = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET, '');
     $recaptchaMinScore = (string) get_option(HEADLESS_CORE_OPTION_RECAPTCHA_MIN_SCORE, '');
     $youtubeApiKey = (string) get_option(HEADLESS_CORE_OPTION_YOUTUBE_API_KEY, '');
@@ -208,10 +218,29 @@ function headless_core_render_settings_page(): void
                     <hr style="margin: 22px 0; border: 0; border-top: 1px solid #e5e7eb;" />
                     <h2 style="margin-top: 0;"><?php echo esc_html__('Bot protection (reCAPTCHA v3)', 'headless-core'); ?></h2>
                     <p style="color: #50575e; margin-top: 6px;">
-                        <?php echo esc_html__('Used to protect public form submissions (Contact + Apply). The secret key is stored in WordPress options and used server-side only.', 'headless-core'); ?>
+                        <?php echo esc_html__('Protects public form submissions (Contact + Apply). The site key is public and served to the React app; the secret key stays server-side only.', 'headless-core'); ?>
                     </p>
                     <table class="form-table" role="presentation" style="margin-top: 8px;">
                         <tbody>
+                        <tr>
+                            <th scope="row">
+                                <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY); ?>"><?php echo esc_html__('reCAPTCHA Site Key', 'headless-core'); ?></label>
+                            </th>
+                            <td>
+                                <input
+                                    type="text"
+                                    id="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY); ?>"
+                                    name="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SITE_KEY); ?>"
+                                    value="<?php echo esc_attr($recaptchaSiteKey); ?>"
+                                    class="regular-text"
+                                    autocomplete="off"
+                                    style="max-width: 520px;"
+                                />
+                                <p class="description">
+                                    <?php echo esc_html__('Google reCAPTCHA v3 site key (public). Exposed to the frontend via /wp-json/custom/v1/nonce.', 'headless-core'); ?>
+                                </p>
+                            </td>
+                        </tr>
                         <tr>
                             <th scope="row">
                                 <label for="<?php echo esc_attr(HEADLESS_CORE_OPTION_RECAPTCHA_SECRET); ?>"><?php echo esc_html__('reCAPTCHA Secret Key', 'headless-core'); ?></label>
@@ -237,7 +266,7 @@ function headless_core_render_settings_page(): void
                                     </button>
                                 </div>
                                 <p class="description">
-                                    <?php echo esc_html__('Paste your Google reCAPTCHA v3 secret key here. (Do not put the site key here.)', 'headless-core'); ?>
+                                    <?php echo esc_html__('Google reCAPTCHA v3 secret key. Server-side only — never put the site key here.', 'headless-core'); ?>
                                 </p>
                             </td>
                         </tr>
