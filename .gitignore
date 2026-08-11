@@ -21,6 +21,7 @@ web/app/themes/hello-elementor/
 
 # Logs
 *.log
+web/app/logs/
 
 # Dotenv
 .env
