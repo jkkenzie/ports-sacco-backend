@@ -15,6 +15,22 @@ function headless_core_transients_enabled(): bool
 }
 
 /**
+ * Mark a REST response as uncacheable by browsers and Cloudflare edge.
+ *
+ * Cache Everything / edge TTL can ignore plain Cache-Control; CDN-Cache-Control
+ * is the Cloudflare-specific bypass signal.
+ */
+function headless_core_rest_nocache_headers(WP_REST_Response $response): void
+{
+    $response->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+    $response->header('Pragma', 'no-cache');
+    $response->header('Expires', '0');
+    $response->header('Vary', 'Cookie');
+    $response->header('CDN-Cache-Control', 'no-store');
+    $response->header('Cloudflare-CDN-Cache-Control', 'no-store');
+}
+
+/**
  * @return int Seconds
  */
 function headless_core_cache_ttl(): int

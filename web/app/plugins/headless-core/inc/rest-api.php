@@ -13,11 +13,18 @@ add_filter('rest_post_dispatch', static function ($response, $server, $request) 
 
     $route = (string) $request->get_route();
     if (strpos($route, '/custom/v1/') !== false) {
-        if (headless_core_api_cache_enabled()) {
-            $response->header('Cache-Control', 'public, max-age=' . (int) headless_core_cache_ttl());
+        // Never CDN/browser-cache auth or form bootstrap responses.
+        $neverCache = (bool) preg_match(
+            '#^/custom/v1/(nonce|contact|submit-form|newsletter-subscribe)(/|$)#',
+            $route
+        ) || (bool) preg_match('#/comments$#', $route);
+
+        if (! $neverCache && headless_core_api_cache_enabled()) {
+            $ttl = (int) headless_core_cache_ttl();
+            $response->header('Cache-Control', 'public, max-age=' . $ttl);
+            $response->header('CDN-Cache-Control', 'public, max-age=' . $ttl);
         } else {
-            $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-            $response->header('Pragma', 'no-cache');
+            headless_core_rest_nocache_headers($response);
         }
     }
 

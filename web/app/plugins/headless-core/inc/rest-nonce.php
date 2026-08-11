@@ -32,10 +32,15 @@ function headless_core_get_recaptcha_site_key(): string
  */
 function headless_core_rest_nonce(): WP_REST_Response
 {
-    return new WP_REST_Response([
+    $response = new WP_REST_Response([
         'nonce' => wp_create_nonce('wp_rest'),
         'recaptchaSiteKey' => headless_core_get_recaptcha_site_key(),
     ], 200);
+
+    // Nonces are per-session; Cloudflare/browser must never cache this.
+    headless_core_rest_nocache_headers($response);
+
+    return $response;
 }
 
 /**
