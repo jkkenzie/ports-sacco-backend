@@ -1014,6 +1014,7 @@ add_action('init', static function (): void {
             'linkHoverTextColor' => ['type' => 'string', 'default' => '#ED6E2A'],
             'linkIconBgColor' => ['type' => 'string', 'default' => '#22ABB5'],
             'linkIconHoverBgColor' => ['type' => 'string', 'default' => '#ED6E2A'],
+            'hiddenFromFront' => ['type' => 'boolean', 'default' => false],
             'items' => [
                 'type' => 'array',
                 'default' => [

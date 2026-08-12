@@ -12,6 +12,7 @@
   var ColorPalette = components.ColorPalette;
   var TextControl = components.TextControl;
   var ToggleControl = components.ToggleControl;
+  var useState = element.useState;
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
 
@@ -125,14 +126,22 @@
       buttonBgColor: { type: 'string', default: '#40C9BF' },
       buttonTextColor: { type: 'string', default: '#ffffff' },
       buttonHoverBgColor: { type: 'string', default: '#35b5ad' },
+      hiddenFromFront: { type: 'boolean', default: false },
       items: { type: 'array', default: DEFAULT_ITEMS },
     },
     edit: function (props) {
-      var blockProps = useBlockProps({ className: 'headless-membership-content-block' });
+      var collapsedState = useState(false);
+      var editorCollapsed = collapsedState[0];
+      var setEditorCollapsed = collapsedState[1];
+      var hiddenFromFront = Boolean(props.attributes.hiddenFromFront);
+      var blockProps = useBlockProps({
+        className: 'headless-membership-content-block' + (hiddenFromFront ? ' is-hidden-from-front' : ''),
+      });
       var items = normalizeItems(props.attributes.items);
       var tableHeaders = normalizeHeaders(props.attributes.tableHeaders);
       var tableRows = normalizeRows(props.attributes.tableRows);
       var colorChoices = ['#22ABB5', '#ED6E2A', '#40C9BF', '#000000', '#FFFFFF', '#eef0f3', '#65605f', '#3b4e6b', '#e7f0f9', '#f8f9fa'];
+      var headingLabel = String(props.attributes.heading || '').replace(/<[^>]*>/g, '').trim() || __('Membership Content', 'headless-core');
 
       function setItem(index, patch) {
         var next = items.map(function (item, i) {
@@ -180,6 +189,18 @@
         el(
           InspectorControls,
           null,
+          el(
+            PanelBody,
+            { title: __('Visibility', 'headless-core'), initialOpen: true },
+            el(ToggleControl, {
+              label: __('Hide from front page', 'headless-core'),
+              help: hiddenFromFront
+                ? __('Hidden on the public site. Content stays in the editor so you can restore it later.', 'headless-core')
+                : __('When enabled, this section is omitted from the membership front page without deleting it.', 'headless-core'),
+              checked: hiddenFromFront,
+              onChange: function (v) { props.setAttributes({ hiddenFromFront: !!v }); },
+            })
+          ),
           el(
             PanelBody,
             { title: __('Colors', 'headless-core'), initialOpen: false },
@@ -263,11 +284,121 @@
             }))
           )
         ),
-        // Inline editor UI (in-canvas), so user can compare styling while editing.
+        // Collapsible block chrome
         el(
           'div',
-          { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', background: props.attributes.backgroundColor || '#ffffff' } },
+          {
+            style: {
+              border: '1px solid ' + (hiddenFromFront ? '#f0b429' : '#e5e7eb'),
+              borderRadius: '8px',
+              background: hiddenFromFront ? '#fffbeb' : (props.attributes.backgroundColor || '#ffffff'),
+              overflow: 'hidden',
+            },
+          },
+          el(
+            'div',
+            {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '10px 12px',
+                background: hiddenFromFront ? '#fef3c7' : '#f8fafc',
+                borderBottom: editorCollapsed ? 'none' : '1px solid #e5e7eb',
+                cursor: 'pointer',
+              },
+              onClick: function () { setEditorCollapsed(!editorCollapsed); },
+              role: 'button',
+              tabIndex: 0,
+              onKeyDown: function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setEditorCollapsed(!editorCollapsed);
+                }
+              },
+            },
+            el(
+              'div',
+              { style: { display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: '1 1 auto' } },
+              el(
+                'span',
+                {
+                  'aria-hidden': true,
+                  style: {
+                    display: 'inline-flex',
+                    width: '22px',
+                    height: '22px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '4px',
+                    background: '#e2e8f0',
+                    color: '#334155',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    flex: '0 0 auto',
+                    transform: editorCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.15s ease',
+                  },
+                },
+                '▾'
+              ),
+              el(
+                'div',
+                { style: { minWidth: 0 } },
+                el('strong', {
+                  style: {
+                    display: 'block',
+                    fontSize: '14px',
+                    color: props.attributes.headingColor || '#22ABB5',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  },
+                }, headingLabel),
+                el('span', { style: { fontSize: '12px', color: '#64748b' } }, __('Membership Content', 'headless-core'))
+              )
+            ),
+            el(
+              'div',
+              {
+                style: { display: 'flex', alignItems: 'center', gap: '8px', flex: '0 0 auto' },
+                onClick: function (e) { e.stopPropagation(); },
+              },
+              hiddenFromFront
+                ? el('span', {
+                    style: {
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      color: '#92400e',
+                      background: '#fde68a',
+                      borderRadius: '999px',
+                      padding: '3px 8px',
+                    },
+                  }, __('Hidden', 'headless-core'))
+                : null,
+              el(Button, {
+                variant: 'secondary',
+                isSmall: true,
+                onClick: function () { setEditorCollapsed(!editorCollapsed); },
+              }, editorCollapsed ? __('Expand', 'headless-core') : __('Collapse', 'headless-core'))
+            )
+          ),
+          editorCollapsed
+            ? null
+            : el(
+          'div',
+          { style: { padding: '16px' } },
           el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
+            el('div', { style: { marginBottom: '14px' } },
+              el(ToggleControl, {
+                label: __('Hide from front page', 'headless-core'),
+                checked: hiddenFromFront,
+                onChange: function (v) { props.setAttributes({ hiddenFromFront: !!v }); },
+              })
+            ),
             el(RichText, {
               tagName: 'h2',
               value: props.attributes.heading || '',
@@ -433,12 +564,7 @@
               }, props.attributes.buttonLabel || __('JOIN US!', 'headless-core'))
             )
           )
-        ),
-        el(
-          'div',
-          { style: { padding: '1rem', border: '1px dashed #ccc', borderRadius: '4px', background: props.attributes.backgroundColor || '#fff' } },
-          el('strong', null, props.attributes.heading || __('Membership Content', 'headless-core')),
-          el('p', { style: { marginTop: '8px', fontSize: '12px', color: '#555' } }, __('Rendered by React frontend.', 'headless-core'))
+        )
         )
       );
     },

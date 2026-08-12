@@ -1356,6 +1356,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             isset($attrs['linkIconHoverBgColor']) ? (string) $attrs['linkIconHoverBgColor'] : '',
             '#ED6E2A'
         );
+        $attrs['hiddenFromFront'] = ! empty($attrs['hiddenFromFront']);
         $buttonLabel = isset($attrs['buttonLabel']) ? trim((string) $attrs['buttonLabel']) : '';
         $attrs['buttonLabel'] = $buttonLabel !== '' ? $buttonLabel : 'JOIN US!';
         $buttonUrl = isset($attrs['buttonUrl']) ? trim((string) $attrs['buttonUrl']) : '';
@@ -4060,6 +4061,11 @@ function headless_core_normalize_blocks(array $parsed): array
         }
 
         $attrs = headless_core_block_attributes_for_api($name, $block, $attrs);
+
+        // Soft-hide: keep in the editor, omit from the public headless API.
+        if (! empty($attrs['hiddenFromFront'])) {
+            continue;
+        }
 
         if ($name === 'core/paragraph' && ($attrs['content'] ?? '') === '' && $i + 1 < $count) {
             $next = $parsed[$i + 1];
