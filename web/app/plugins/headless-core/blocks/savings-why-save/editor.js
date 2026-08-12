@@ -13,11 +13,6 @@
   var TextControl = components.TextControl;
   var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
-  var richText = window.wp && window.wp.richText;
-  var registerFormatType = richText && richText.registerFormatType;
-  var toggleFormat = richText && richText.toggleFormat;
-  var ToolbarGroup = components.ToolbarGroup;
-  var ToolbarButton = components.ToolbarButton;
   var trashSvg = el(
     'svg',
     { viewBox: '0 0 24 24', width: '16', height: '16', style: { display: 'block' }, fill: 'currentColor' },
@@ -31,46 +26,14 @@
     { heading: 'Retirement', paragraph: 'Savings come in handy when you retire from formal employment.' }
   ];
 
-  // Adds a simple "bigger text" inline format for point descriptions.
-  // Must use a unique className — bare <span> can only be owned by one format,
-  // and re-registering it (or conflicting with core) breaks the block editor save path.
-  if (typeof document !== 'undefined' && !document.getElementById('headless-why-save-big-text-style')) {
-    var styleEl = document.createElement('style');
-    styleEl.id = 'headless-why-save-big-text-style';
-    styleEl.textContent = '.headless-why-save-big-text{font-size:20px;}';
-    document.head.appendChild(styleEl);
-  }
-  if (registerFormatType) {
-    var getFormatType = richText.getFormatType;
-    var already = typeof getFormatType === 'function' && getFormatType('headless/why-save-big-text');
-    if (!already) {
-      try {
-        registerFormatType('headless/why-save-big-text', {
-          title: __('Big text', 'headless-core'),
-          tagName: 'span',
-          className: 'headless-why-save-big-text',
-          edit: function (props) {
-            return el(
-              ToolbarGroup,
-              null,
-              el(ToolbarButton, {
-                icon: 'editor-textcolor',
-                title: __('Big text', 'headless-core'),
-                onClick: function () {
-                  props.onChange(
-                    toggleFormat(props.value, {
-                      type: 'headless/why-save-big-text',
-                    })
-                  );
-                },
-                isActive: props.isActive,
-              })
-            );
-          },
-        });
-      } catch (e) {
-        // Ignore if registered already (script evaluated twice).
-      }
+  // Drop any leftover custom RichText format from older plugin builds. Claiming bare
+  // <span> broke core format-library registration and blocked editor saves.
+  var richText = window.wp && window.wp.richText;
+  if (richText && typeof richText.unregisterFormatType === 'function') {
+    try {
+      richText.unregisterFormatType('headless/why-save-big-text');
+    } catch (e) {
+      /* ignore */
     }
   }
 
@@ -277,7 +240,7 @@
                   value: (item && item.paragraph) || '',
                   onChange: function (v) { setItem(index, { paragraph: v }); },
                   placeholder: __('Point paragraph…', 'headless-core'),
-                  allowedFormats: ['core/bold', 'core/italic', 'core/text-color', 'headless/why-save-big-text'],
+                  allowedFormats: ['core/bold', 'core/italic', 'core/text-color'],
                   style: { color: textColor }
                 }),
                 el(ToggleControl, {
