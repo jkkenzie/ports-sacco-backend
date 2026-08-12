@@ -128,7 +128,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-savings-why-save-editor',
         HEADLESS_CORE_URL . 'blocks/savings-why-save/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-rich-text', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );

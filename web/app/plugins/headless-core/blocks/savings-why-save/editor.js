@@ -32,36 +32,45 @@
   ];
 
   // Adds a simple "bigger text" inline format for point descriptions.
-  // This avoids pasting raw HTML into RichText (which is often escaped).
+  // Must use a unique className — bare <span> can only be owned by one format,
+  // and re-registering it (or conflicting with core) breaks the block editor save path.
+  if (typeof document !== 'undefined' && !document.getElementById('headless-why-save-big-text-style')) {
+    var styleEl = document.createElement('style');
+    styleEl.id = 'headless-why-save-big-text-style';
+    styleEl.textContent = '.headless-why-save-big-text{font-size:20px;}';
+    document.head.appendChild(styleEl);
+  }
   if (registerFormatType) {
-    try {
-      registerFormatType('headless/why-save-big-text', {
-        title: __('Big text', 'headless-core'),
-        tagName: 'span',
-        className: null,
-        attributes: { style: 'style' },
-        edit: function (props) {
-          return el(
-            ToolbarGroup,
-            null,
-            el(ToolbarButton, {
-              icon: 'editor-textcolor',
-              label: __('Big text', 'headless-core'),
-              onClick: function () {
-                props.onChange(
-                  toggleFormat(props.value, {
-                    type: 'headless/why-save-big-text',
-                    attributes: { style: 'font-size: 20px' },
-                  })
-                );
-              },
-              isActive: props.isActive,
-            })
-          );
-        },
-      });
-    } catch (e) {
-      // Ignore if registered already.
+    var getFormatType = richText.getFormatType;
+    var already = typeof getFormatType === 'function' && getFormatType('headless/why-save-big-text');
+    if (!already) {
+      try {
+        registerFormatType('headless/why-save-big-text', {
+          title: __('Big text', 'headless-core'),
+          tagName: 'span',
+          className: 'headless-why-save-big-text',
+          edit: function (props) {
+            return el(
+              ToolbarGroup,
+              null,
+              el(ToolbarButton, {
+                icon: 'editor-textcolor',
+                title: __('Big text', 'headless-core'),
+                onClick: function () {
+                  props.onChange(
+                    toggleFormat(props.value, {
+                      type: 'headless/why-save-big-text',
+                    })
+                  );
+                },
+                isActive: props.isActive,
+              })
+            );
+          },
+        });
+      } catch (e) {
+        // Ignore if registered already (script evaluated twice).
+      }
     }
   }
 
