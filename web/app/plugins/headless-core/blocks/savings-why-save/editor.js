@@ -26,15 +26,14 @@
     { heading: 'Retirement', paragraph: 'Savings come in handy when you retire from formal employment.' }
   ];
 
-  // Drop any leftover custom RichText format from older plugin builds. Claiming bare
-  // <span> broke core format-library registration and blocked editor saves.
-  var richText = window.wp && window.wp.richText;
-  if (richText && typeof richText.unregisterFormatType === 'function') {
-    try {
-      richText.unregisterFormatType('headless/why-save-big-text');
-    } catch (e) {
-      /* ignore */
-    }
+  function stripLegacyBigTextMarkup(html) {
+    var raw = String(html || '');
+    if (!raw) return '';
+    // Older builds stored big-text as a custom format / classed span. Flatten to plain markup
+    // so RichText does not look up the removed format type.
+    return raw
+      .replace(/<\/?span\b[^>]*\bheadless-why-save-big-text\b[^>]*>/gi, '')
+      .replace(/\uFFF9|\uFFFA|\uFFFB/g, '');
   }
 
   function normalizeItems(items) {
@@ -45,7 +44,7 @@
       var d = DEFAULT_ITEMS[i] || { heading: '', paragraph: '', fullWidth: false };
       return {
         heading: String((row && row.heading) || d.heading || ''),
-        paragraph: String((row && row.paragraph) || d.paragraph || ''),
+        paragraph: stripLegacyBigTextMarkup((row && row.paragraph) || d.paragraph || ''),
         fullWidth: Boolean((row && row.fullWidth) || false)
       };
     });
