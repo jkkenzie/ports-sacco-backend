@@ -20,6 +20,27 @@ flowchart LR
 
 ---
 
+## Headless REST namespace (`portsacco/v1`)
+
+Custom Headless Core routes no longer use the generic `/wp-json/custom/v1/` prefix. The project namespace is:
+
+| | Namespace | Example |
+|---|-----------|---------|
+| **Primary** | `portsacco/v1` | `/wp-json/portsacco/v1/nonce` |
+| **Legacy alias** (temporary) | `custom/v1` | `/wp-json/custom/v1/nonce` |
+
+Same callbacks are registered on both namespaces during cutover so cached old SPA builds keep working.
+
+**PHP (Headless Core):** `HEADLESS_CORE_REST_NAMESPACE` / `HEADLESS_CORE_REST_NAMESPACE_LEGACY` in `web/app/plugins/headless-core/headless-core.php`, with dual registration via `inc/rest-namespace.php`.
+
+**SPA:** `WP_CUSTOM_API = '/wp-json/portsacco/v1'` and `customApiUrl()` in `web/frontend/src/src/api/wp.js`.
+
+**Deploy order:** ship the plugin (both namespaces live) before the SPA build that calls `portsacco/v1`. Update Cloudflare Cache / WAF notes for `/wp-json/portsacco/v1/*` and keep `/wp-json/custom/v1/*` until aliases are removed in a follow-up.
+
+Common routes under the primary namespace include `/nonce`, `/contact`, `/submit-form`, `/page/{slug}`, CPT lists, `/header`, `/footer`, and `/seo/sitemap`.
+
+---
+
 ## Prerequisites
 
 - PHP 8.1+, Composer
@@ -269,7 +290,7 @@ Then re-run `deploy.sh`. Going forward, always use `composer require` / `compose
 
 - Homepage loads (SEO shell via `app.php`)
 - A content page (e.g. `/membership`) renders blocks from the API
-- `/wp-json/portsacco/v1/...` responds (`/custom/v1` still aliased temporarily)
+- `/wp-json/portsacco/v1/nonce` (and other `portsacco/v1` routes) respond; `/wp-json/custom/v1/...` still works via temporary alias
 - `/sitemap.xml` and `/robots.txt` hit the PHP entry points, not the SPA
 - `public_html/frontend/` has `index.html` + `assets/` from the pull (no `src/`, no `node_modules/`)
 
@@ -322,7 +343,8 @@ Public forms and the WP REST API must keep working behind Cloudflare. Prefer **n
 | `web/app.php` | SPA HTML + SEO injection |
 | `web/frontend/` | Published SPA (Bedrock tracks) |
 | `web/frontend/src/` | Vite project / ports-sacco-frontend (local nested git) |
-| `web/app/plugins/headless-core/` | Headless CMS, blocks, REST, SEO |
+| `web/app/plugins/headless-core/` | Headless CMS, blocks, REST (`portsacco/v1`), SEO |
+| `/wp-json/portsacco/v1/` | Primary headless REST API (legacy: `/wp-json/custom/v1/`) |
 | `web/app/plugins/chat-engine/` | Chat / WhatsApp (see its `DOCS.md`) |
 
 ---
