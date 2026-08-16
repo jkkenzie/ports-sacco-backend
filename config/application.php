@@ -24,7 +24,10 @@ Env\Env::$options = 31;
 $root_dir = dirname(__DIR__);
 
 /**
- * Document Root
+ * Document root (provisional until .env is loaded).
+ *
+ * Override on hosts where the public docroot is not `{project}/web` (e.g. cPanel
+ * `public_html`) by setting WEBROOT_DIR in `.env` — never hard-code server paths here.
  *
  * @var non-falsy-string
  */
@@ -75,6 +78,17 @@ foreach ($env_root_dirs as $env_root_dir) {
     } catch (\Throwable $e) {
         // Ignore and try the next .env directory.
     }
+}
+
+$configured_webroot = env('WEBROOT_DIR');
+if (is_string($configured_webroot) && trim($configured_webroot) !== '') {
+    $webroot_dir = rtrim(str_replace('\\', '/', trim($configured_webroot)), '/');
+}
+
+$error_log_path = env('PHP_ERROR_LOG');
+if (is_string($error_log_path) && trim($error_log_path) !== '') {
+    @ini_set('log_errors', 'On');
+    @ini_set('error_log', trim($error_log_path));
 }
 
 /**

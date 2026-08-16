@@ -1,0 +1,26 @@
+---
+description: Git workflow for web/frontend inside the Bedrock monorepo
+alwaysApply: true
+---
+
+# Frontend git workflow (Bedrock monorepo)
+
+`web/frontend` is a **normal directory** in this Bedrock repo (not a submodule). Commit React/Vite source and published SPA files from the repo root.
+
+## Frontend / SPA changes
+
+```bash
+cd web/frontend
+npm run build          # vite build + publish dist → index.html / assets/
+cd ../..               # repo root
+git add web/frontend
+git commit -m "Describe the frontend change"
+```
+
+- Do **not** commit `web/frontend/dist/` or `node_modules/` (gitignored).
+- Do commit published `web/frontend/index.html` and hashed bundles under `web/frontend/assets/` after a production build so `git pull` on the server updates `public_html/frontend/`.
+- Never wipe `assets/fonts/` or `assets/image/` when publishing.
+
+## PHP / Bedrock-only changes
+
+Commit plugin/config/docs as usual; no separate frontend remote or submodule pointer update.

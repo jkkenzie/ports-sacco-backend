@@ -3,7 +3,7 @@
 # IMPORTANT: Rules that route to WordPress or sitemap.php MUST appear BEFORE
 # the React SPA catch-all, or /sitemap.xml and /robots.txt will load the app.
 
-DirectoryIndex app.php frontend/index.html
+DirectoryIndex app.php frontend/index.html index.php
 
 # Compensating security headers (also emitted by Headless Core / app.php).
 # Keep in sync with web/app/plugins/headless-core/inc/security-headers.php.
@@ -19,18 +19,15 @@ DirectoryIndex app.php frontend/index.html
   Header unset X-Powered-By
 </IfModule>
 
+# Serve React SPA for non-WordPress routes (frontend router).
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
-# React bundle path fix
+# Redirect /assets/* → /frontend/assets/* (React bundle path fix)
 RewriteCond %{REQUEST_URI} ^/assets/(.+)$ [NC]
 RewriteRule ^assets/(.+)$ /frontend/assets/$1 [L]
 
-# REST API → wp-api.php (no theme)
-RewriteCond %{REQUEST_URI} ^/(wp-json|wp/wp-json) [NC]
-RewriteRule ^.*$ wp-api.php [L]
-
-# SEO: pretty URLs → physical PHP entry points (works without WP rewrite rules)
+# SEO: pretty URLs → physical PHP entry points (before SPA catch-all)
 RewriteRule ^sitemap\.xml$ sitemap.php [L,QSA]
 RewriteRule ^sitemap-([a-z0-9_-]+)\.xml$ sitemap.php?type=$1 [L,QSA]
 RewriteRule ^robots\.txt$ robots.php [L]
@@ -42,20 +39,21 @@ RewriteCond %{REQUEST_URI} !^/wp-json [NC]
 RewriteCond %{REQUEST_URI} !^/wp-content [NC]
 RewriteCond %{REQUEST_URI} !^/wp-includes [NC]
 RewriteCond %{REQUEST_URI} !^/wp-api\.php$ [NC]
-RewriteCond %{REQUEST_URI} !^/sitemap\.php$ [NC]
-RewriteCond %{REQUEST_URI} !^/robots\.php$ [NC]
+# Let WordPress generate the SEO sitemap and robots.txt (not the SPA)
+RewriteCond %{REQUEST_URI} !^/sitemap[^/]*\.xml$ [NC]
+RewriteCond %{REQUEST_URI} !^/robots\.txt$ [NC]
 RewriteCond %{REQUEST_URI} !^/app\.php$ [NC]
-# Homepage is a directory request, so the !-d catch-all below never matches /.
-# Route it explicitly so app.php can inject SEO (same as every other page).
-RewriteRule ^$ /app.php [L,E=HC_ROUTE:/]
+# Pass through if the file or directory physically exists
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 # All other routes → React SPA (via app.php, which injects SEO <head> then serves the shell)
-# E=HC_ROUTE preserves the original path for SEO resolution on cPanel/Apache.
 RewriteRule ^(.*)$ /app.php [L,E=HC_ROUTE:/$1]
 </IfModule>
 
 # BEGIN WordPress
+# The directives (lines) between "BEGIN WordPress" and "END WordPress" are
+# dynamically generated, and should only be modified via WordPress filters.
+# Any changes to the directives between these markers will be overwritten.
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -65,4 +63,12 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.php [L]
 </IfModule>
+
 # END WordPress
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php82” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php82 .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

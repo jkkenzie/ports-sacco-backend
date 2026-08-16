@@ -35,10 +35,11 @@ auth.json
 # WP-CLI
 wp-cli.local.yml
 
-# Frontend (submodule + builds)
+# Frontend (source + published SPA; dist is intermediate only)
 web/frontend/node_modules/
 web/frontend/dist/
 web/frontend/.cache/
+web/frontend/.vite/
 web/frontend/build/
 
 # Node
@@ -46,3 +47,4 @@ node_modules/
 npm-debug.log
 yarn.lock
 package-lock.json
+!web/frontend/package-lock.json

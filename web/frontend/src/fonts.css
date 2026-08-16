@@ -1,0 +1,57 @@
+/* Museo Font Face Declarations */
+
+@font-face {
+  font-family: 'Museo';
+  src: url('../assets/fonts/museo/Museo300-Regular.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Museo';
+  src: url('../assets/fonts/museo/Museo500-Regular.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Museo';
+  src: url('../assets/fonts/museo/Museo700-Regular.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Museo700-Regular';
+  src: url('../assets/fonts/museo/Museo700-Regular.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Museo100-Regular';
+  src: url('../assets/fonts/museo/Museo100-Regular.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Museo900-Regular';
+  src: url('../assets/fonts/museo/Museo900-Regular.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Museo300-Regular';
+  src: url('../assets/fonts/museo/Museo300-Regular.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
