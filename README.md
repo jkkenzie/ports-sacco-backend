@@ -5,15 +5,15 @@ Headless WordPress (Roots Bedrock) + React (Vite) SPA. WordPress powers content 
 | Path / repo | Role |
 |-------------|------|
 | **This Bedrock repo** | WordPress, plugins, Apache entry points; **published** SPA under `web/frontend/` |
-| **[ports-sacco-frontend](https://github.com/jkkenzie/ports-sacco-frontend)** | React/Vite **source** (`src/`, `package.json`, …), nested under `web/frontend/` for local builds |
+| **[ports-sacco-frontend](https://github.com/jkkenzie/ports-sacco-frontend)** | React/Vite project at `web/frontend/src/` for local builds |
 
 On the server, `git pull` of Bedrock updates `public_html/frontend/` (`index.html`, `assets/`, …). **No npm on the server.** Build locally, then commit only the published files into Bedrock.
 
 ```mermaid
 flowchart LR
-  srcRepo[ports-sacco-frontend src] --> build[npm run build]
-  build --> dist[web/frontend/dist]
-  dist --> publish[publish into web/frontend]
+  srcRepo["web/frontend/src Vite project"] --> build[npm run build]
+  build --> dist["web/frontend/src/dist"]
+  dist --> publish["publish up to web/frontend"]
   publish --> bedrock[Bedrock commit published files]
   bedrock --> server[git pull on cPanel]
 ```
@@ -47,16 +47,15 @@ cp web/.htaccess.example web/.htaccess
 
 ### Frontend source (local / build machine)
 
-`web/frontend/src` is **not** in Bedrock. Use the nested repo:
+`web/frontend/src` is **not** in Bedrock. Use the nested repo there:
 
 ```bash
-cd web/frontend
-# If this folder has no .git yet (fresh Bedrock clone with published files only):
+cd web/frontend/src
+# If this folder has no .git yet:
 git init
 git remote add origin https://github.com/jkkenzie/ports-sacco-frontend.git
 git fetch origin
 git checkout -B main origin/main
-# Keep existing published index.html / assets/ if checkout would overwrite — stash or rebuild after.
 
 cp .env.example .env
 npm install
@@ -75,7 +74,7 @@ Use WAMP (or similar) so `WP_HOME` in the root `.env` resolves (e.g. `http://por
 ### React (Vite) — inside ports-sacco-frontend
 
 ```bash
-cd web/frontend
+cd web/frontend/src
 npm run dev
 ```
 
@@ -85,12 +84,12 @@ npm run dev
 ### Production-like preview
 
 ```bash
-cd web/frontend
+cd web/frontend/src
 npm run build
 npm run preview
 ```
 
-`npm run build` = `vite build` + publish `dist/` → `index.html` / `assets/` in **this same folder** (one level up from `dist/`). Fonts/images under `assets/` are preserved.
+`npm run build` = `vite build` + publish `dist/` **one level up** into `web/frontend/` (`index.html`, `assets/`, fonts/images synced).
 
 ---
 
@@ -98,7 +97,7 @@ npm run preview
 
 ### 1. Configure build env
 
-In `web/frontend/.env` (ports-sacco-frontend):
+In `web/frontend/src/.env` (ports-sacco-frontend):
 
 | Variable | Purpose |
 |----------|---------|
@@ -111,7 +110,7 @@ In `web/frontend/.env` (ports-sacco-frontend):
 ### 2. Build (local)
 
 ```bash
-cd web/frontend
+cd web/frontend/src
 npm install
 npm run build
 ```
@@ -119,7 +118,7 @@ npm run build
 ### 3. Commit published files in **Bedrock** (what the server pulls)
 
 ```bash
-cd ../..   # Bedrock root
+cd ../../..   # Bedrock root
 git add web/frontend/index.html web/frontend/favicon.svg web/frontend/team-bg.png web/frontend/team-bg.svg web/frontend/assets
 git commit -m "Update published SPA build"
 git push origin main
@@ -141,9 +140,9 @@ Do **not** add `web/frontend/src` (gitignored). Commit source changes only in th
 ### A. Source (ports-sacco-frontend)
 
 ```bash
-cd web/frontend
+cd web/frontend/src
 git status
-git add src ...
+git add .
 git commit -m "Describe the frontend source change"
 git push origin main
 ```
@@ -151,7 +150,7 @@ git push origin main
 ### B. Published SPA + PHP (Bedrock)
 
 ```bash
-# after npm run build in web/frontend
+# after npm run build in web/frontend/src
 cd /path/to/bedrock
 git add web/frontend/index.html web/frontend/assets web/frontend/favicon.svg web/frontend/team-bg.png web/frontend/team-bg.svg
 git add web/app/plugins/headless-core   # etc. for PHP
@@ -222,7 +221,8 @@ Public forms and the WP REST API must keep working behind Cloudflare. Prefer **n
 | `.env` | Bedrock / WordPress env |
 | `web/.htaccess.example` | Canonical Apache rules |
 | `web/app.php` | SPA HTML + SEO injection |
-| `web/frontend/` | Published SPA (Bedrock) + nested ports-sacco-frontend source (local) |
+| `web/frontend/` | Published SPA (Bedrock tracks) |
+| `web/frontend/src/` | Vite project / ports-sacco-frontend (local nested git) |
 | `web/app/plugins/headless-core/` | Headless CMS, blocks, REST, SEO |
 | `web/app/plugins/chat-engine/` | Chat / WhatsApp (see its `DOCS.md`) |
 

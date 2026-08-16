@@ -35,30 +35,9 @@ auth.json
 # WP-CLI
 wp-cli.local.yml
 
-# Frontend — Bedrock ships published SPA only (no src / no npm on server).
-# Source + Vite tooling live in the nested ports-sacco-frontend git repo
-# under web/frontend/ (manual git there). After npm run build, commit:
-#   index.html, favicon.svg, team-bg.*, assets/
+# Frontend — Vite project is web/frontend/src/ (ports-sacco-frontend).
+# Bedrock only ships published SPA at web/frontend/ (index.html, assets/, …).
 web/frontend/src/
-web/frontend/scripts/
-web/frontend/public/
-web/frontend/node_modules/
-web/frontend/dist/
-web/frontend/.cache/
-web/frontend/.vite/
-web/frontend/build/
-web/frontend/package.json
-web/frontend/package-lock.json
-web/frontend/vite.config.js
-web/frontend/tailwind.config.js
-web/frontend/postcss.config.js
-web/frontend/root-index.html
-web/frontend/LICENSE
-web/frontend/vite.svg
-web/frontend/.gitignore
-web/frontend/.env.example
-web/frontend/.env.production.example
-web/frontend/.env.staging.example
 
 # Node
 node_modules/

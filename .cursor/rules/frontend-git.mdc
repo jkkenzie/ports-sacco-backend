@@ -5,19 +5,17 @@ alwaysApply: true
 
 # Frontend git workflow (published SPA in Bedrock)
 
-Bedrock tracks **only** the Apache-served build under `web/frontend/`:
+Layout:
 
-- Tracked: `index.html`, `favicon.svg`, `team-bg.*`, `assets/` (hashed bundles + fonts/images)
-- Ignored: `src/`, Vite tooling, `node_modules/`, `dist/`
-
-Source is the separate repo [ports-sacco-frontend](https://github.com/jkkenzie/ports-sacco-frontend), checked out as a **nested git repo** in `web/frontend/` (manual git there; not a Bedrock submodule).
+- `web/frontend/src/` — Vite project ([ports-sacco-frontend](https://github.com/jkkenzie/ports-sacco-frontend); nested git)
+- `web/frontend/` — published SPA (`index.html`, `assets/`, …) tracked by Bedrock
 
 ## Source changes (ports-sacco-frontend)
 
 ```bash
-cd web/frontend
-# edit src/, commit/push to ports-sacco-frontend as usual
-git add src ...
+cd web/frontend/src
+# edit, commit/push to ports-sacco-frontend as usual
+git add .
 git commit -m "Describe source change"
 git push origin main
 ```
@@ -25,9 +23,9 @@ git push origin main
 ## Publish into Bedrock (for server `git pull`)
 
 ```bash
-cd web/frontend
-npm run build          # vite → dist/ → publish into this folder (index.html, assets/)
-cd ../..               # Bedrock root
+cd web/frontend/src
+npm run build          # vite → dist/ → publish up to web/frontend/
+cd ../../..            # Bedrock root
 git add web/frontend/index.html web/frontend/assets web/frontend/favicon.svg web/frontend/team-bg.png web/frontend/team-bg.svg
 git commit -m "Update published SPA build"
 git push origin main
