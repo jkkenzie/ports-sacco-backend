@@ -1,26 +1,36 @@
 ---
-description: Git workflow for web/frontend inside the Bedrock monorepo
+description: Dual-repo workflow — Bedrock publishes SPA; ports-sacco-frontend owns source
 alwaysApply: true
 ---
 
-# Frontend git workflow (Bedrock monorepo)
+# Frontend git workflow (published SPA in Bedrock)
 
-`web/frontend` is a **normal directory** in this Bedrock repo (not a submodule). Commit React/Vite source and published SPA files from the repo root.
+Bedrock tracks **only** the Apache-served build under `web/frontend/`:
 
-## Frontend / SPA changes
+- Tracked: `index.html`, `favicon.svg`, `team-bg.*`, `assets/` (hashed bundles + fonts/images)
+- Ignored: `src/`, Vite tooling, `node_modules/`, `dist/`
+
+Source is the separate repo [ports-sacco-frontend](https://github.com/jkkenzie/ports-sacco-frontend), checked out as a **nested git repo** in `web/frontend/` (manual git there; not a Bedrock submodule).
+
+## Source changes (ports-sacco-frontend)
 
 ```bash
 cd web/frontend
-npm run build          # vite build + publish dist → index.html / assets/
-cd ../..               # repo root
-git add web/frontend
-git commit -m "Describe the frontend change"
+# edit src/, commit/push to ports-sacco-frontend as usual
+git add src ...
+git commit -m "Describe source change"
+git push origin main
 ```
 
-- Do **not** commit `web/frontend/dist/` or `node_modules/` (gitignored).
-- Do commit published `web/frontend/index.html` and hashed bundles under `web/frontend/assets/` after a production build so `git pull` on the server updates `public_html/frontend/`.
-- Never wipe `assets/fonts/` or `assets/image/` when publishing.
+## Publish into Bedrock (for server `git pull`)
 
-## PHP / Bedrock-only changes
+```bash
+cd web/frontend
+npm run build          # vite → dist/ → publish into this folder (index.html, assets/)
+cd ../..               # Bedrock root
+git add web/frontend/index.html web/frontend/assets web/frontend/favicon.svg web/frontend/team-bg.png web/frontend/team-bg.svg
+git commit -m "Update published SPA build"
+git push origin main
+```
 
-Commit plugin/config/docs as usual; no separate frontend remote or submodule pointer update.
+Server: `git pull` only — no npm, no copy from `dist/`.
