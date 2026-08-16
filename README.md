@@ -160,18 +160,110 @@ git push origin main
 
 ---
 
-## Deploying `main` on the server
+## Server Deployment (cPanel / CloudLinux)
 
-Published SPA files are in Bedrock. The server does **not** need Node.
+### Architecture
+
+This Bedrock repo is the project root and lives **outside** the web-exposed directory. On production it is typically `~/portsacco_core/`. The cPanel document root, `public_html/`, contains **symlinks** into `portsacco_core/web/` (plus a real `.htaccess`):
+
+```text
+~/portsacco_core/                 ← git repo root (NOT web-accessible)
+├── .env                          ← real DB creds, salts, secrets (gitignored, chmod 600)
+├── config/
+├── vendor/                       ← composer dependencies
+├── web/                          ← Bedrock public webroot content
+│   ├── app/                      (uploads, plugins, mu-plugins, themes)
+│   ├── wp/                       (WordPress core, composer-managed)
+│   ├── frontend/                 (published React SPA — index.html, assets/)
+│   ├── app.php, index.php, wp-config.php, wp-api.php, …
+└── deploy.sh                     ← optional server helper (git pull + composer)
+
+~/public_html/                    ← actual document root (symlinks only, except .htaccess)
+├── app            → ~/portsacco_core/web/app
+├── app.php        → ~/portsacco_core/web/app.php
+├── wp             → ~/portsacco_core/web/wp
+├── wp-config.php  → ~/portsacco_core/web/wp-config.php
+├── index.php      → ~/portsacco_core/web/index.php
+├── frontend       → ~/portsacco_core/web/frontend
+├── favicon.svg, robots.php, sitemap.php, wp-api.php, wp-index.php  (symlinked as needed)
+└── .htaccess                     ← REAL FILE, not symlinked, not tracked by git
+```
+
+`WEBROOT_DIR` in `.env` must be the cPanel document root (`/home/USER/public_html`), **not** `~/portsacco_core/web`.
+
+### What is and isn't tracked by git
+
+**Tracked (deployed via `git pull`):**
+
+- PHP entry points (`app.php`, `index.php`, `wp-api.php`, `sitemap.php`, `robots.php`, …)
+- `composer.json` / `composer.lock`
+- `config/application.php` + environment overrides
+- Whitelisted plugins: `chat-engine`, `services-page-editor`, `headless-core`
+- Custom mu-plugins that are committed (e.g. `web/app/mu-plugins/cors-header.php` when present)
+- **Published SPA** under `web/frontend/` (`index.html`, hashed `assets/`, `favicon.svg`, `team-bg.*`) — built locally from [ports-sacco-frontend](https://github.com/jkkenzie/ports-sacco-frontend) (`web/frontend/src/`), then committed here. No npm on the server.
+
+**Not tracked — installed by Composer on deploy:**
+
+- `web/wp/` (WordPress core — `roots/wordpress`)
+- Bedrock Composer mu-plugins (e.g. `bedrock-autoloader.php`, `bedrock-disallow-indexing/`)
+- WPackagist plugins/themes such as `newsletter/`, `twentytwentyfive/`
+
+**Not tracked — server-only; must persist across deploys (never delete):**
+
+- `.env` — DB credentials, WP salts, Twilio / Turnstile secrets. **The site will not boot without this.**
+- `web/app/uploads/` — media library
+- Unmanaged plugins installed only on the server, e.g.:
+  - `web/app/plugins/insert-headers-and-footers/`
+  - `web/app/plugins/iyi-smtp-mail/`
+  - `web/app/plugins/wordpress-importer/`
+- `web/favicon.svg`, `web/wp-index.php` — legacy files outside the published SPA path when present
+- `public_html/.htaccess` — server-specific rewrite rules; template is `web/.htaccess.example` (copy manually per server; never symlink)
+
+`web/frontend/src/` (Vite source / nested frontend git) is gitignored in this repo and should not exist on production.
+
+### Deploying updates
 
 ```bash
-cd /path/to/bedrock   # parent of public_html / web
+~/portsacco_core/deploy.sh
+```
+
+Typical `deploy.sh` behaviour: `git pull origin main` + `composer install --no-dev --optimize-autoloader`. It must **never** overwrite `.env`, wipe `uploads/`, or remove the unmanaged plugins listed above.
+
+Equivalent manual steps:
+
+```bash
+cd ~/portsacco_core
 git checkout main
 git pull origin main
 composer install --no-dev --optimize-autoloader
 ```
 
-Ensure production `.env` includes `WEBROOT_DIR` / `PHP_ERROR_LOG` on cPanel. Refresh `web/.htaccess` from `web/.htaccess.example` when rewrite rules change.
+After pull, `public_html/frontend/` (symlink) already shows the new published SPA. Refresh `public_html/.htaccess` from `web/.htaccess.example` only when rewrite rules change.
+
+**If `composer install` fails with a "package not present in lock file" error:**  
+someone edited `composer.json` without updating the lock. Fix:
+
+```bash
+cd ~/portsacco_core
+composer update <package-name> --no-dev
+# Prefer fixing on a local/dev machine, then:
+git add composer.lock
+git commit -m "Fix composer.lock"
+git push origin main
+```
+
+Then re-run `deploy.sh`. Going forward, always use `composer require` / `composer update` and commit `composer.lock` — never hand-edit `composer.json` alone.
+
+### First-time server setup (new environment)
+
+1. Generate an SSH deploy key on the server, add the public key to the GitHub repo’s Deploy Keys, and configure `~/.ssh/config` to use it for `github.com`.
+2. `git clone git@github.com:jkkenzie/ports-sacco-backend.git ~/portsacco_core` (or this repo’s SSH URL).
+3. `cd ~/portsacco_core && composer install --no-dev --optimize-autoloader`
+4. Copy the real `.env` from the previous server or a password manager into `~/portsacco_core/.env`, then `chmod 600 ~/portsacco_core/.env`.  
+   Set `WEBROOT_DIR` to the cPanel document root (`…/public_html`) and `PHP_ERROR_LOG` if desired (see `.env.example`).
+5. Restore server-only data: `uploads/`, unmanaged plugins (list above). Published `web/frontend/` comes from git once it is committed on `main`.
+6. In `public_html/`, symlink the web paths into `~/portsacco_core/web/<item>`. Copy `.htaccess` as a **real file** from `web/.htaccess.example`, then adjust per-server — never symlink `.htaccess`.
+7. Verify: `curl -I --resolve <domain>:443:<server-ip> https://<domain>/` and check `~/public_html/error_log` (or `PHP_ERROR_LOG`).
 
 ### Smoke-check
 
@@ -180,6 +272,13 @@ Ensure production `.env` includes `WEBROOT_DIR` / `PHP_ERROR_LOG` on cPanel. Ref
 - `/wp-json/portsacco/v1/...` responds (`/custom/v1` still aliased temporarily)
 - `/sitemap.xml` and `/robots.txt` hit the PHP entry points, not the SPA
 - `public_html/frontend/` has `index.html` + `assets/` from the pull (no `src/`, no `node_modules/`)
+
+### Known gotchas
+
+- **No `rsync`** on this CloudLinux jailed shell — use `cp -a` instead.
+- **CloudLinux / `open_basedir`**: if PHP cannot read across the symlink boundary between `public_html` and `portsacco_core`, check `php -i | grep open_basedir`. It should be empty/unrestricted for this layout.
+- **Cloudflare**: if the origin is healthy on direct-IP testing but the public domain 403s, the block is often at Cloudflare’s edge (Security → Events), not Apache. A burst of origin 5xx during a bad deploy can also trigger WAF heuristics. See also [Cloudflare + security controls](#cloudflare--security-controls) below.
+- **`.htaccess` is never git-tracked** — `web/.htaccess.example` is the template; live rules stay in `public_html/.htaccess`.
 
 ---
 
