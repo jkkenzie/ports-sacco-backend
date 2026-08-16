@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bc7d9597e6ce62fa25fa069c384ed29d",
+    "content-hash": "f1c86bf53dc954b8061523301838fc86",
     "packages": [
         {
             "name": "composer/installers",
@@ -1093,6 +1093,24 @@
                 }
             ],
             "time": "2025-12-27T19:49:13+00:00"
+        },
+        {
+            "name": "wpackagist-plugin/newsletter",
+            "version": "9.3.3",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/newsletter/",
+                "reference": "tags/9.3.3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/newsletter.9.3.3.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/newsletter/"
         },
         {
             "name": "wpackagist-theme/twentytwentyfive",
