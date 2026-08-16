@@ -23,10 +23,10 @@ web/app/themes/hello-elementor/
 *.log
 web/app/logs/
 
-# Dotenv
+# Dotenv (Bedrock root only; frontend env examples stay in ports-sacco-frontend)
 .env
 .env.*
-!.env.example
+!/.env.example
 
 # Composer
 /vendor
