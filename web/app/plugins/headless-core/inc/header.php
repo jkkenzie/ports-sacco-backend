@@ -230,7 +230,7 @@ add_action('save_post_wp_block', static function (int $postId, WP_Post $post): v
  * Register header endpoint.
  */
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/header', [
+    headless_core_register_rest_route('/header', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_header',
         'permission_callback' => '__return_true',

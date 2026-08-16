@@ -64,6 +64,9 @@ try {
 
     if (! headers_sent()) {
         header('Content-Type: text/html; charset=UTF-8');
+        if (function_exists('headless_core_send_security_headers')) {
+            headless_core_send_security_headers();
+        }
     }
 
     $hcSent = true;

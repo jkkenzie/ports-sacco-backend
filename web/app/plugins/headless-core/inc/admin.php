@@ -247,7 +247,7 @@ function headless_core_render_settings_page(): void
                                     style="max-width: 520px;"
                                 />
                                 <p class="description">
-                                    <?php echo esc_html__('Public widget site key from Cloudflare Turnstile. Exposed to the frontend via /wp-json/custom/v1/nonce when enabled.', 'headless-core'); ?>
+                                    <?php echo esc_html__('Public widget site key from Cloudflare Turnstile. Exposed to the frontend via /wp-json/portsacco/v1/nonce when enabled.', 'headless-core'); ?>
                                 </p>
                             </td>
                         </tr>

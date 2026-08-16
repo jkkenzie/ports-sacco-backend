@@ -7,7 +7,7 @@ if (! defined('ABSPATH')) {
 }
 
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/nonce', [
+    headless_core_register_rest_route('/nonce', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_nonce',
         'permission_callback' => '__return_true',

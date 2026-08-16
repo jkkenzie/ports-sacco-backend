@@ -35,9 +35,9 @@ function headless_core_get_cors_origin(): string
 }
 
 /**
- * Apply CORS headers for custom REST routes when an origin is configured.
+ * Apply CORS headers for headless REST routes when an origin is configured.
  */
-function headless_core_maybe_send_cors_headers(WP_REST_Request $request, string $routePrefix = '/custom/v1/'): void
+function headless_core_maybe_send_cors_headers(WP_REST_Request $request, string $routePrefix = ''): void
 {
     $origin = headless_core_get_cors_origin();
 
@@ -56,7 +56,11 @@ function headless_core_maybe_send_cors_headers(WP_REST_Request $request, string 
     }
 
     $route = (string) $request->get_route();
-    if (strpos($route, $routePrefix) !== 0) {
+    if ($routePrefix !== '') {
+        if (strpos($route, $routePrefix) !== 0) {
+            return;
+        }
+    } elseif (! headless_core_is_headless_rest_route($route)) {
         return;
     }
 

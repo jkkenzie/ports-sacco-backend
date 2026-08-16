@@ -7,7 +7,7 @@ if (! defined('ABSPATH')) {
 }
 
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/newsletter-subscribe', [
+    headless_core_register_rest_route('/newsletter-subscribe', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'headless_core_rest_newsletter_subscribe',
         'permission_callback' => 'headless_core_rest_verify_nonce_permission',

@@ -221,7 +221,7 @@ cp -f dist/assets/* assets/
 
 - Homepage loads (SEO shell via `app.php`)
 - A content page (e.g. `/membership`) renders blocks from the API
-- `/wp-json/custom/v1/...` responds
+- `/wp-json/portsacco/v1/...` responds (`/custom/v1` still aliased temporarily)
 - `/sitemap.xml` and `/robots.txt` hit the PHP entry points, not the SPA
 
 ---
@@ -237,6 +237,35 @@ cp -f dist/assets/* assets/
 5. Everything else → `app.php` (SPA shell + SEO `<head>`)
 
 If the SPA catch-all runs first, sitemaps and the REST API will break.
+
+---
+
+## Cloudflare + security controls
+
+Public forms and the WP REST API must keep working behind Cloudflare. Prefer **narrow exception rules** for the specific managed rulesets blocking editor saves / form POSTs (provider option 3), after compensating controls are in place:
+
+### Already in application code
+- Form POSTs: WordPress REST nonce + honeypot; optional Cloudflare Turnstile
+- Nonce / form routes: `Cache-Control` / `CDN-Cache-Control: no-store` (never edge-cache auth tokens)
+- Security HTTP headers via Headless Core (`inc/security-headers.php`), SPA `app.php`, and `web/.htaccess.example`:
+  - `Strict-Transport-Security` (HTTPS)
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: SAMEORIGIN`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy` (camera/mic/geo disabled)
+  - `Cross-Origin-Opener-Policy: same-origin-allow-popups`
+- Bedrock: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `FORCE_SSL_ADMIN` when `WP_HOME` is HTTPS
+
+### Cloudflare dashboard (ops)
+1. **Rocket Loader → Off** (breaks WP admin / Turnstile script timing)
+2. **Cache Rule**: Bypass `/wp-json/*` (especially `/wp-json/portsacco/v1/nonce*` and legacy `/wp-json/custom/v1/nonce*`)
+3. **Cloudflare Access** for `/wp-admin` and `/wp-login.php` only (not public forms)
+4. Exception / skip **only** the 1–2 managed rulesets blocking legitimate `POST /wp-json/wp/v2/*` editor saves and `POST /wp-json/portsacco/v1/*` form submits — not a blanket WAF bypass
+
+### Process recommendations
+- VAPT before go-live
+- Patch cycle for WordPress core, plugins, PHP, and OS packages
+- Optional later: enable `HEADLESS_CONTENT_SECURITY_POLICY` / `_REPORT_ONLY` in `.env` after browser testing
 
 ---
 

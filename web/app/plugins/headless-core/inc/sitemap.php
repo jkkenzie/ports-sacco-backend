@@ -11,7 +11,7 @@
  *   /sitemap.xml            → sitemap index (needs .htaccess → sitemap.php)
  *   /sitemap-<type>.xml     → per content-type sitemap
  *   /sitemap.php            → physical entry (works without .htaccess aliases)
- *   /wp-json/custom/v1/seo/sitemap → REST fallback (always works)
+ *   /wp-json/portsacco/v1/seo/sitemap → REST fallback (always works; custom/v1 alias during cutover)
  *   /robots.txt             → robots file (needs .htaccess → robots.php)
  *
  * See web/.htaccess.example for production Apache rules.
@@ -102,7 +102,7 @@ add_action('template_redirect', static function (): void {
 }, 0);
 
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/seo/sitemap', [
+    headless_core_register_rest_route('/seo/sitemap', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => static function (): void {
             headless_core_sitemap_render('index', 'headless_core_sitemap_rest_sub_loc');
@@ -111,7 +111,7 @@ add_action('rest_api_init', static function (): void {
         'permission_callback' => '__return_true',
     ]);
 
-    register_rest_route('custom/v1', '/seo/sitemap/(?P<type>[a-z0-9_-]+)', [
+    headless_core_register_rest_route('/seo/sitemap/(?P<type>[a-z0-9_-]+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => static function (WP_REST_Request $request): void {
             $type = sanitize_key((string) $request->get_param('type'));
@@ -133,7 +133,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/seo/robots', [
+    headless_core_register_rest_route('/seo/robots', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => static function (): void {
             $public = (bool) get_option('blog_public');
@@ -156,11 +156,11 @@ function headless_core_sitemap_public_url(): string
 }
 
 /**
- * REST sub-sitemap loc for the sitemap index served via /wp-json/custom/v1/seo/sitemap.
+ * REST sub-sitemap loc for the sitemap index served via /wp-json/portsacco/v1/seo/sitemap.
  */
 function headless_core_sitemap_rest_sub_loc(string $slug): string
 {
-    return rest_url('custom/v1/seo/sitemap/' . $slug);
+    return headless_core_rest_url('seo/sitemap/' . $slug);
 }
 
 /**

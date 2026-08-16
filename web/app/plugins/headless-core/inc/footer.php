@@ -211,7 +211,7 @@ function headless_core_on_footer_save_invalidate_and_enforce(int $postId): void
  * Register footer endpoint.
  */
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/footer', [
+    headless_core_register_rest_route('/footer', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_footer',
         'permission_callback' => '__return_true',

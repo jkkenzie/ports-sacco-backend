@@ -7,7 +7,7 @@ if (! defined('ABSPATH')) {
 }
 
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/news/(?P<slug>[a-z0-9\-_]+)/comments', [
+    headless_core_register_rest_route('/news/(?P<slug>[a-z0-9\-_]+)/comments', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_news_comments_list',
         'permission_callback' => '__return_true',
@@ -19,7 +19,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/news/(?P<slug>[a-z0-9\-_]+)/comments', [
+    headless_core_register_rest_route('/news/(?P<slug>[a-z0-9\-_]+)/comments', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'headless_core_rest_news_comment_submit',
         'permission_callback' => 'headless_core_rest_verify_nonce_permission',

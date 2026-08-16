@@ -182,6 +182,10 @@ if (
     $_SERVER['HTTPS'] = 'on';
 }
 
+if ($wp_home_scheme === 'https') {
+    Config::define('FORCE_SSL_ADMIN', true);
+}
+
 $env_config = __DIR__ . '/environments/' . WP_ENV . '.php';
 
 if (file_exists($env_config)) {

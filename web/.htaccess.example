@@ -5,6 +5,20 @@
 
 DirectoryIndex app.php frontend/index.html
 
+# Compensating security headers (also emitted by Headless Core / app.php).
+# Keep in sync with web/app/plugins/headless-core/inc/security-headers.php.
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+  Header always set X-DNS-Prefetch-Control "off"
+  # Always set HSTS on production HTTPS sites (edge is HTTPS even if origin is HTTP behind Cloudflare).
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  Header unset X-Powered-By
+</IfModule>
+
 <IfModule mod_rewrite.c>
 RewriteEngine On
 

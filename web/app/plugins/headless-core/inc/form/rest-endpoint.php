@@ -11,7 +11,7 @@ require_once HEADLESS_CORE_PATH . 'inc/form/register-cpt.php';
 require_once HEADLESS_CORE_PATH . 'inc/form/submission-storage.php';
 
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/submit-form', [
+    headless_core_register_rest_route('/submit-form', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'ports_form_rest_submit',
         'permission_callback' => 'headless_core_rest_verify_nonce_permission',

@@ -10,7 +10,7 @@ const HEADLESS_CORE_OPTION_YOUTUBE_API_KEY = 'headless_core_youtube_api_key';
 const HEADLESS_CORE_OPTION_YOUTUBE_CHANNEL_ID = 'headless_core_youtube_channel_id';
 
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/youtube/videos', [
+    headless_core_register_rest_route('/youtube/videos', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_youtube_videos',
         'permission_callback' => '__return_true',

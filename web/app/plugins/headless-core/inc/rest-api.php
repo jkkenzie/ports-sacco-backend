@@ -12,10 +12,10 @@ add_filter('rest_post_dispatch', static function ($response, $server, $request) 
     }
 
     $route = (string) $request->get_route();
-    if (strpos($route, '/custom/v1/') !== false) {
+    if (headless_core_is_headless_rest_route($route)) {
         // Never CDN/browser-cache auth or form bootstrap responses.
         $neverCache = (bool) preg_match(
-            '#^/custom/v1/(nonce|contact|submit-form|newsletter-subscribe)(/|$)#',
+            '#^/(portsacco|custom)/v1/(nonce|contact|submit-form|newsletter-subscribe)(/|$)#',
             $route
         ) || (bool) preg_match('#/comments$#', $route);
 
@@ -32,7 +32,7 @@ add_filter('rest_post_dispatch', static function ($response, $server, $request) 
 }, 10, 3);
 
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/page/(?P<slug>.+)', [
+    headless_core_register_rest_route('/page/(?P<slug>.+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_page',
         'permission_callback' => '__return_true',
@@ -44,13 +44,13 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/page', [
+    headless_core_register_rest_route('/page', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_page_home',
         'permission_callback' => '__return_true',
     ]);
 
-    register_rest_route('custom/v1', '/menu/(?P<location>[a-z0-9\-_]+)', [
+    headless_core_register_rest_route('/menu/(?P<location>[a-z0-9\-_]+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_menu',
         'permission_callback' => '__return_true',
@@ -62,7 +62,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/savings-products', [
+    headless_core_register_rest_route('/savings-products', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_savings_products',
         'permission_callback' => '__return_true',
@@ -76,7 +76,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/savings-products/(?P<slug>[a-z0-9\-_]+)', [
+    headless_core_register_rest_route('/savings-products/(?P<slug>[a-z0-9\-_]+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_savings_product',
         'permission_callback' => '__return_true',
@@ -88,7 +88,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/loan-products', [
+    headless_core_register_rest_route('/loan-products', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_loan_products',
         'permission_callback' => '__return_true',
@@ -106,7 +106,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/loan-products/(?P<slug>[a-z0-9\-_]+)', [
+    headless_core_register_rest_route('/loan-products/(?P<slug>[a-z0-9\-_]+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_loan_product',
         'permission_callback' => '__return_true',
@@ -118,7 +118,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/team-members', [
+    headless_core_register_rest_route('/team-members', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_team_members',
         'permission_callback' => '__return_true',
@@ -136,7 +136,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/services', [
+    headless_core_register_rest_route('/services', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_services',
         'permission_callback' => '__return_true',
@@ -154,7 +154,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/services/(?P<slug>[a-z0-9\-_]+)', [
+    headless_core_register_rest_route('/services/(?P<slug>[a-z0-9\-_]+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_service',
         'permission_callback' => '__return_true',
@@ -166,7 +166,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/events', [
+    headless_core_register_rest_route('/events', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_events',
         'permission_callback' => '__return_true',
@@ -184,7 +184,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/events/(?P<slug>[a-z0-9\-_]+)', [
+    headless_core_register_rest_route('/events/(?P<slug>[a-z0-9\-_]+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_event',
         'permission_callback' => '__return_true',
@@ -196,7 +196,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/news', [
+    headless_core_register_rest_route('/news', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_news',
         'permission_callback' => '__return_true',
@@ -219,13 +219,13 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/news/categories', [
+    headless_core_register_rest_route('/news/categories', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_news_categories',
         'permission_callback' => '__return_true',
     ]);
 
-    register_rest_route('custom/v1', '/news/(?P<slug>[a-z0-9\-_]+)', [
+    headless_core_register_rest_route('/news/(?P<slug>[a-z0-9\-_]+)', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'headless_core_rest_news_post',
         'permission_callback' => '__return_true',
@@ -237,7 +237,7 @@ add_action('rest_api_init', static function (): void {
         ],
     ]);
 
-    register_rest_route('custom/v1', '/contact', [
+    headless_core_register_rest_route('/contact', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'headless_core_rest_contact_submit',
         'permission_callback' => 'headless_core_rest_verify_nonce_permission',
@@ -264,7 +264,7 @@ add_filter('rest_pre_serve_request', static function ($served, $result, $request
 
 // Handle CORS preflight for our custom routes when HEADLESS_CORS_ORIGIN is set.
 add_action('rest_api_init', static function (): void {
-    register_rest_route('custom/v1', '/(?P<any>.*)', [
+    headless_core_register_rest_route('/(?P<any>.*)', [
         'methods' => 'OPTIONS',
         'callback' => static function (): WP_REST_Response {
             return new WP_REST_Response(null, 204);
