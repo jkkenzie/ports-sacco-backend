@@ -33,11 +33,69 @@ Same callbacks are registered on both namespaces during cutover so cached old SP
 
 **PHP (Headless Core):** `HEADLESS_CORE_REST_NAMESPACE` / `HEADLESS_CORE_REST_NAMESPACE_LEGACY` in `web/app/plugins/headless-core/headless-core.php`, with dual registration via `inc/rest-namespace.php`.
 
-**SPA (Cloudflare workaround):** The published SPA currently calls **`/wp-json/custom/v1/`** (the temporary alias), because some Cloudflare WAF rules already allow that path while blocking `/wp-json/portsacco/v1/*`. PHP still registers both namespaces. Prefer updating Cloudflare to allow `portsacco/v1`, then switch the SPA back.
-
-**Form bootstrap without `/nonce`:** `app.php` injects `window.__HC_FORM_BOOTSTRAP__` (nonce + Turnstile public config) into the SPA shell with `Cache-Control: no-store`. The React client prefers that inline payload and only falls back to `GET …/nonce` when missing or force-refreshing.
-
 Common routes under the primary namespace include `/nonce`, `/contact`, `/submit-form`, `/page/{slug}`, CPT lists, `/header`, `/footer`, and `/seo/sitemap`.
+
+For how the SPA talks to these routes **behind Cloudflare**, see [Forms + Cloudflare workarounds](#forms--cloudflare-workarounds) below.
+
+---
+
+## Forms + Cloudflare workarounds
+
+Cloudflare can return an HTML **403** for `/wp-json/...` even when the origin is healthy (`curl --resolve` → JSON 200). Public forms (contact, membership / onboarding, newsletter, news comments) must keep working **without** requiring a WAF change. The durable fix is still a narrow CF skip for `/wp-json/portsacco/v1/*` (and chat); until then, keep the pieces below.
+
+### How forms get a nonce
+
+```text
+1. app.php injects window.__HC_FORM_BOOTSTRAP__ into the SPA shell (preferred)
+2. On force-refresh (every submit): GET /hc-bootstrap.php
+3. Fallback: GET /wp-json/custom/v1/nonce
+4. Last resort: reuse the inline __HC_FORM_BOOTSTRAP__ nonce
+```
+
+SPA logic: `web/frontend/src/src/api/formBootstrap.js` → `useFormNonce`.  
+PHP inject: `headless_core_inject_form_bootstrap_script()` in `web/app/plugins/headless-core/inc/rest-nonce.php`, called from `web/app.php` with `Cache-Control: no-store` on the shell.
+
+### How form POSTs avoid `/wp-json`
+
+| Form | REST route | Browser calls |
+|------|------------|---------------|
+| Contact / Asset Finance apply | `/contact` | `/hc-api.php?rest_route=/custom/v1/contact` |
+| Membership / onboarding | `/submit-form` | `/hc-api.php?rest_route=/custom/v1/submit-form` |
+| Newsletter | `/newsletter-subscribe` | `/hc-api.php?rest_route=/custom/v1/newsletter-subscribe` |
+| News comments | `/news/{slug}/comments` | `/hc-api.php?rest_route=/custom/v1/news/.../comments` |
+
+`formApiUrl()` in `web/frontend/src/src/api/wp.js` builds those URLs. `web/hc-api.php` allowlists only those routes (plus `/nonce`) under `custom/v1` or `portsacco/v1` and runs them via `rest_do_request`.
+
+### Read APIs (pages, menus, CPT lists)
+
+Still use **`/wp-json/custom/v1/`** (`WP_CUSTOM_API`) so existing CF rules that already allow the legacy alias keep working. PHP still registers **`portsacco/v1`** as primary.
+
+### Must keep deployed (do not delete)
+
+| Path | Why |
+|------|-----|
+| `web/app.php` | SPA shell + SEO + **inline form bootstrap** + `no-store` |
+| `web/hc-bootstrap.php` | Fresh nonce **outside** `/wp-json` |
+| `web/hc-api.php` | Form POSTs **outside** `/wp-json` |
+| `web/app/plugins/headless-core/` (incl. `inc/rest-nonce.php`) | Bootstrap payload, dual namespaces, form REST |
+| Published `web/frontend/` matching that source | SPA must call `formApiUrl` / prefer inline bootstrap |
+| `web/.htaccess` from `.htaccess.example` | Physical `hc-*.php` must not be swallowed by the SPA catch-all (`!-f` + explicit exclusions) |
+
+### Server / ops checklist
+
+1. After `git pull`, confirm these exist under the web root (e.g. `public_html/`): `app.php`, `hc-api.php`, `hc-bootstrap.php`, `frontend/index.html`.
+2. SPA pages must be served through **`app.php`** (not a static `frontend/index.html` only) so `__HC_FORM_BOOTSTRAP__` is present — View Source and search for `__HC_FORM_BOOTSTRAP__`.
+3. Smoke (through Cloudflare, browser or curl to the public hostname):
+   - `GET /hc-bootstrap.php` → JSON `{ "nonce": "...", "turnstileEnabled": ... }`
+   - `POST /hc-api.php?rest_route=/custom/v1/contact` with a valid nonce is not an HTML CF block page
+   - Contact + membership submit succeed in the UI
+4. If origin works but CF still blocks `/wp-json/custom/v1/*` **reads**, content pages break too — then CF must allow at least `custom/v1` GETs, or grey-cloud is not an option; forms alone use `hc-*` but page data still needs REST.
+
+### When Cloudflare is fixed (optional cleanup)
+
+1. WAF skip / cache bypass for `/wp-json/portsacco/v1/*` and `/wp-json/chat/v1/*`.
+2. Point SPA `WP_CUSTOM_API` back to `/wp-json/portsacco/v1` and optionally use `customApiUrl` again for form POSTs.
+3. Keep `hc-api.php` / `hc-bootstrap.php` / inline inject until you verify forms under CF; then they can become optional fallbacks.
 
 ---
 
@@ -290,7 +348,10 @@ Then re-run `deploy.sh`. Going forward, always use `composer require` / `compose
 
 - Homepage loads (SEO shell via `app.php`)
 - A content page (e.g. `/membership`) renders blocks from the API
-- `/wp-json/portsacco/v1/nonce` (and other `portsacco/v1` routes) respond; `/wp-json/custom/v1/...` still works via temporary alias
+- View Source on a form page includes `window.__HC_FORM_BOOTSTRAP__`
+- `GET /hc-bootstrap.php` returns JSON nonce (through CF)
+- `/wp-json/portsacco/v1/nonce` and `/wp-json/custom/v1/nonce` respond on **origin**; through CF, prefer `/hc-bootstrap.php` if `/wp-json` is blocked
+- Contact + membership form submit succeed (POSTs go to `/hc-api.php`)
 - `/sitemap.xml` and `/robots.txt` hit the PHP entry points, not the SPA
 - `public_html/frontend/` has `index.html` + `assets/` from the pull (no `src/`, no `node_modules/`)
 
@@ -298,7 +359,7 @@ Then re-run `deploy.sh`. Going forward, always use `composer require` / `compose
 
 - **No `rsync`** on this CloudLinux jailed shell — use `cp -a` instead.
 - **CloudLinux / `open_basedir`**: if PHP cannot read across the symlink boundary between `public_html` and `portsacco_core`, check `php -i | grep open_basedir`. It should be empty/unrestricted for this layout.
-- **Cloudflare**: if the origin is healthy on direct-IP testing but the public domain 403s, the block is often at Cloudflare’s edge (Security → Events), not Apache. A burst of origin 5xx during a bad deploy can also trigger WAF heuristics. See also [Cloudflare + security controls](#cloudflare--security-controls) below.
+- **Cloudflare**: if the origin is healthy on direct-IP testing but the public domain 403s, the block is often at Cloudflare’s edge (Security → Events), not Apache. Forms use `hc-api.php` / `hc-bootstrap.php` / inline bootstrap — see [Forms + Cloudflare workarounds](#forms--cloudflare-workarounds). A burst of origin 5xx during a bad deploy can also trigger WAF heuristics.
 - **`.htaccess` is never git-tracked** — `web/.htaccess.example` is the template; live rules stay in `public_html/.htaccess`.
 
 ---
@@ -310,28 +371,32 @@ Then re-run `deploy.sh`. Going forward, always use `composer require` / `compose
 1. `/assets/*` → `/frontend/assets/*`
 2. SEO `/sitemap.xml`, `/robots.txt` → PHP scripts
 3. WordPress admin / `wp/` / `wp-json` paths pass through
-4. Everything else → `app.php` (SPA shell + SEO `<head>`)
+4. Physical files such as `app.php`, `hc-api.php`, `hc-bootstrap.php` are served as files (`!-f`; example also excludes them explicitly)
+5. Everything else → `app.php` (SPA shell + SEO `<head>` + form bootstrap)
 
-If the SPA catch-all runs first, sitemaps and the REST API will break.
+If the SPA catch-all runs first, sitemaps, the REST API, and `hc-*.php` form endpoints will break.
 
 ---
 
 ## Cloudflare + security controls
 
-Public forms and the WP REST API must keep working behind Cloudflare. Prefer **narrow exception rules** for the specific managed rulesets blocking editor saves / form POSTs (provider option 3), after compensating controls are in place:
+Public forms and the WP REST API must keep working behind Cloudflare. Prefer **narrow exception rules** for the specific managed rulesets blocking editor saves / form POSTs (provider option 3), after compensating controls are in place.
+
+**App-level workarounds (already shipped):** see [Forms + Cloudflare workarounds](#forms--cloudflare-workarounds) — keep `app.php` inject, `hc-bootstrap.php`, `hc-api.php`, SPA `formApiUrl` / `custom/v1` reads, and dual REST namespaces until CF allows `portsacco/v1`.
 
 ### Already in application code
 - Form POSTs: WordPress REST nonce + honeypot; optional Cloudflare Turnstile
-- Nonce / form routes: `Cache-Control` / `CDN-Cache-Control: no-store` (never edge-cache auth tokens)
+- Form traffic prefers `/hc-api.php` and `/hc-bootstrap.php` so WAF rules matching `wp-json` do not block submits
+- Nonce / form routes: `Cache-Control` / `CDN-Cache-Control: no-store` (never edge-cache auth tokens); SPA shell from `app.php` is also `no-store`
 - Security HTTP headers via Headless Core (`inc/security-headers.php`), SPA `app.php`, and `web/.htaccess.example`
 - Bedrock: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `FORCE_SSL_ADMIN` when `WP_HOME` is HTTPS
 
 ### Cloudflare dashboard (ops)
 1. **Rocket Loader → Off**
-2. **Cache Rule**: Bypass `/wp-json/*` (especially `/wp-json/portsacco/v1/nonce*`, `/wp-json/custom/v1/nonce*`, and `/wp-json/chat/v1/*`)
-3. **Cloudflare Access** for `/wp-admin` and `/wp-login.php` only (not public forms)
+2. **Cache Rule**: Bypass `/wp-json/*`, `/hc-api.php*`, `/hc-bootstrap.php*` (and especially nonce / chat paths)
+3. **Cloudflare Access** for `/wp-admin` and `/wp-login.php` only (not public forms, not `hc-*.php`)
 4. Exception / skip **only** the managed rulesets blocking legitimate editor/form POSTs and REST GETs — not a blanket WAF bypass
-5. Until CF allows `portsacco/v1`, the SPA uses `custom/v1` and `app.php` inline form bootstrap (see [Headless REST namespace](#headless-rest-namespace-portsaccov1))
+5. Ideal end state: allow `/wp-json/portsacco/v1/*` and `/wp-json/chat/v1/*`, then optionally retire the SPA workarounds (see cleanup notes in the forms section)
 
 ---
 
@@ -341,7 +406,9 @@ Public forms and the WP REST API must keep working behind Cloudflare. Prefer **n
 |------|---------|
 | `.env` | Bedrock / WordPress env |
 | `web/.htaccess.example` | Canonical Apache rules |
-| `web/app.php` | SPA HTML + SEO injection |
+| `web/app.php` | SPA HTML + SEO + form bootstrap inject |
+| `web/hc-bootstrap.php` | Form nonce JSON outside `/wp-json` (CF workaround) |
+| `web/hc-api.php` | Allowlisted form REST proxy outside `/wp-json` (CF workaround) |
 | `web/frontend/` | Published SPA (Bedrock tracks) |
 | `web/frontend/src/` | Vite project / ports-sacco-frontend (local nested git) |
 | `web/app/plugins/headless-core/` | Headless CMS, blocks, REST (`portsacco/v1`), SEO |
