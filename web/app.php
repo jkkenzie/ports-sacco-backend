@@ -62,8 +62,17 @@ try {
         }
     }
 
+    if (function_exists('headless_core_inject_form_bootstrap_script')) {
+        $output = headless_core_inject_form_bootstrap_script($output);
+    }
+
     if (! headers_sent()) {
         header('Content-Type: text/html; charset=UTF-8');
+        // Form bootstrap includes a per-request nonce — never let intermediaries cache the shell.
+        header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('CDN-Cache-Control: no-store');
+        header('Cloudflare-CDN-Cache-Control: no-store');
         if (function_exists('headless_core_send_security_headers')) {
             headless_core_send_security_headers();
         }

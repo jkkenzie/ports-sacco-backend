@@ -33,9 +33,9 @@ Same callbacks are registered on both namespaces during cutover so cached old SP
 
 **PHP (Headless Core):** `HEADLESS_CORE_REST_NAMESPACE` / `HEADLESS_CORE_REST_NAMESPACE_LEGACY` in `web/app/plugins/headless-core/headless-core.php`, with dual registration via `inc/rest-namespace.php`.
 
-**SPA:** `WP_CUSTOM_API = '/wp-json/portsacco/v1'` and `customApiUrl()` in `web/frontend/src/src/api/wp.js`.
+**SPA (Cloudflare workaround):** The published SPA currently calls **`/wp-json/custom/v1/`** (the temporary alias), because some Cloudflare WAF rules already allow that path while blocking `/wp-json/portsacco/v1/*`. PHP still registers both namespaces. Prefer updating Cloudflare to allow `portsacco/v1`, then switch the SPA back.
 
-**Deploy order:** ship the plugin (both namespaces live) before the SPA build that calls `portsacco/v1`. Update Cloudflare Cache / WAF notes for `/wp-json/portsacco/v1/*` and keep `/wp-json/custom/v1/*` until aliases are removed in a follow-up.
+**Form bootstrap without `/nonce`:** `app.php` injects `window.__HC_FORM_BOOTSTRAP__` (nonce + Turnstile public config) into the SPA shell with `Cache-Control: no-store`. The React client prefers that inline payload and only falls back to `GET …/nonce` when missing or force-refreshing.
 
 Common routes under the primary namespace include `/nonce`, `/contact`, `/submit-form`, `/page/{slug}`, CPT lists, `/header`, `/footer`, and `/seo/sitemap`.
 
@@ -328,9 +328,10 @@ Public forms and the WP REST API must keep working behind Cloudflare. Prefer **n
 
 ### Cloudflare dashboard (ops)
 1. **Rocket Loader → Off**
-2. **Cache Rule**: Bypass `/wp-json/*` (especially `/wp-json/portsacco/v1/nonce*` and legacy `/wp-json/custom/v1/nonce*`)
+2. **Cache Rule**: Bypass `/wp-json/*` (especially `/wp-json/portsacco/v1/nonce*`, `/wp-json/custom/v1/nonce*`, and `/wp-json/chat/v1/*`)
 3. **Cloudflare Access** for `/wp-admin` and `/wp-login.php` only (not public forms)
-4. Exception / skip **only** the managed rulesets blocking legitimate editor/form POSTs — not a blanket WAF bypass
+4. Exception / skip **only** the managed rulesets blocking legitimate editor/form POSTs and REST GETs — not a blanket WAF bypass
+5. Until CF allows `portsacco/v1`, the SPA uses `custom/v1` and `app.php` inline form bootstrap (see [Headless REST namespace](#headless-rest-namespace-portsaccov1))
 
 ---
 
