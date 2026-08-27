@@ -1,15 +1,19 @@
 (function (blocks, blockEditor, components, element, i18n) {
   var el = element.createElement;
+  var Fragment = element.Fragment;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
+  var InspectorControls = blockEditor.InspectorControls;
   var RichText = blockEditor.RichText;
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var Button = components.Button;
   var TextControl = components.TextControl;
+  var PanelBody = components.PanelBody;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
+  var cc = window.headlessCoreColorControls || {};
   var trashSvg = el(
     'svg',
     { viewBox: '0 0 24 24', width: '16', height: '16', style: { display: 'block' }, fill: 'currentColor' },
@@ -160,8 +164,16 @@
 
       
       return el(
-        'div',
-        blockProps,
+        Fragment,
+        null,
+        cc.panel
+          ? cc.panel(el, InspectorControls, PanelBody, BaseControl, ColorPalette, i18n, [
+              { label: __('Icon color', 'headless-core'), value: iconColor, fallback: '#40C9BF', onChange: function (c) { props.setAttributes({ iconColor: c }); } },
+            ], { extraColors: iconColorChoices })
+          : null,
+        el(
+          'div',
+          blockProps,
         el('h3', null, __('About Us Stats', 'headless-core')),
         el(
           'div',
@@ -196,26 +208,7 @@
               var n = parseInt(v, 10);
               props.setAttributes({ iconHeight: Number.isFinite(n) && n >= 0 ? n : 58 });
             },
-          }),
-          el(TextControl, {
-            label: __('Icon color (hex)', 'headless-core'),
-            value: iconColor,
-            onChange: function (v) {
-              props.setAttributes({ iconColor: String(v || '').trim() || '#40C9BF' });
-            },
-          }),
-          el('div', null,
-            el(BaseControl, { label: __('Icon color selector', 'headless-core') }),
-            el(ColorPalette, {
-              value: iconColor,
-              colors: iconColorChoices.map(function (hex) {
-                return { color: hex, name: hex };
-              }),
-              onChange: function (nextColor) {
-                props.setAttributes({ iconColor: nextColor || '#40C9BF' });
-              },
-            })
-          )
+          })
         ),
         el(
           'div',
@@ -311,6 +304,7 @@
           { variant: 'primary', onClick: addItem },
           '+ ',
           __('Add Stat', 'headless-core')
+        )
         )
       );
     },

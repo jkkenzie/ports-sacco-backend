@@ -156,6 +156,21 @@
             el(ColorPalette, { value: a.imageBgFrom, colors: palette(), onChange: function (c) { props.setAttributes({ imageBgFrom: c || '#00B2E0' }); } }),
             el(BaseControl, { label: __('Image background gradient (to)', 'headless-core') }),
             el(ColorPalette, { value: a.imageBgTo, colors: palette(), onChange: function (c) { props.setAttributes({ imageBgTo: c || '#00AB81' }); } })
+          ),
+          el(
+            PanelBody,
+            { title: __('Card image gradients', 'headless-core'), initialOpen: false },
+            cards.map(function (card, i) {
+              return el(
+                'div',
+                { key: 'card-colors-' + i, style: { marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' } },
+                el('strong', { style: { display: 'block', marginBottom: '8px' } }, __('Card', 'headless-core') + ' ' + (i + 1)),
+                el(BaseControl, { label: __('Image BG from (optional)', 'headless-core') }),
+                el(ColorPalette, { value: card.imageBgFrom || '', colors: palette(), onChange: function (c) { setCard(i, { imageBgFrom: c || '' }); } }),
+                el(BaseControl, { label: __('Image BG to (optional)', 'headless-core') }),
+                el(ColorPalette, { value: card.imageBgTo || '', colors: palette(), onChange: function (c) { setCard(i, { imageBgTo: c || '' }); } })
+              );
+            })
           )
         ),
         el(
@@ -192,16 +207,6 @@
                       el('img', { src: card.imageUrl, alt: '', style: { width: '180px', height: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' } })
                     )
                     : null,
-                  el('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' } },
-                    el('div', null,
-                      el(BaseControl, { label: __('Image BG from (optional)', 'headless-core') }),
-                      el(ColorPalette, { value: card.imageBgFrom || '', colors: palette(), onChange: function (c) { setCard(i, { imageBgFrom: c || '' }); } })
-                    ),
-                    el('div', null,
-                      el(BaseControl, { label: __('Image BG to (optional)', 'headless-core') }),
-                      el(ColorPalette, { value: card.imageBgTo || '', colors: palette(), onChange: function (c) { setCard(i, { imageBgTo: c || '' }); } })
-                    )
-                  ),
                   el(ToggleControl, {
                     label: __('Image above content (may overlap text)', 'headless-core'),
                     checked: Boolean(card.imageAboveContent),

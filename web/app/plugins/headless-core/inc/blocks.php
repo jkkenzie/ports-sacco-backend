@@ -16,6 +16,14 @@ add_action('init', static function (): void {
     );
 
     wp_register_script(
+        'headless-core-color-controls',
+        HEADLESS_CORE_URL . 'blocks/shared/color-controls.js',
+        ['wp-element'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+
+    wp_register_script(
         'headless-custom-hero-editor',
         HEADLESS_CORE_URL . 'blocks/hero/hero-editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
@@ -41,7 +49,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-about-us-stats-editor',
         HEADLESS_CORE_URL . 'blocks/about-us-stats/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-color-controls'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -62,7 +70,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-about-us-help-editor',
         HEADLESS_CORE_URL . 'blocks/about-us-help/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control', 'headless-core-color-controls'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -303,28 +311,28 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-youtube-grid-editor',
         HEADLESS_CORE_URL . 'blocks/youtube-grid/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'headless-core-color-controls'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-downloads-grid-editor',
         HEADLESS_CORE_URL . 'blocks/downloads-grid/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'headless-core-color-controls'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-faq-section-editor',
         HEADLESS_CORE_URL . 'blocks/faq-section/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library', 'headless-core-color-controls'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-privacy-policy-editor',
         HEADLESS_CORE_URL . 'blocks/privacy-policy/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library', 'headless-core-color-controls'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -342,7 +350,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-cookie-policy-editor',
         HEADLESS_CORE_URL . 'blocks/cookie-policy/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-format-library', 'headless-core-color-controls'],
         HEADLESS_CORE_VERSION,
         true
     );

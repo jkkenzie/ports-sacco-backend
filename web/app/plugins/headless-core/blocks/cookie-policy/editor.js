@@ -5,12 +5,15 @@
   var Fragment = element.Fragment;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
+  var InspectorControls = blockEditor.InspectorControls;
   var RichText = blockEditor.RichText;
   var Button = components.Button;
   var TextControl = components.TextControl;
+  var PanelBody = components.PanelBody;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
+  var cc = window.headlessCoreColorControls || {};
 
   var DESC_FORMATS = ['core/bold', 'core/italic', 'core/link'];
 
@@ -231,23 +234,6 @@
     return next;
   }
 
-  function inlineColorField(label, value, fallback, onChange) {
-    return el(
-      'div',
-      { style: { marginBottom: '10px' } },
-      el(BaseControl, { label: label }),
-      el(ColorPalette, {
-        value: value || fallback,
-        colors: PALETTE.map(function (hex) {
-          return { color: hex, name: hex };
-        }),
-        onChange: function (c) {
-          onChange(c || fallback);
-        },
-      })
-    );
-  }
-
   function InsertBetween(props) {
     var onInsert = props.onInsert;
     var label = props.label;
@@ -392,46 +378,22 @@
       }
 
       return el(
-        'div',
-        blockProps,
+        Fragment,
+        null,
+        cc.panel
+          ? cc.panel(el, InspectorControls, PanelBody, BaseControl, ColorPalette, i18n, [
+              { label: __('Section background', 'headless-core'), value: a.sectionBgColor, fallback: '#ffffff', onChange: function (c) { props.setAttributes({ sectionBgColor: c }); } },
+              { label: __('Card background', 'headless-core'), value: a.cardBgColor, fallback: '#f8fafc', onChange: function (c) { props.setAttributes({ cardBgColor: c }); } },
+              { label: __('Accent', 'headless-core'), value: a.accentColor, fallback: '#22acb6', onChange: function (c) { props.setAttributes({ accentColor: c }); } },
+              { label: __('Page heading', 'headless-core'), value: a.headingColor, fallback: '#22acb6', onChange: function (c) { props.setAttributes({ headingColor: c }); } },
+              { label: __('Section title', 'headless-core'), value: a.titleColor, fallback: '#1e293b', onChange: function (c) { props.setAttributes({ titleColor: c }); } },
+              { label: __('Body text', 'headless-core'), value: a.bodyColor, fallback: '#334155', onChange: function (c) { props.setAttributes({ bodyColor: c }); } },
+              { label: __('Border', 'headless-core'), value: a.borderColor, fallback: '#e2e8f0', onChange: function (c) { props.setAttributes({ borderColor: c }); } },
+            ], { extraColors: PALETTE })
+          : null,
         el(
           'div',
-          {
-            style: {
-              marginBottom: '20px',
-              padding: '14px',
-              background: '#fff',
-              border: '1px dashed #cbd5e1',
-              borderRadius: '10px',
-            },
-          },
-          el('strong', { style: { display: 'block', marginBottom: '10px' } }, __('Block styles (inline)', 'headless-core')),
-          el(
-            'div',
-            { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' } },
-            inlineColorField(__('Section background', 'headless-core'), a.sectionBgColor, '#ffffff', function (c) {
-              props.setAttributes({ sectionBgColor: c });
-            }),
-            inlineColorField(__('Card background', 'headless-core'), a.cardBgColor, '#f8fafc', function (c) {
-              props.setAttributes({ cardBgColor: c });
-            }),
-            inlineColorField(__('Accent', 'headless-core'), a.accentColor, '#22acb6', function (c) {
-              props.setAttributes({ accentColor: c });
-            }),
-            inlineColorField(__('Page heading', 'headless-core'), a.headingColor, '#22acb6', function (c) {
-              props.setAttributes({ headingColor: c });
-            }),
-            inlineColorField(__('Section title', 'headless-core'), a.titleColor, '#1e293b', function (c) {
-              props.setAttributes({ titleColor: c });
-            }),
-            inlineColorField(__('Body text', 'headless-core'), a.bodyColor, '#334155', function (c) {
-              props.setAttributes({ bodyColor: c });
-            }),
-            inlineColorField(__('Border', 'headless-core'), a.borderColor, '#e2e8f0', function (c) {
-              props.setAttributes({ borderColor: c });
-            })
-          )
-        ),
+          blockProps,
         el(RichText, {
           tagName: 'h2',
           value: a.sectionTitle || '',
@@ -762,6 +724,7 @@
         el('p', {
           style: { marginTop: '14px', color: '#94a3b8', fontSize: '12px' },
         }, __('Drag ⋮⋮ to reorder sections. Edit bullets as plain text fields — they render as a list on the site.', 'headless-core'))
+        )
       );
     },
     save: function () {

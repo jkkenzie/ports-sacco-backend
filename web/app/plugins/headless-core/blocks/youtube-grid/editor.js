@@ -9,7 +9,10 @@
   var TextareaControl = components.TextareaControl;
   var ToggleControl = components.ToggleControl;
   var SelectControl = components.SelectControl;
+  var BaseControl = components.BaseControl;
+  var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
+  var cc = window.headlessCoreColorControls || {};
 
   registerBlockType('custom/youtube-grid', {
     apiVersion: 3,
@@ -97,6 +100,21 @@
           ),
           el(
             PanelBody,
+            { title: __('Colors', 'headless-core'), initialOpen: false },
+            cc.field
+              ? cc.field(el, BaseControl, ColorPalette, __('Accent color', 'headless-core'), a.accentColor, '#22acb6', function (c) {
+                  props.setAttributes({ accentColor: c });
+                })
+              : el(TextControl, {
+                  label: __('Accent color', 'headless-core'),
+                  value: a.accentColor || '#22acb6',
+                  onChange: function (v) {
+                    props.setAttributes({ accentColor: String(v || '#22acb6') });
+                  },
+                })
+          ),
+          el(
+            PanelBody,
             { title: __('Channel override', 'headless-core'), initialOpen: false },
             el(TextControl, {
               label: __('Channel ID or @handle', 'headless-core'),
@@ -112,13 +130,6 @@
               help: __('Overrides the default “visit channel” link.', 'headless-core'),
               onChange: function (v) {
                 props.setAttributes({ channelUrl: String(v || '') });
-              },
-            }),
-            el(TextControl, {
-              label: __('Accent color', 'headless-core'),
-              value: a.accentColor || '#22acb6',
-              onChange: function (v) {
-                props.setAttributes({ accentColor: String(v || '#22acb6') });
               },
             })
           )

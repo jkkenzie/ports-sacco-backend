@@ -1,13 +1,17 @@
 (function (blocks, blockEditor, components, element, i18n) {
   var el = element.createElement;
+  var Fragment = element.Fragment;
   var useEffect = element.useEffect;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
+  var InspectorControls = blockEditor.InspectorControls;
   var RichText = blockEditor.RichText;
   var Button = components.Button;
+  var PanelBody = components.PanelBody;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
+  var cc = window.headlessCoreColorControls || {};
 
   var ANSWER_FORMATS = ['core/bold', 'core/italic', 'core/link', 'core/list', 'core/indent'];
 
@@ -180,23 +184,6 @@
     return next;
   }
 
-  function inlineColorField(label, value, fallback, onChange) {
-    return el(
-      'div',
-      { style: { marginBottom: '10px' } },
-      el(BaseControl, { label: label }),
-      el(ColorPalette, {
-        value: value || fallback,
-        colors: PALETTE.map(function (hex) {
-          return { color: hex, name: hex };
-        }),
-        onChange: function (c) {
-          onChange(c || fallback);
-        },
-      })
-    );
-  }
-
   registerBlockType('custom/faq-section', {
     apiVersion: 3,
     title: __('FAQ Section', 'headless-core'),
@@ -251,52 +238,24 @@
       }
 
       return el(
-        'div',
-        blockProps,
+        Fragment,
+        null,
+        cc.panel
+          ? cc.panel(el, InspectorControls, PanelBody, BaseControl, ColorPalette, i18n, [
+              { label: __('Section background', 'headless-core'), value: a.sectionBgColor, fallback: '#f8fafc', onChange: function (c) { props.setAttributes({ sectionBgColor: c }); } },
+              { label: __('Card background', 'headless-core'), value: a.cardBgColor, fallback: '#ffffff', onChange: function (c) { props.setAttributes({ cardBgColor: c }); } },
+              { label: __('Accent', 'headless-core'), value: a.accentColor, fallback: '#22acb6', onChange: function (c) { props.setAttributes({ accentColor: c }); } },
+              { label: __('Group heading', 'headless-core'), value: a.groupHeadingColor, fallback: '#1e293b', onChange: function (c) { props.setAttributes({ groupHeadingColor: c }); } },
+              { label: __('Question', 'headless-core'), value: a.questionColor, fallback: '#1e293b', onChange: function (c) { props.setAttributes({ questionColor: c }); } },
+              { label: __('Answer', 'headless-core'), value: a.answerColor, fallback: '#475569', onChange: function (c) { props.setAttributes({ answerColor: c }); } },
+              { label: __('Border', 'headless-core'), value: a.borderColor, fallback: '#e2e8f0', onChange: function (c) { props.setAttributes({ borderColor: c }); } },
+              { label: __('Row hover', 'headless-core'), value: a.hoverBgColor, fallback: '#f8fafc', onChange: function (c) { props.setAttributes({ hoverBgColor: c }); } },
+              { label: __('Icon', 'headless-core'), value: a.iconColor, fallback: '#22acb6', onChange: function (c) { props.setAttributes({ iconColor: c }); } },
+            ], { extraColors: PALETTE })
+          : null,
         el(
           'div',
-          {
-            style: {
-              marginBottom: '20px',
-              padding: '14px',
-              background: '#fff',
-              border: '1px dashed #cbd5e1',
-              borderRadius: '10px',
-            },
-          },
-          el('strong', { style: { display: 'block', marginBottom: '10px' } }, __('Block styles (inline)', 'headless-core')),
-          el(
-            'div',
-            { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' } },
-            inlineColorField(__('Section background', 'headless-core'), a.sectionBgColor, '#f8fafc', function (c) {
-              props.setAttributes({ sectionBgColor: c });
-            }),
-            inlineColorField(__('Card background', 'headless-core'), a.cardBgColor, '#ffffff', function (c) {
-              props.setAttributes({ cardBgColor: c });
-            }),
-            inlineColorField(__('Accent', 'headless-core'), a.accentColor, '#22acb6', function (c) {
-              props.setAttributes({ accentColor: c });
-            }),
-            inlineColorField(__('Group heading', 'headless-core'), a.groupHeadingColor, '#1e293b', function (c) {
-              props.setAttributes({ groupHeadingColor: c });
-            }),
-            inlineColorField(__('Question', 'headless-core'), a.questionColor, '#1e293b', function (c) {
-              props.setAttributes({ questionColor: c });
-            }),
-            inlineColorField(__('Answer', 'headless-core'), a.answerColor, '#475569', function (c) {
-              props.setAttributes({ answerColor: c });
-            }),
-            inlineColorField(__('Border', 'headless-core'), a.borderColor, '#e2e8f0', function (c) {
-              props.setAttributes({ borderColor: c });
-            }),
-            inlineColorField(__('Row hover', 'headless-core'), a.hoverBgColor, '#f8fafc', function (c) {
-              props.setAttributes({ hoverBgColor: c });
-            }),
-            inlineColorField(__('Icon', 'headless-core'), a.iconColor, '#22acb6', function (c) {
-              props.setAttributes({ iconColor: c });
-            })
-          )
-        ),
+          blockProps,
         el(RichText, {
           tagName: 'h2',
           value: a.sectionTitle || '',
@@ -540,6 +499,7 @@
         ),
         el('p', { style: { marginTop: '14px', color: '#94a3b8', fontSize: '12px' } },
           __('Use ˄ / ˅ to reorder FAQ groups or individual questions. Rendered as accordions on the React frontend.', 'headless-core')
+        )
         )
       );
     },

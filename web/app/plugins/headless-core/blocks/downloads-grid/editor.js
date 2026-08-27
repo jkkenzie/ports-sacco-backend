@@ -3,15 +3,18 @@
   var Fragment = element.Fragment;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
+  var InspectorControls = blockEditor.InspectorControls;
   var RichText = blockEditor.RichText;
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var Button = components.Button;
   var TextControl = components.TextControl;
   var ToggleControl = components.ToggleControl;
+  var PanelBody = components.PanelBody;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
+  var cc = window.headlessCoreColorControls || {};
 
   var PALETTE = [
     '#22acb6',
@@ -144,23 +147,6 @@
     return next;
   }
 
-  function inlineColorField(label, value, fallback, onChange) {
-    return el(
-      'div',
-      { style: { marginBottom: '10px' } },
-      el(BaseControl, { label: label }),
-      el(ColorPalette, {
-        value: value || fallback,
-        colors: PALETTE.map(function (hex) {
-          return { color: hex, name: hex };
-        }),
-        onChange: function (c) {
-          onChange(c || fallback);
-        },
-      })
-    );
-  }
-
   function renderPdfField(item, onChange) {
     var hasFile = !!(item.fileId || (item.fileUrl && String(item.fileUrl).trim()));
     return el(
@@ -250,49 +236,30 @@
       }
 
       return el(
-        'div',
-        blockProps,
+        Fragment,
+        null,
+        cc.panel
+          ? cc.panel(el, InspectorControls, PanelBody, BaseControl, ColorPalette, i18n, [
+              { label: __('Section background', 'headless-core'), value: a.sectionBgColor, fallback: '#f8fafc', onChange: function (c) { props.setAttributes({ sectionBgColor: c }); } },
+              { label: __('Card background', 'headless-core'), value: a.cardBgColor, fallback: '#ffffff', onChange: function (c) { props.setAttributes({ cardBgColor: c }); } },
+              { label: __('Accent / button', 'headless-core'), value: a.accentColor, fallback: '#22acb6', onChange: function (c) { props.setAttributes({ accentColor: c }); } },
+              { label: __('Button hover', 'headless-core'), value: a.buttonHoverColor, fallback: '#ee6e2a', onChange: function (c) { props.setAttributes({ buttonHoverColor: c }); } },
+              { label: __('Row heading', 'headless-core'), value: a.headingColor, fallback: '#1e293b', onChange: function (c) { props.setAttributes({ headingColor: c }); } },
+              { label: __('Download title', 'headless-core'), value: a.titleColor, fallback: '#334155', onChange: function (c) { props.setAttributes({ titleColor: c }); } },
+            ], { extraColors: PALETTE })
+          : null,
         el(
           'div',
-          {
-            style: {
-              marginBottom: '20px',
-              padding: '14px',
-              background: '#fff',
-              border: '1px dashed #cbd5e1',
-              borderRadius: '10px',
-            },
-          },
-          el('strong', { style: { display: 'block', marginBottom: '10px' } }, __('Block styles (inline)', 'headless-core')),
-          el(
-            'div',
-            { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' } },
-            inlineColorField(__('Section background', 'headless-core'), a.sectionBgColor, '#f8fafc', function (c) {
-              props.setAttributes({ sectionBgColor: c });
-            }),
-            inlineColorField(__('Card background', 'headless-core'), a.cardBgColor, '#ffffff', function (c) {
-              props.setAttributes({ cardBgColor: c });
-            }),
-            inlineColorField(__('Accent / button', 'headless-core'), a.accentColor, '#22acb6', function (c) {
-              props.setAttributes({ accentColor: c });
-            }),
-            inlineColorField(__('Button hover', 'headless-core'), a.buttonHoverColor, '#ee6e2a', function (c) {
-              props.setAttributes({ buttonHoverColor: c });
-            }),
-            inlineColorField(__('Row heading', 'headless-core'), a.headingColor, '#1e293b', function (c) {
-              props.setAttributes({ headingColor: c });
-            }),
-            inlineColorField(__('Download title', 'headless-core'), a.titleColor, '#334155', function (c) {
-              props.setAttributes({ titleColor: c });
-            })
-          ),
+          blockProps,
+        el(
+          'div',
+          { style: { marginBottom: '16px', maxWidth: '320px' } },
           el(TextControl, {
             label: __('Download button label', 'headless-core'),
             value: a.downloadLabel || 'Download PDF',
             onChange: function (v) {
               props.setAttributes({ downloadLabel: v || 'Download PDF' });
             },
-            style: { marginTop: '8px' },
           })
         ),
         el(RichText, {
@@ -528,6 +495,7 @@
         ),
         el('p', { style: { marginTop: '14px', color: '#94a3b8', fontSize: '12px' } },
           __('Use ˄ / ˅ to reorder downloads or whole sections. The frontend shows downloads in this order (two per row).', 'headless-core')
+        )
         )
       );
     },

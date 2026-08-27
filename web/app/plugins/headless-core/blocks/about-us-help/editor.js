@@ -1,16 +1,20 @@
 (function (blocks, blockEditor, components, element, i18n) {
   var el = element.createElement;
+  var Fragment = element.Fragment;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
+  var InspectorControls = blockEditor.InspectorControls;
   var RichText = blockEditor.RichText;
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var Button = components.Button;
   var TextControl = components.TextControl;
   var SelectControl = components.SelectControl;
+  var PanelBody = components.PanelBody;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var __ = i18n.__;
+  var cc = window.headlessCoreColorControls || {};
   var headlessLink = window.headlessCoreEditor || {};
 
   function renderUrlField(label, item, urlKey, onChange) {
@@ -183,8 +187,17 @@
       }
 
       return el(
-        'div',
-        blockProps,
+        Fragment,
+        null,
+        cc.panel
+          ? cc.panel(el, InspectorControls, PanelBody, BaseControl, ColorPalette, i18n, [
+              { label: __('Icon SVG fill color', 'headless-core'), value: iconColor, fallback: '#EE6E2A', onChange: function (c) { props.setAttributes({ iconColor: c }); } },
+              { label: __('Link SVG fill color', 'headless-core'), value: linkSvgColor, fallback: '#22ACB6', onChange: function (c) { props.setAttributes({ linkSvgColor: c }); } },
+            ], { extraColors: iconColorChoices.concat(linkColorChoices) })
+          : null,
+        el(
+          'div',
+          blockProps,
         el('h3', null, __('About Us Help', 'headless-core')),
         el(
           'div',
@@ -202,43 +215,7 @@
             onChange: function (v) {
               props.setAttributes({ ctaText: String(v || '').trim() || 'TALK TO US!' });
             },
-          }),
-          el(TextControl, {
-            label: __('Icon SVG fill color (hex)', 'headless-core'),
-            value: iconColor,
-            onChange: function (v) {
-              props.setAttributes({ iconColor: String(v || '').trim() || '#EE6E2A' });
-            },
-          }),
-          el(
-            BaseControl,
-            { label: __('Icon color selector', 'headless-core') },
-            el(ColorPalette, {
-              value: iconColor,
-              colors: iconColorChoices.map(function (hex) { return { color: hex, name: hex }; }),
-              onChange: function (nextColor) {
-                props.setAttributes({ iconColor: nextColor || '#EE6E2A' });
-              },
-            })
-          ),
-          el(TextControl, {
-            label: __('Link SVG fill color (hex)', 'headless-core'),
-            value: linkSvgColor,
-            onChange: function (v) {
-              props.setAttributes({ linkSvgColor: String(v || '').trim() || '#22ACB6' });
-            },
-          }),
-          el(
-            BaseControl,
-            { label: __('Link SVG color selector', 'headless-core') },
-            el(ColorPalette, {
-              value: linkSvgColor,
-              colors: linkColorChoices.map(function (hex) { return { color: hex, name: hex }; }),
-              onChange: function (nextColor) {
-                props.setAttributes({ linkSvgColor: nextColor || '#22ACB6' });
-              },
-            })
-          )
+          })
         ),
         el(
           'div',
@@ -302,6 +279,7 @@
           })
         ),
         el(Button, { variant: 'primary', onClick: addItem }, '+ ', __('Add Help Card', 'headless-core'))
+        )
       );
     },
     save: function () {
