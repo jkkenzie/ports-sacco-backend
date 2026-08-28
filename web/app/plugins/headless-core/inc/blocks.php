@@ -1262,6 +1262,7 @@ add_action('init', static function (): void {
             'venueTitle' => ['type' => 'string', 'default' => 'Venue'],
             'timeLine' => ['type' => 'string', 'default' => '09.00 HOURS'],
             'bannerTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkUrl' => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => static function (): string {
             return '';

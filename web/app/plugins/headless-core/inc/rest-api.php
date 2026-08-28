@@ -3786,6 +3786,9 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         $attrs['timeLine'] = isset($attrs['timeLine']) ? sanitize_text_field((string) $attrs['timeLine']) : '';
         $attrs['logoAlt'] = isset($attrs['logoAlt']) ? sanitize_text_field((string) $attrs['logoAlt']) : '';
 
+        $linkUrl = isset($attrs['linkUrl']) ? trim((string) $attrs['linkUrl']) : '';
+        $attrs['linkUrl'] = $linkUrl !== '' ? esc_url_raw($linkUrl) : '';
+
         $patternId = isset($attrs['patternImageId']) ? (int) $attrs['patternImageId'] : 0;
         $attrs['patternImageId'] = $patternId;
         $attrs['patternImageUrl'] = '';

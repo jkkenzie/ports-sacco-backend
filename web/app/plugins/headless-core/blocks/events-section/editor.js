@@ -14,6 +14,7 @@
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
 
   var palette = ['#FF8C00', '#FF6347', '#800080', '#ff6346', '#ff7bac', '#ffffff', '#000000', '#22ACB6', '#F5F4EE'];
 
@@ -93,6 +94,7 @@
       venueTitle: { type: 'string', default: 'Venue' },
       timeLine: { type: 'string', default: '09.00 HOURS' },
       bannerTextColor: { type: 'string', default: '#ffffff' },
+      linkUrl: { type: 'string', default: '' },
     },
     edit: function (props) {
       var a = props.attributes;
@@ -143,7 +145,26 @@
               label: __('Section id (anchor)', 'headless-core'),
               value: a.sectionId != null ? a.sectionId : 'events',
               onChange: function (v) { props.setAttributes({ sectionId: v != null ? String(v) : 'events' }); },
-            })
+            }),
+            headlessLink.renderLinkControlAttribute
+              ? headlessLink.renderLinkControlAttribute(
+                  el,
+                  blockEditor,
+                  components,
+                  i18n,
+                  __('Content link (optional)', 'headless-core'),
+                  a,
+                  'linkUrl',
+                  props.setAttributes
+                )
+              : el(TextControl, {
+                  label: __('Content link (optional)', 'headless-core'),
+                  value: a.linkUrl || '',
+                  onChange: function (v) {
+                    props.setAttributes({ linkUrl: v || '' });
+                  },
+                  help: __('Wraps the banner content. Leave empty for no link.', 'headless-core'),
+                })
           ),
           el(
             PanelBody,
