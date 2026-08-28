@@ -74,7 +74,6 @@
         el(
           'div',
           { style: { border: '1px solid #e5e7eb', borderRadius: '10px', overflow: 'hidden', background: '#fff' } },
-          el('div', { style: { height: '38px', background: a.barBgColor || '#22acb6' } }),
           el('div', { style: { padding: '16px' } },
             el(TextControl, { label: __('Section ID', 'headless-core'), value: a.sectionId, onChange: function (v) { props.setAttributes({ sectionId: v }); }, help: __('Used as the section id for hash links (e.g. #about).', 'headless-core') }),
             headlessLink.renderLinkControlAttribute

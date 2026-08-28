@@ -217,20 +217,6 @@
             },
             el('div', {
               style: {
-                height: '12px',
-                background: a.topBarUseGradient
-                  ? 'linear-gradient(to right,' +
-                    String(a.topBarGradientFrom || '#F5F4EE') +
-                    ',' +
-                    String(a.topBarGradientVia || '#E8E6E0') +
-                    ',' +
-                    String(a.topBarGradientTo || '#F5F4EE') +
-                    ')'
-                  : String(a.topBarBg || '#F5F4EE'),
-              },
-            }),
-            el('div', {
-              style: {
                 padding: '16px',
                 background: a.useGradient !== false
                   ? 'linear-gradient(to right,' +

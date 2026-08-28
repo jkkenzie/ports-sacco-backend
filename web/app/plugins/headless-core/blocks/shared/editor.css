@@ -20,3 +20,19 @@
   margin-bottom: 4px;
   isolation: isolate;
 }
+
+/*
+ * Decorative section curve bars and floating scroll buttons overflow the
+ * Gutenberg canvas (fixed 1089px SVG). Hide them in the editor only.
+ */
+.section-curve-bar,
+.section-scroll-button,
+[data-section-chrome="curve-bar"],
+[data-section-chrome="scroll-button"],
+svg[viewBox="0 0 1088.78 38.01"],
+svg[viewBox="0 0 116.94 34.5"],
+button[aria-label="Scroll section to top"],
+div:has(> svg[viewBox="0 0 1088.78 38.01"]) {
+  display: none !important;
+}
+

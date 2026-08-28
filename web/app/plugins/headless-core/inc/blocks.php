@@ -2034,4 +2034,29 @@ add_action('init', static function (): void {
 
 add_action('enqueue_block_editor_assets', static function (): void {
     wp_enqueue_script('headless-core-rich-text-spacing');
+    wp_enqueue_style(
+        'headless-core-editor',
+        HEADLESS_CORE_URL . 'blocks/shared/editor.css',
+        [],
+        HEADLESS_CORE_VERSION
+    );
+});
+
+add_filter('block_editor_settings_all', static function (array $settings): array {
+    $path = HEADLESS_CORE_PATH . 'blocks/shared/editor.css';
+    if (! is_readable($path)) {
+        return $settings;
+    }
+    $css = file_get_contents($path);
+    if (! is_string($css) || $css === '') {
+        return $settings;
+    }
+    if (! isset($settings['styles']) || ! is_array($settings['styles'])) {
+        $settings['styles'] = [];
+    }
+    $settings['styles'][] = [
+        'css' => $css,
+        '__unstableType' => 'plugin',
+    ];
+    return $settings;
 });

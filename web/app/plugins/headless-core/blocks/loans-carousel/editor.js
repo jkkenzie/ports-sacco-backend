@@ -66,12 +66,6 @@
         return colors.map(function (hex) { return { color: hex, name: hex }; });
       }
 
-      var topBarGrad = 'linear-gradient(' + (Number(props.attributes.topBarGradientAngle) || 90) + 'deg, ' +
-        (props.attributes.topBarGradientFrom || '#ffffff') + ', ' +
-        (props.attributes.topBarGradientVia || '#ffffff') + ', ' +
-        (props.attributes.topBarGradientTo || '#ffffff') + ')';
-      var gradId = 'loans-carousel-topbar-grad-editor-' + String(props.clientId || '0').replace(/[^a-z0-9-]/gi, '');
-
       return el(
         'div',
         blockProps,
@@ -182,58 +176,7 @@
         ),
         el(
           'div',
-          {
-            style: {
-              marginLeft: '-14px',
-              marginRight: '-14px',
-              marginTop: '-8px',
-              position: 'relative',
-              overflow: 'hidden',
-              background: topBarGrad,
-              minHeight: '37px',
-            },
-          },
-          el(
-            'svg',
-            {
-              viewBox: '0 0 1088.78 38.01',
-              xmlns: 'http://www.w3.org/2000/svg',
-              style: { display: 'block', minWidth: '100%', width: '100%', height: 'auto', maxHeight: '38px' },
-              preserveAspectRatio: 'none',
-            },
-            el(
-              'defs',
-              null,
-              el(
-                'linearGradient',
-                { id: gradId, gradientUnits: 'objectBoundingBox', x1: '0', y1: '0', x2: '1', y2: '0' },
-                el('stop', { offset: '0%', stopColor: props.attributes.topBarGradientFrom || '#ffffff' }),
-                el('stop', { offset: '50%', stopColor: props.attributes.topBarGradientVia || '#ffffff' }),
-                el('stop', { offset: '100%', stopColor: props.attributes.topBarGradientTo || '#ffffff' })
-              ),
-              el('clipPath', { id: 'clip-loans-carousel-editor-' + String(props.clientId || '0').replace(/[^a-z0-9-]/gi, '') },
-                el('rect', { x: '484.39', y: '0', width: '120', height: '38.01' })
-              )
-            ),
-            el(
-              'g',
-              { clipPath: 'url(#clip-loans-carousel-editor-' + String(props.clientId || '0').replace(/[^a-z0-9-]/gi, '') + ')' },
-              el('rect', { x: '422.93', width: '240.31', height: '38.01', style: { fill: props.attributes.sectionBgColor || '#F5F4EE' } }),
-              el('path', {
-                d: 'M1088.78,38.01h-485.18c-9.52-.55-19.25-5.16-24.51-12.52-1.19-1.67-1.76-3.43-2.78-5.14-13.44-22.42-47.98-22.41-61.41,0-1.02,1.71-1.59,3.47-2.78,5.14-5.25,7.34-15.01,11.97-24.51,12.52H0V0h1088.78v38.01Z',
-                style: { fill: 'url(#' + gradId + ')' },
-              })
-            )
-          )
-        ),
-        el(
-          'div',
-          { style: { padding: '1rem', border: '1px dashed #ccc', borderRadius: '8px', background: props.attributes.sectionBgColor || '#F5F4EE', borderTopLeftRadius: 0, borderTopRightRadius: 0 } },
-          el(
-            'div',
-            { style: { textAlign: 'center', marginTop: '-28px', marginBottom: '12px' } },
-            el('div', { style: { margin: '0 auto', width: '56px', height: '56px', borderRadius: '999px', background: props.attributes.arrowButtonBgColor || '#00AFBB', color: props.attributes.arrowButtonIconColor || '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, '↓')
-          ),
+          { style: { padding: '1rem', border: '1px dashed #ccc', borderRadius: '8px', background: props.attributes.sectionBgColor || '#F5F4EE' } },
           el(RichText, {
             tagName: 'p',
             value: props.attributes.sectionHeader || '',

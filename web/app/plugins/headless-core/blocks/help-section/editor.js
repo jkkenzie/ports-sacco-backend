@@ -478,7 +478,6 @@
                 background: a.sectionBgColor || '#00AFBB',
               },
             },
-            el('div', { style: { height: '36px', background: a.topBarBg || '#fff' } }),
             el('div', { style: { padding: '12px 16px 16px', color: '#fff' } },
               el(
                 'div',
@@ -517,28 +516,10 @@
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'flex-end',
-                      gap: a.talkButtonHtml ? '50px' : '0',
+                      gap: 0,
                       flexShrink: 0,
                     },
                   },
-                  el(
-                    'div',
-                    {
-                      style: {
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        border: '2px solid rgba(255,255,255,0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '18px',
-                        lineHeight: 1,
-                        opacity: 0.85,
-                      },
-                    },
-                    '↓'
-                  ),
                   el(RichText, {
                     tagName: 'div',
                     value: a.talkButtonHtml || '',
