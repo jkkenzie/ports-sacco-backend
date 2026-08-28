@@ -10,6 +10,7 @@
   var ColorPalette = components.ColorPalette;
   var RichText = blockEditor.RichText;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
 
   registerBlockType('custom/savings-carousel', {
     apiVersion: 3,
@@ -53,11 +54,22 @@
           el(
             PanelBody,
             { title: __('Query + Links', 'headless-core'), initialOpen: true },
-            el(TextControl, {
-              label: __('Right link URL', 'headless-core'),
-              value: props.attributes.linkUrl || '',
-              onChange: function (v) { props.setAttributes({ linkUrl: v }); },
-            }),
+            headlessLink.renderLinkControlAttribute
+              ? headlessLink.renderLinkControlAttribute(
+                  el,
+                  blockEditor,
+                  components,
+                  i18n,
+                  __('Right link URL', 'headless-core'),
+                  props.attributes,
+                  'linkUrl',
+                  props.setAttributes
+                )
+              : el(TextControl, {
+                  label: __('Right link URL', 'headless-core'),
+                  value: props.attributes.linkUrl || '',
+                  onChange: function (v) { props.setAttributes({ linkUrl: v }); },
+                }),
             el(RangeControl, {
               label: __('Maximum items', 'headless-core'),
               value: Number(props.attributes.maxItems || 9),

@@ -1,11 +1,13 @@
 (function (blocks, blockEditor, components, element, i18n) {
   var el = element.createElement;
   var Fragment = element.Fragment;
+  var useState = element.useState;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
   var InspectorControls = blockEditor.InspectorControls;
   var RichText = blockEditor.RichText;
   var PanelBody = components.PanelBody;
+  var Button = components.Button;
   var TextControl = components.TextControl;
   var SelectControl = components.SelectControl;
   var BaseControl = components.BaseControl;
@@ -13,6 +15,8 @@
   var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
+
+  var BLOCK_TITLE = __('Help section', 'headless-core');
 
   function renderUrlField(label, item, urlKey, onChange) {
     if (headlessLink.renderLinkControl) {
@@ -130,10 +134,17 @@
       cards: { type: 'array', default: DEFAULT_CARDS },
     },
     edit: function (props) {
+      var collapsedState = useState(false);
+      var editorCollapsed = collapsedState[0];
+      var setEditorCollapsed = collapsedState[1];
       var blockProps = useBlockProps({ className: 'headless-help-section-block' });
       var a = props.attributes;
       var cards = normalizeCards(a.cards);
       var colors = ['#00AFBB', '#22ACB6', '#22acb6', '#EE6E2A', '#ffffff', '#000000', '#808080', '#3b4e6b', '#f3f5f7', '#eef0f3'];
+
+      function toggleCollapsed() {
+        setEditorCollapsed(!editorCollapsed);
+      }
 
       function palette() {
         return colors.map(function (hex) {
@@ -473,11 +484,86 @@
             {
               style: {
                 border: '1px solid #e5e7eb',
-                borderRadius: '10px',
+                borderRadius: '8px',
                 overflow: 'hidden',
-                background: a.sectionBgColor || '#00AFBB',
+                background: '#fff',
               },
             },
+            el(
+              'div',
+              {
+                style: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  padding: '10px 12px',
+                  background: '#f6f7f7',
+                  borderBottom: editorCollapsed ? 'none' : '1px solid #e5e7eb',
+                  cursor: 'pointer',
+                },
+                onClick: toggleCollapsed,
+                role: 'button',
+                tabIndex: 0,
+                'aria-expanded': !editorCollapsed,
+                onKeyDown: function (e) {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleCollapsed();
+                  }
+                },
+              },
+              el(
+                'div',
+                { style: { display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: '1 1 auto' } },
+                el(
+                  'span',
+                  {
+                    'aria-hidden': true,
+                    style: {
+                      display: 'inline-flex',
+                      width: '22px',
+                      height: '22px',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '4px',
+                      background: '#e2e8f0',
+                      color: '#334155',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      flex: '0 0 auto',
+                      transform: editorCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.15s ease',
+                    },
+                  },
+                  '▾'
+                ),
+                el('strong', { style: { fontSize: '14px', color: '#1e1e1e' } }, BLOCK_TITLE)
+              ),
+              el(
+                Button,
+                {
+                  variant: 'tertiary',
+                  isSmall: true,
+                  onClick: function (e) {
+                    e.stopPropagation();
+                    toggleCollapsed();
+                  },
+                },
+                editorCollapsed ? __('Expand', 'headless-core') : __('Collapse', 'headless-core')
+              )
+            ),
+            editorCollapsed
+              ? null
+              : el(
+                  'div',
+                  {
+                    style: {
+                      borderRadius: '0',
+                      overflow: 'hidden',
+                      background: a.sectionBgColor || '#00AFBB',
+                    },
+                  },
             el('div', { style: { padding: '12px 16px 16px', color: '#fff' } },
               el(
                 'div',
@@ -569,6 +655,7 @@
                 )
               )
             )
+                  )
           )
         )
       );

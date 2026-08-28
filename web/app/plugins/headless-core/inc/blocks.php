@@ -255,7 +255,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-loans-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/loans-carousel/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -269,14 +269,14 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-savings-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/savings-carousel/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-services-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/services-carousel/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );

@@ -115,9 +115,17 @@
       return renderTextUrlControl(el, TextControl, label, item, urlKey, onChange);
     }
 
+    // Prefer searchable URL input for custom paths (no post id). LinkControl's
+    // preview mode often hides the pencil for relative/custom URLs, so they
+    // become uneditable after a value is saved.
+    var linkId = item && item.linkId ? Number(item.linkId) : 0;
+    if (opts.preferUrlSearch || linkId <= 0) {
+      return renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, options);
+    }
+
     var storedUrl = readUrlFromItem(item, urlKey);
     var linkValue = linkValueFromItem(item, urlKey);
-    var controlKey = urlKey + ':' + String(storedUrl || 'new') + ':' + String((item && item.linkId) || 0);
+    var controlKey = String(opts.instanceKey || urlKey) + '-link-' + String(linkId);
 
     return el(
       BaseControl,
@@ -164,6 +172,7 @@
   function renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, options) {
     var URLInput = blockEditor.URLInput || blockEditor.__experimentalURLInput;
     var TextControl = components.TextControl;
+    var BaseControl = components.BaseControl;
     var __ = i18n.__;
     var opts = options && typeof options === 'object' ? options : {};
     var instanceKey = String(opts.instanceKey || urlKey || 'url-field');
@@ -176,20 +185,21 @@
     return el(
       'div',
       { key: instanceKey + '-wrap', className: 'headless-url-search-wrap' },
-      el(URLInput, {
-        key: instanceKey,
-        className: 'headless-url-search-control',
-        label: label,
-        value: currentUrl,
-        isFullWidth: true,
-        placeholder: __('Search or paste URL…', 'headless-core'),
-        onChange: function (nextUrl, post) {
-          var url = typeof nextUrl === 'string' ? nextUrl : coerceUrl(nextUrl);
-          var selected = post && typeof post === 'object' ? post : null;
-          onChange(patchFromUrlInput(url, selected, urlKey));
-        },
-        __nextHasNoMarginBottom: true,
-      })
+      el(BaseControl, { label: label },
+        el(URLInput, {
+          key: instanceKey,
+          className: 'headless-url-search-control',
+          value: currentUrl,
+          isFullWidth: true,
+          placeholder: __('Search or paste URL…', 'headless-core'),
+          onChange: function (nextUrl, post) {
+            var url = typeof nextUrl === 'string' ? nextUrl : coerceUrl(nextUrl);
+            var selected = post && typeof post === 'object' ? post : null;
+            onChange(patchFromUrlInput(url, selected, urlKey));
+          },
+          __nextHasNoMarginBottom: true,
+        })
+      )
     );
   }
 

@@ -1,24 +1,64 @@
-/* Ensure every URL search field in block sidebars stays visible (multiple instances). */
-.headless-url-search-control.block-editor-url-input,
-.headless-url-search-control .block-editor-url-input {
+/* Ensure every URL search field in block sidebars stays within the panel width. */
+.block-editor-block-inspector .headless-url-search-wrap,
+.components-panel__body .headless-url-search-wrap,
+.headless-url-search-wrap {
+  position: relative;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  isolation: isolate;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.headless-url-search-wrap .components-base-control,
+.headless-url-search-wrap .components-base-control__field,
+.headless-url-search-wrap .components-base-control__help {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.headless-url-search-control.block-editor-url-input,
+.headless-url-search-control .block-editor-url-input,
+.headless-url-search-wrap .block-editor-url-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   box-sizing: border-box;
 }
 
 .headless-url-search-control input[type="text"],
-.headless-url-search-control input.components-input-control__input {
+.headless-url-search-control input.components-input-control__input,
+.headless-url-search-wrap .block-editor-url-input input[type="text"],
+.headless-url-search-wrap input[type="text"] {
   min-height: 36px;
   width: 100% !important;
-  box-sizing: border-box;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
 }
 
-.headless-url-search-wrap {
-  position: relative;
-  width: 100%;
-  margin-top: 8px;
-  margin-bottom: 4px;
-  isolation: isolate;
+/* Keep page/post suggestions inside the sidebar instead of stretching it. */
+.headless-url-search-wrap .block-editor-url-input__suggestions,
+.headless-url-search-control .block-editor-url-input__suggestions {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  word-break: break-word;
+}
+
+.headless-url-search-wrap .block-editor-url-input__suggestion,
+.headless-url-search-control .block-editor-url-input__suggestion {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /*
@@ -35,4 +75,3 @@ button[aria-label="Scroll section to top"],
 div:has(> svg[viewBox="0 0 1088.78 38.01"]) {
   display: none !important;
 }
-
