@@ -1122,10 +1122,7 @@ add_action('init', static function (): void {
             'googlePlayLinkUrl' => ['type' => 'string', 'default' => ''],
             'googlePlayLinks' => [
                 'type' => 'array',
-                'default' => [
-                    ['label' => 'M-Port Cash', 'url' => ''],
-                    ['label' => 'Sacco Account', 'url' => ''],
-                ],
+                'default' => [],
             ],
             'appStoreImageId' => ['type' => 'number', 'default' => 0],
             'appStoreImageUrl' => ['type' => 'string', 'default' => ''],
