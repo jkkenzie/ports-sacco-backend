@@ -115,35 +115,34 @@
       return renderTextUrlControl(el, TextControl, label, item, urlKey, onChange);
     }
 
-    // Prefer searchable URL input for custom paths (no post id). LinkControl's
-    // preview mode often hides the pencil for relative/custom URLs, so they
-    // become uneditable after a value is saved.
-    var linkId = item && item.linkId ? Number(item.linkId) : 0;
-    if (opts.preferUrlSearch || linkId <= 0) {
+    // Optional: always-editable search field (no LinkControl preview chrome).
+    if (opts.preferUrlSearch) {
       return renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, options);
     }
 
-    var storedUrl = readUrlFromItem(item, urlKey);
     var linkValue = linkValueFromItem(item, urlKey);
-    var controlKey = String(opts.instanceKey || urlKey) + '-link-' + String(linkId);
+    var linkId = item && item.linkId ? Number(item.linkId) : 0;
+    var controlKey = String(opts.instanceKey || urlKey) + '-link-' + String(linkId || 'x');
 
     return el(
-      BaseControl,
-      { label: label },
-      el(LinkControl, {
-        key: controlKey,
-        value: linkValue,
-        onChange: function (link) {
-          onChange(patchFromLink(link, urlKey));
-        },
-        settings: [
-          {
-            id: 'opensInNewTab',
-            title: __('Open in new tab', 'headless-core'),
+      'div',
+      { className: 'headless-link-control-wrap' },
+      el(BaseControl, { label: label },
+        el(LinkControl, {
+          key: controlKey,
+          value: linkValue,
+          onChange: function (link) {
+            onChange(patchFromLink(link, urlKey));
           },
-        ],
-        hasRichPreviews: false,
-      })
+          settings: [
+            {
+              id: 'opensInNewTab',
+              title: __('Open in new tab', 'headless-core'),
+            },
+          ],
+          hasRichPreviews: false,
+        })
+      )
     );
   }
 
@@ -206,7 +205,7 @@
   function renderLinkControlAttribute(el, blockEditor, components, i18n, label, attributes, urlKey, setAttributes) {
     return renderLinkControl(el, blockEditor, components, i18n, label, attributes, urlKey, function (patch) {
       setAttributes(patch);
-    });
+    }, { instanceKey: 'attr-' + String(urlKey || 'url') });
   }
 
   window.headlessCoreEditor = {

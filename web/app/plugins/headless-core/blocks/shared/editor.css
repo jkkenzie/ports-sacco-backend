@@ -1,4 +1,15 @@
-/* Ensure every URL search field in block sidebars stays within the panel width. */
+/* Canvas-embedded carousel page/post link picker. */
+.headless-carousel-link-field {
+  margin: 12px auto 0;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  text-align: left;
+}
+
+/* URL search fields in the block sidebar. */
 .block-editor-block-inspector .headless-url-search-wrap,
 .components-panel__body .headless-url-search-wrap,
 .headless-url-search-wrap {
@@ -59,6 +70,40 @@
 .headless-url-search-control .block-editor-url-input__suggestion {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/*
+ * LinkControl defaults to min-width: 350px which overflows the ~280px inspector.
+ * Only constrain inside the sidebar — leave canvas / carousel layouts natural.
+ */
+.block-editor-block-inspector .headless-link-control-wrap,
+.components-panel__body .headless-link-control-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.block-editor-block-inspector .headless-link-control-wrap .block-editor-link-control,
+.components-panel__body .headless-link-control-wrap .block-editor-link-control,
+.block-editor-block-inspector .block-editor-link-control,
+.components-panel__body .block-editor-link-control {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.block-editor-block-inspector .headless-link-control-wrap .block-editor-link-control__preview-title,
+.block-editor-block-inspector .headless-link-control-wrap .block-editor-link-control__preview-info,
+.block-editor-block-inspector .headless-link-control-wrap .block-editor-link-control__search-item-info,
+.components-panel__body .headless-link-control-wrap .block-editor-link-control__preview-title,
+.components-panel__body .headless-link-control-wrap .block-editor-link-control__preview-info,
+.components-panel__body .headless-link-control-wrap .block-editor-link-control__search-item-info {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /*
