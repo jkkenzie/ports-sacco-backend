@@ -129,7 +129,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-savings-archive-hero-editor',
         HEADLESS_CORE_URL . 'blocks/savings-archive-hero/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-core-data', 'headless-core-link-control'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data', 'wp-core-data', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );

@@ -1,4 +1,4 @@
-(function (blocks, blockEditor, components, element, i18n) {
+(function (blocks, blockEditor, components, data, element, i18n) {
   var el = element.createElement;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
@@ -13,7 +13,10 @@
   var TextControl = components.TextControl;
   var TextareaControl = components.TextareaControl;
   var ToggleControl = components.ToggleControl;
+  var SelectControl = components.SelectControl;
+  var useSelect = data.useSelect;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
   var trashSvg = el(
     'svg',
     { viewBox: '0 0 24 24', width: '16', height: '16', style: { display: 'block' }, fill: 'currentColor' },
@@ -112,11 +115,121 @@
     );
   }
 
+  function mergeLinkPatch(item, patch, urlKey) {
+    var next = Object.assign({}, item || {});
+    var src = patch && typeof patch === 'object' ? patch : {};
+    Object.keys(src).forEach(function (key) {
+      next[key] = src[key];
+    });
+
+    var url = '';
+    if (Object.prototype.hasOwnProperty.call(src, urlKey)) {
+      url = String(src[urlKey] == null ? '' : src[urlKey]);
+    } else if (next[urlKey] != null) {
+      url = String(next[urlKey]);
+    }
+    next[urlKey] = url;
+    if (urlKey === 'href') {
+      next.url = url;
+    }
+    if (urlKey === 'url') {
+      next.href = url;
+    }
+    if (Object.prototype.hasOwnProperty.call(src, 'opensInNewTab')) {
+      next.opensInNewTab = Boolean(src.opensInNewTab);
+      next.target = next.opensInNewTab ? '_blank' : '';
+    } else if (Object.prototype.hasOwnProperty.call(src, 'target')) {
+      next.target = String(src.target || '');
+      next.opensInNewTab = next.target === '_blank';
+    }
+    if (Object.prototype.hasOwnProperty.call(src, 'linkId')) {
+      next.linkId = Number(src.linkId) || 0;
+    }
+    if (Object.prototype.hasOwnProperty.call(src, 'linkType')) {
+      next.linkType = String(src.linkType || '');
+    }
+    return next;
+  }
+
+  function slugifySectionId(input) {
+    return String(input || '')
+      .toLowerCase()
+      .trim()
+      .replace(/['"]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function collectSectionOptions(blocks) {
+    var seen = {};
+    var options = [{ label: __('— Choose a section on this page —', 'headless-core'), value: '' }];
+
+    function pushOption(id, label) {
+      var clean = String(id || '').replace(/^#/, '').trim();
+      if (!clean || seen[clean]) return;
+      seen[clean] = true;
+      options.push({
+        label: String(label || clean),
+        value: '#' + clean,
+      });
+    }
+
+    var SECTION_BLOCKS = {
+      'custom/membership-content': true,
+      'custom/asset-finance-whatever': true,
+      'custom/asset-finance-faq': true,
+      'custom/asset-finance-apply': true,
+      'custom/download-app': true,
+      'custom/contact-map': true,
+      'custom/faq-section': true,
+      'custom/events-section': true,
+      'custom/mobile-app-section': true,
+      'core/heading': true,
+    };
+
+    function walk(list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (block) {
+        if (!block || typeof block !== 'object') return;
+        var a = block.attributes || {};
+        var name = String(block.name || '');
+        var heading = String(a.heading || a.title || a.content || '').trim();
+        // core/heading stores plain text / HTML in content — keep it readable.
+        if (name === 'core/heading' && heading) {
+          heading = heading.replace(/<[^>]+>/g, '').trim();
+        }
+        var anchor = String(a.anchor || '').trim();
+        var sectionId = String(a.sectionId || '').trim();
+
+        if (SECTION_BLOCKS[name]) {
+          var id = anchor || sectionId || slugifySectionId(heading);
+          if (id) {
+            pushOption(id, heading || anchor || sectionId || id);
+          }
+        } else if (sectionId) {
+          pushOption(sectionId, heading || sectionId);
+        } else if (anchor) {
+          pushOption(anchor, heading || anchor);
+        }
+
+        if (Array.isArray(block.innerBlocks) && block.innerBlocks.length) {
+          walk(block.innerBlocks);
+        }
+      });
+    }
+
+    walk(blocks);
+    return options;
+  }
+
   function renderUrlField(label, item, urlKey, onChange) {
+    if (headlessLink.renderLinkControl) {
+      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+    }
     return el(TextControl, {
       label: label,
       value: String((item && item[urlKey]) || ''),
-      placeholder: __('https://example.com or /page-slug', 'headless-core'),
+      placeholder: __('Search or paste a URL, or pick a section below', 'headless-core'),
       onChange: function (v) {
         var patch = {};
         patch[urlKey] = String(v || '');
@@ -292,6 +405,13 @@
       var attrs = props.attributes || {};
       var buttons = normalizeButtons(attrs.buttons);
       var menuItems = normalizeMenuItems(attrs.menuItems);
+      var sectionOptions = useSelect(function (select) {
+        var store = select('core/block-editor');
+        if (!store || !store.getBlocks) {
+          return [{ label: __('— Choose a section on this page —', 'headless-core'), value: '' }];
+        }
+        return collectSectionOptions(store.getBlocks());
+      }, []);
 
       function patchButton(index, patch) {
         var current = normalizeButtons(props.attributes.buttons);
@@ -499,7 +619,7 @@
                     value: btn.label,
                     onChange: function (v) { patchButton(index, { label: v }); },
                   }),
-                  renderUrlField(__('Link', 'headless-core'), btn, 'url', function (patch) {
+                  renderUrlField(__('Page/Post Link', 'headless-core'), btn, 'url', function (patch) {
                     patchButton(index, patch);
                   })
                 );
@@ -510,10 +630,20 @@
             ),
             el('div', { style: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' } },
               el('strong', null, __('Menu items', 'headless-core')),
+              el(
+                'p',
+                { style: { color: '#666', fontSize: '12px', marginTop: '6px' } },
+                __(
+                  'Link to a page/post, or choose a section on this page to smooth-scroll there.',
+                  'headless-core'
+                )
+              ),
               menuItems.length === 0
                 ? el('p', { style: { color: '#666', marginTop: '8px' } }, __('No menu items yet. Add links for the sub-navigation row.', 'headless-core'))
                 : null,
               menuItems.map(function (item, index) {
+                var currentHref = String(item.href || '');
+                var sectionValue = currentHref.indexOf('#') === 0 ? currentHref : '';
                 return el(
                   'div',
                   { key: 'menu-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
@@ -530,9 +660,38 @@
                     value: item.label,
                     onChange: function (v) { patchMenuItem(index, { label: v }); },
                   }),
-                  renderUrlField(__('Link', 'headless-core'), item, 'href', function (patch) {
+                  renderUrlField(__('Page/Post Link', 'headless-core'), item, 'href', function (patch) {
                     patchMenuItem(index, patch);
-                  })
+                  }),
+                  sectionOptions.length > 1
+                    ? el(SelectControl, {
+                        label: __('Or jump to a section on this page', 'headless-core'),
+                        value: sectionValue,
+                        options: sectionOptions,
+                        onChange: function (v) {
+                          var next = String(v || '');
+                          patchMenuItem(index, {
+                            href: next,
+                            url: next,
+                            linkId: 0,
+                            linkType: next ? 'section' : '',
+                            opensInNewTab: false,
+                            target: '',
+                          });
+                        },
+                        help: __(
+                          'Sections come from content blocks on this page (for example membership section headings).',
+                          'headless-core'
+                        ),
+                      })
+                    : el(
+                        'p',
+                        { style: { fontSize: '12px', color: '#666', marginTop: '8px' } },
+                        __(
+                          'Add content sections below this hero (with headings) to pick them here for smooth scrolling.',
+                          'headless-core'
+                        )
+                      )
                 );
               }),
               el('div', { style: { marginTop: '10px' } },
@@ -549,10 +708,10 @@
           menuItems.length > 0
             ? el('p', { style: { marginTop: '8px', fontSize: '12px' } }, menuItems.map(function (m) { return m.label; }).filter(Boolean).join(' · '))
             : null,
-          el('p', { style: { marginTop: '8px', fontSize: '12px', color: '#555' } }, __('Rendered by React frontend.', 'headless-core'))
+          el('p', { style: { marginTop: '8px', fontSize: '12px', color: '#555' } }, __('Buttons and menu links appear on the live site.', 'headless-core'))
         )
       );
     },
     save: function () { return null; }
   });
-})(window.wp.blocks, window.wp.blockEditor, window.wp.components, window.wp.element, window.wp.i18n);
+})(window.wp.blocks, window.wp.blockEditor, window.wp.components, window.wp.data, window.wp.element, window.wp.i18n);
