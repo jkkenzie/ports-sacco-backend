@@ -210,8 +210,17 @@ function headless_core_seo_head_for_path(string $path): string
 
     $blocks = [];
     if (function_exists('headless_core_normalize_blocks')) {
-        $parsed = parse_blocks((string) $post->post_content);
-        $blocks = headless_core_normalize_blocks($parsed);
+        if (function_exists('headless_core_set_normalize_page_path') && function_exists('headless_core_page_path_from_post')) {
+            headless_core_set_normalize_page_path(headless_core_page_path_from_post($post));
+        }
+        try {
+            $parsed = parse_blocks((string) $post->post_content);
+            $blocks = headless_core_normalize_blocks($parsed);
+        } finally {
+            if (function_exists('headless_core_clear_normalize_page_path')) {
+                headless_core_clear_normalize_page_path();
+            }
+        }
     }
 
     $seo = headless_core_build_seo($post, $blocks);

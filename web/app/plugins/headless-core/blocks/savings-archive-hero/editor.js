@@ -14,6 +14,7 @@
   var TextareaControl = components.TextareaControl;
   var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
   var trashSvg = el(
     'svg',
     { viewBox: '0 0 24 24', width: '16', height: '16', style: { display: 'block' }, fill: 'currentColor' },
@@ -112,23 +113,77 @@
     );
   }
 
-  function renderUrlField(label, item, urlKey, onChange) {
+  function mergeLinkPatch(item, patch, urlKey) {
+    if (headlessLink.mergeLinkPatch) {
+      return headlessLink.mergeLinkPatch(item, patch, urlKey);
+    }
+    var next = Object.assign({}, item || {}, patch || {});
+    var url = String(next[urlKey] || '');
+    if (urlKey === 'href') {
+      next.url = url;
+    }
+    if (urlKey === 'url') {
+      next.href = url;
+    }
+    return next;
+  }
+
+  function editorPagePath() {
+    try {
+      if (!window.wp || !wp.data) {
+        return '';
+      }
+      var select = wp.data.select('core/editor');
+      if (!select) {
+        return '';
+      }
+      if (headlessLink.pathnameFromUrl && select.getPermalink) {
+        var permalink = select.getPermalink();
+        if (permalink) {
+          return headlessLink.pathnameFromUrl(permalink);
+        }
+      }
+      if (select.getCurrentPostId) {
+        var postId = select.getCurrentPostId();
+        var record = postId ? wp.data.select('core').getEntityRecord('postType', 'page', postId) : null;
+        if (record && record.link && headlessLink.pathnameFromUrl) {
+          return headlessLink.pathnameFromUrl(record.link);
+        }
+      }
+    } catch (e) {
+      return '';
+    }
+    return '';
+  }
+
+  function renderUrlField(label, item, urlKey, onChange, instanceKey) {
+    if (headlessLink.renderUrlSearchInput) {
+      return headlessLink.renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, {
+        instanceKey: instanceKey || urlKey,
+        showHashFragment: true,
+        defaultBaseUrl: editorPagePath(),
+      });
+    }
     return el(TextControl, {
       label: label,
       value: String((item && item[urlKey]) || ''),
-      placeholder: __('https://example.com or /page-slug', 'headless-core'),
+      placeholder: __('Search pages or paste URL…', 'headless-core'),
       onChange: function (v) {
-        var patch = {};
-        patch[urlKey] = String(v || '');
-        if (urlKey === 'href') {
-          patch.url = patch[urlKey];
-        }
-        if (urlKey === 'url') {
-          patch.href = patch[urlKey];
-        }
-        onChange(patch);
+        onChange(mergeLinkPatch(item, patchFromPlainUrl(v, urlKey), urlKey));
       },
     });
+  }
+
+  function patchFromPlainUrl(value, urlKey) {
+    var patch = {};
+    patch[urlKey] = String(value || '');
+    if (urlKey === 'href') {
+      patch.url = patch[urlKey];
+    }
+    if (urlKey === 'url') {
+      patch.href = patch[urlKey];
+    }
+    return patch;
   }
 
   function normalizeButtons(buttons) {
@@ -501,7 +556,7 @@
                   }),
                   renderUrlField(__('Link', 'headless-core'), btn, 'url', function (patch) {
                     patchButton(index, patch);
-                  })
+                  }, 'hero-btn-' + index)
                 );
               }),
               el('div', { style: { marginTop: '10px' } },
@@ -532,7 +587,7 @@
                   }),
                   renderUrlField(__('Link', 'headless-core'), item, 'href', function (patch) {
                     patchMenuItem(index, patch);
-                  })
+                  }, 'hero-menu-' + index)
                 );
               }),
               el('div', { style: { marginTop: '10px' } },
