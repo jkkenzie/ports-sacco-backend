@@ -38,12 +38,21 @@
     });
   }
 
+  var BLOCK_TITLE = __('Home banner slider', 'headless-core');
+
   function HomeBannerEdit(props) {
     var a = props.attributes;
     var slides = normalizeSlides(a.slides);
     var selectedPair = useState(0);
     var selected = selectedPair[0];
     var setSelected = selectedPair[1];
+    var collapsedState = useState(false);
+    var editorCollapsed = collapsedState[0];
+    var setEditorCollapsed = collapsedState[1];
+
+    function toggleCollapsed() {
+      setEditorCollapsed(!editorCollapsed);
+    }
 
     function setSlides(next) {
       props.setAttributes({ slides: next });
@@ -371,46 +380,114 @@
           { style: { border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' } },
           el(
             'div',
-            { style: { padding: '12px 16px', background: '#f6f7f7', borderBottom: '1px solid #ddd' } },
-            el('strong', null, __('Home banner slider', 'headless-core'))
-          ),
-          el(
-            'div',
             {
               style: {
-                padding: '12px 16px',
-                background: a.heroBg || '#1BB5B5',
-                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '10px 12px',
+                background: '#f6f7f7',
+                borderBottom: editorCollapsed ? 'none' : '1px solid #ddd',
+                cursor: 'pointer',
+              },
+              onClick: toggleCollapsed,
+              role: 'button',
+              tabIndex: 0,
+              'aria-expanded': !editorCollapsed,
+              onKeyDown: function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleCollapsed();
+                }
               },
             },
             el(
-              'p',
-              { style: { margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.95)', fontWeight: 600 } },
-              __('Preview strip — matches hero background', 'headless-core')
-            )
-          ),
-          el(
-            'div',
-            { style: { padding: '16px', maxHeight: '70vh', overflowY: 'auto' } },
-            slides.map(function (s, i) {
-              return slideRow(s, i);
-            }),
+              'div',
+              { style: { display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: '1 1 auto' } },
+              el(
+                'span',
+                {
+                  'aria-hidden': true,
+                  style: {
+                    display: 'inline-flex',
+                    width: '22px',
+                    height: '22px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '4px',
+                    background: '#e2e8f0',
+                    color: '#334155',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    flex: '0 0 auto',
+                    transform: editorCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.15s ease',
+                  },
+                },
+                '▾'
+              ),
+              el('strong', { style: { fontSize: '14px', color: '#1e1e1e' } }, BLOCK_TITLE)
+            ),
             el(
               Button,
               {
-                variant: 'secondary',
-                onClick: function () {
-                  addSlide();
+                variant: 'tertiary',
+                isSmall: true,
+                onClick: function (e) {
+                  e.stopPropagation();
+                  toggleCollapsed();
                 },
               },
-              __('Add slide', 'headless-core')
-            ),
-            el(
-              'p',
-              { style: { fontSize: '12px', color: '#757575', marginTop: '12px', marginBottom: 0 } },
-              __('Click a slide to highlight it. Remove slide asks for confirmation. Upload uses the Media Library.', 'headless-core')
+              editorCollapsed ? __('Expand', 'headless-core') : __('Collapse', 'headless-core')
             )
-          )
+          ),
+          editorCollapsed
+            ? null
+            : el(
+                'div',
+                null,
+                el(
+                  'div',
+                  {
+                    style: {
+                      padding: '12px 16px',
+                      background: a.heroBg || '#1BB5B5',
+                      borderBottom: '1px solid rgba(0,0,0,0.06)',
+                    },
+                  },
+                  el(
+                    'p',
+                    { style: { margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.95)', fontWeight: 600 } },
+                    __('Preview strip — matches hero background', 'headless-core')
+                  )
+                ),
+                el(
+                  'div',
+                  { style: { padding: '16px', maxHeight: '70vh', overflowY: 'auto' } },
+                  slides.map(function (s, i) {
+                    return slideRow(s, i);
+                  }),
+                  el(
+                    Button,
+                    {
+                      variant: 'secondary',
+                      onClick: function () {
+                        addSlide();
+                      },
+                    },
+                    __('Add slide', 'headless-core')
+                  ),
+                  el(
+                    'p',
+                    { style: { fontSize: '12px', color: '#757575', marginTop: '12px', marginBottom: 0 } },
+                    __(
+                      'Click a slide to highlight it. Remove slide asks for confirmation. Upload uses the Media Library.',
+                      'headless-core'
+                    )
+                  )
+                )
+              )
         )
       )
     );

@@ -1,6 +1,7 @@
 (function (blocks, blockEditor, components, element, i18n) {
   var el = element.createElement;
   var Fragment = element.Fragment;
+  var useState = element.useState;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
   var InspectorControls = blockEditor.InspectorControls;
@@ -15,6 +16,8 @@
   var ToggleControl = components.ToggleControl;
   var RangeControl = components.RangeControl || components.__experimentalRangeControl;
   var __ = i18n.__;
+
+  var BLOCK_TITLE = __('Home stats', 'headless-core');
 
   var trashSvg = el(
     'svg',
@@ -115,12 +118,19 @@
       items: { type: 'array', default: DEFAULT_ITEMS },
     },
     edit: function (props) {
+      var collapsedState = useState(false);
+      var editorCollapsed = collapsedState[0];
+      var setEditorCollapsed = collapsedState[1];
       var blockProps = useBlockProps({ className: 'headless-home-stats-editor' });
       var a = props.attributes;
       var items = normalizeItems(a.items);
       var iconWidth = Number.isFinite(Number(a.iconWidth)) ? Number(a.iconWidth) : 107;
       var iconHeight = Number.isFinite(Number(a.iconHeight)) ? Number(a.iconHeight) : 58;
       var duration = a.animationDurationSec != null ? Number(a.animationDurationSec) : 2.5;
+
+      function toggleCollapsed() {
+        setEditorCollapsed(!editorCollapsed);
+      }
 
       function patchItem(index, patch) {
         var next = items.slice();
@@ -331,121 +341,224 @@
         el(
           'div',
           blockProps,
-          el('h3', { style: { marginTop: 0 } }, __('Home stats', 'headless-core')),
-          el(
-            'p',
-            { style: { fontSize: '12px', color: '#757575' } },
-            __('Counters run once when this section scrolls into view. Set start/end and duration in the sidebar.', 'headless-core')
-          ),
           el(
             'div',
-            { style: { display: 'grid', gap: '12px', marginTop: '12px' } },
-            items.map(function (item, index) {
-              return el(
-                'div',
-                {
-                  key: 'stat-' + index,
-                  style: { border: '1px solid #ddd', borderRadius: '6px', padding: '10px', background: '#fff', color: '#1e1e1e' },
+            {
+              style: {
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                background: '#fff',
+              },
+            },
+            el(
+              'div',
+              {
+                style: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  padding: '10px 12px',
+                  background: '#f6f7f7',
+                  borderBottom: editorCollapsed ? 'none' : '1px solid #e5e7eb',
+                  cursor: 'pointer',
                 },
+                onClick: toggleCollapsed,
+                role: 'button',
+                tabIndex: 0,
+                'aria-expanded': !editorCollapsed,
+                onKeyDown: function (e) {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleCollapsed();
+                  }
+                },
+              },
+              el(
+                'div',
+                { style: { display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: '1 1 auto' } },
                 el(
+                  'span',
+                  {
+                    'aria-hidden': true,
+                    style: {
+                      display: 'inline-flex',
+                      width: '22px',
+                      height: '22px',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '4px',
+                      background: '#e2e8f0',
+                      color: '#334155',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      flex: '0 0 auto',
+                      transform: editorCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.15s ease',
+                    },
+                  },
+                  '▾'
+                ),
+                el('strong', { style: { fontSize: '14px', color: '#1e1e1e' } }, BLOCK_TITLE)
+              ),
+              el(
+                Button,
+                {
+                  variant: 'tertiary',
+                  isSmall: true,
+                  onClick: function (e) {
+                    e.stopPropagation();
+                    toggleCollapsed();
+                  },
+                },
+                editorCollapsed ? __('Expand', 'headless-core') : __('Collapse', 'headless-core')
+              )
+            ),
+            editorCollapsed
+              ? null
+              : el(
                   'div',
-                  { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' } },
-                  el('strong', null, __('Stat', 'headless-core') + ' ' + (index + 1)),
+                  { style: { padding: '16px' } },
+                  el(
+                    'p',
+                    { style: { fontSize: '12px', color: '#757575', marginTop: 0 } },
+                    __(
+                      'Counters run once when this section scrolls into view. Set start/end and duration in the sidebar.',
+                      'headless-core'
+                    )
+                  ),
                   el(
                     'div',
-                    { style: { display: 'flex', gap: '4px' } },
-                    el(
-                      Button,
-                      {
-                        variant: 'tertiary',
-                        isSmall: true,
-                        disabled: index === 0,
-                        onClick: function () {
-                          props.setAttributes({ items: moveRow(items, index, -1) });
+                    { style: { display: 'grid', gap: '12px', marginTop: '12px' } },
+                    items.map(function (item, index) {
+                      return el(
+                        'div',
+                        {
+                          key: 'stat-' + index,
+                          style: {
+                            border: '1px solid #ddd',
+                            borderRadius: '6px',
+                            padding: '10px',
+                            background: '#fff',
+                            color: '#1e1e1e',
+                          },
                         },
-                      },
-                      '˄'
-                    ),
-                    el(
-                      Button,
-                      {
-                        variant: 'tertiary',
-                        isSmall: true,
-                        disabled: index === items.length - 1,
-                        onClick: function () {
-                          props.setAttributes({ items: moveRow(items, index, 1) });
-                        },
-                      },
-                      '˅'
-                    ),
-                    el(
-                      Button,
-                      {
-                        variant: 'tertiary',
-                        isSmall: true,
-                        isDestructive: true,
-                        onClick: function () {
-                          removeItem(index);
-                        },
-                      },
-                      trashSvg
-                    )
+                        el(
+                          'div',
+                          {
+                            style: {
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginBottom: '8px',
+                            },
+                          },
+                          el('strong', null, __('Stat', 'headless-core') + ' ' + (index + 1)),
+                          el(
+                            'div',
+                            { style: { display: 'flex', gap: '4px' } },
+                            el(
+                              Button,
+                              {
+                                variant: 'tertiary',
+                                isSmall: true,
+                                disabled: index === 0,
+                                onClick: function () {
+                                  props.setAttributes({ items: moveRow(items, index, -1) });
+                                },
+                              },
+                              '˄'
+                            ),
+                            el(
+                              Button,
+                              {
+                                variant: 'tertiary',
+                                isSmall: true,
+                                disabled: index === items.length - 1,
+                                onClick: function () {
+                                  props.setAttributes({ items: moveRow(items, index, 1) });
+                                },
+                              },
+                              '˅'
+                            ),
+                            el(
+                              Button,
+                              {
+                                variant: 'tertiary',
+                                isSmall: true,
+                                isDestructive: true,
+                                onClick: function () {
+                                  removeItem(index);
+                                },
+                              },
+                              trashSvg
+                            )
+                          )
+                        ),
+                        el(
+                          'div',
+                          {
+                            style: {
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 1fr',
+                              gap: '8px',
+                              marginBottom: '8px',
+                            },
+                          },
+                          el(TextControl, {
+                            label: __('Start value', 'headless-core'),
+                            type: 'number',
+                            value: item.valueStart,
+                            onChange: function (v) {
+                              patchItem(index, { valueStart: parseInt(v, 10) || 0 });
+                            },
+                          }),
+                          el(TextControl, {
+                            label: __('End value', 'headless-core'),
+                            type: 'number',
+                            value: item.valueEnd,
+                            onChange: function (v) {
+                              patchItem(index, { valueEnd: parseInt(v, 10) || 0 });
+                            },
+                          })
+                        ),
+                        el(ToggleControl, {
+                          label: __('Append + to number (e.g. members)', 'headless-core'),
+                          checked: !!item.showPlus,
+                          onChange: function (v) {
+                            patchItem(index, { showPlus: !!v });
+                          },
+                        }),
+                        iconChooser(item, index),
+                        el(RichText, {
+                          tagName: 'div',
+                          value: item.title,
+                          onChange: function (v) {
+                            patchItem(index, { title: v });
+                          },
+                          placeholder: __('Title (inline)', 'headless-core'),
+                          allowedFormats: ['core/bold', 'core/italic', 'core/link'],
+                        }),
+                        el(RichText, {
+                          tagName: 'div',
+                          value: item.subtitle,
+                          onChange: function (v) {
+                            patchItem(index, { subtitle: v });
+                          },
+                          placeholder: __('Subtitle (inline)', 'headless-core'),
+                          allowedFormats: ['core/bold', 'core/italic', 'core/link'],
+                        })
+                      );
+                    })
+                  ),
+                  el(
+                    Button,
+                    { variant: 'primary', onClick: addItem, style: { marginTop: '8px' } },
+                    '+ ',
+                    __('Add stat', 'headless-core')
                   )
-                ),
-                el(
-                  'div',
-                  { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' } },
-                  el(TextControl, {
-                    label: __('Start value', 'headless-core'),
-                    type: 'number',
-                    value: item.valueStart,
-                    onChange: function (v) {
-                      patchItem(index, { valueStart: parseInt(v, 10) || 0 });
-                    },
-                  }),
-                  el(TextControl, {
-                    label: __('End value', 'headless-core'),
-                    type: 'number',
-                    value: item.valueEnd,
-                    onChange: function (v) {
-                      patchItem(index, { valueEnd: parseInt(v, 10) || 0 });
-                    },
-                  })
-                ),
-                el(ToggleControl, {
-                  label: __('Append + to number (e.g. members)', 'headless-core'),
-                  checked: !!item.showPlus,
-                  onChange: function (v) {
-                    patchItem(index, { showPlus: !!v });
-                  },
-                }),
-                iconChooser(item, index),
-                el(RichText, {
-                  tagName: 'div',
-                  value: item.title,
-                  onChange: function (v) {
-                    patchItem(index, { title: v });
-                  },
-                  placeholder: __('Title (inline)', 'headless-core'),
-                  allowedFormats: ['core/bold', 'core/italic', 'core/link'],
-                }),
-                el(RichText, {
-                  tagName: 'div',
-                  value: item.subtitle,
-                  onChange: function (v) {
-                    patchItem(index, { subtitle: v });
-                  },
-                  placeholder: __('Subtitle (inline)', 'headless-core'),
-                  allowedFormats: ['core/bold', 'core/italic', 'core/link'],
-                })
-              );
-            })
-          ),
-          el(
-            Button,
-            { variant: 'primary', onClick: addItem, style: { marginTop: '8px' } },
-            '+ ',
-            __('Add stat', 'headless-core')
+                )
           )
         )
       );

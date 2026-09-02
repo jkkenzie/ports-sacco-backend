@@ -44,3 +44,10 @@ node_modules/
 npm-debug.log
 yarn.lock
 package-lock.json
+
+# Ignore error logs
+error_log
+web/error_log
+
+# Ignore DOCS
+/docs/

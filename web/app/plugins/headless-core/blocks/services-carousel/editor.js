@@ -12,13 +12,14 @@
   var RichText = blockEditor.RichText;
   var useSelect = data.useSelect;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
 
   registerBlockType('custom/services-carousel', {
     apiVersion: 3,
     title: __('Services Carousel', 'headless-core'),
     icon: 'slides',
     category: 'widgets',
-    description: __('Carousel of Services CPT (no top bar).', 'headless-core'),
+    description: __('Carousel of services.', 'headless-core'),
     attributes: {
       categoryId: { type: 'number', default: 0 },
       sectionHeader: { type: 'string', default: 'EXPLORE OUR SERVICES' },
@@ -59,6 +60,34 @@
         return colors.map(function (hex) { return { color: hex, name: hex }; });
       }
 
+      function renderRightLinkField() {
+        return el(
+          'div',
+          {
+            className: 'headless-carousel-link-field',
+            onClick: function (e) {
+              e.stopPropagation();
+            },
+          },
+          headlessLink.renderLinkControlAttribute
+            ? headlessLink.renderLinkControlAttribute(
+                el,
+                blockEditor,
+                components,
+                i18n,
+                __('Page/Post Link', 'headless-core'),
+                props.attributes,
+                'linkUrl',
+                props.setAttributes
+              )
+            : el(TextControl, {
+                label: __('Page/Post Link', 'headless-core'),
+                value: props.attributes.linkUrl || '',
+                onChange: function (v) { props.setAttributes({ linkUrl: v }); },
+              })
+        );
+      }
+
       return el(
         'div',
         blockProps,
@@ -67,12 +96,7 @@
           null,
           el(
             PanelBody,
-            { title: __('Query + Links', 'headless-core'), initialOpen: true },
-            el(TextControl, {
-              label: __('Right link URL', 'headless-core'),
-              value: props.attributes.linkUrl || '',
-              onChange: function (v) { props.setAttributes({ linkUrl: v }); },
-            }),
+            { title: __('Carousel settings', 'headless-core'), initialOpen: true },
             el(RangeControl, {
               label: __('Maximum items', 'headless-core'),
               value: Number(props.attributes.maxItems || 9),
@@ -161,8 +185,9 @@
               style: { display: 'inline-block', padding: '6px 16px', borderRadius: '999px', background: props.attributes.linkBadgeBgColor || '#ffffff', color: props.attributes.linkTextColor || '#22ACB6', border: '1px solid #e8e8e8', fontSize: '12px' },
             })
           ),
-          el('p', { style: { marginTop: '8px', marginBottom: 0, color: '#555', textAlign: 'center' } },
-            __('Services carousel (no top bar). Optional category filter.', 'headless-core')
+          renderRightLinkField(),
+          el('p', { style: { marginTop: '10px', marginBottom: 0, color: '#555', textAlign: 'center', fontSize: '12px' } },
+            __('Your services will show here as a scrolling carousel on the live site. Use the sidebar to filter by category if needed.', 'headless-core')
           )
         )
       );

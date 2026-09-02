@@ -255,7 +255,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-loans-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/loans-carousel/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -269,14 +269,14 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-custom-savings-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/savings-carousel/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
     wp_register_script(
         'headless-custom-services-carousel-editor',
         HEADLESS_CORE_URL . 'blocks/services-carousel/editor.js',
-        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data'],
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data', 'wp-core-data', 'headless-core-link-control'],
         HEADLESS_CORE_VERSION,
         true
     );
@@ -1122,10 +1122,7 @@ add_action('init', static function (): void {
             'googlePlayLinkUrl' => ['type' => 'string', 'default' => ''],
             'googlePlayLinks' => [
                 'type' => 'array',
-                'default' => [
-                    ['label' => 'M-Port Cash', 'url' => ''],
-                    ['label' => 'Sacco Account', 'url' => ''],
-                ],
+                'default' => [],
             ],
             'appStoreImageId' => ['type' => 'number', 'default' => 0],
             'appStoreImageUrl' => ['type' => 'string', 'default' => ''],
@@ -1262,6 +1259,7 @@ add_action('init', static function (): void {
             'venueTitle' => ['type' => 'string', 'default' => 'Venue'],
             'timeLine' => ['type' => 'string', 'default' => '09.00 HOURS'],
             'bannerTextColor' => ['type' => 'string', 'default' => '#ffffff'],
+            'linkUrl' => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -2034,4 +2032,29 @@ add_action('init', static function (): void {
 
 add_action('enqueue_block_editor_assets', static function (): void {
     wp_enqueue_script('headless-core-rich-text-spacing');
+    wp_enqueue_style(
+        'headless-core-editor',
+        HEADLESS_CORE_URL . 'blocks/shared/editor.css',
+        [],
+        HEADLESS_CORE_VERSION
+    );
+});
+
+add_filter('block_editor_settings_all', static function (array $settings): array {
+    $path = HEADLESS_CORE_PATH . 'blocks/shared/editor.css';
+    if (! is_readable($path)) {
+        return $settings;
+    }
+    $css = file_get_contents($path);
+    if (! is_string($css) || $css === '') {
+        return $settings;
+    }
+    if (! isset($settings['styles']) || ! is_array($settings['styles'])) {
+        $settings['styles'] = [];
+    }
+    $settings['styles'][] = [
+        'css' => $css,
+        '__unstableType' => 'plugin',
+    ];
+    return $settings;
 });

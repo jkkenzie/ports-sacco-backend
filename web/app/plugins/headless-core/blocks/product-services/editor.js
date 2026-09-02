@@ -1,5 +1,6 @@
 (function (blocks, blockEditor, components, element, i18n) {
   var el = element.createElement;
+  var useState = element.useState;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
   var InspectorControls = blockEditor.InspectorControls;
@@ -12,6 +13,8 @@
   var RangeControl = components.RangeControl;
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
+
+  var BLOCK_TITLE = __('Product & Services', 'headless-core');
 
   function renderUrlField(label, item, urlKey, onChange) {
     if (headlessLink.renderLinkControl) {
@@ -113,12 +116,19 @@
       pillHoverTextColor: { type: 'string', default: '#ffffff' },
     },
     edit: function (props) {
+      var collapsedState = useState(false);
+      var editorCollapsed = collapsedState[0];
+      var setEditorCollapsed = collapsedState[1];
       var blockProps = useBlockProps({ className: 'headless-product-services-block' });
       var a = props.attributes;
       var dropdownItems = normalizeDropdown(a.dropdownItems);
       if (!dropdownItems.length) dropdownItems = defaultDropdown.slice();
       var productButtons = normalizePills(a.productButtons);
       if (!productButtons.length) productButtons = defaultPills.slice();
+
+      function toggleCollapsed() {
+        setEditorCollapsed(!editorCollapsed);
+      }
 
       function setDropdown(i, patch) {
         var next = dropdownItems.map(function (row, idx) {
@@ -445,122 +455,198 @@
           'div',
           {
             style: {
-              padding: '16px',
-              borderRadius: '10px',
               border: '1px solid #e5e7eb',
-              background: grad,
-              color: '#fff',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              background: '#fff',
             },
           },
           el(
             'div',
-            { style: { maxWidth: '960px', margin: '0 auto', background: 'rgba(255,255,255,0.12)', borderRadius: '8px', padding: '12px' } },
-            el('p', { style: { fontSize: '11px', marginBottom: '8px', opacity: 0.95 } }, a.kickerText || ''),
-            el('div', { style: { display: 'inline-block', background: a.centerPillBg || '#EE6E2A', color: a.centerPillTextColor || '#fff', borderRadius: '999px', padding: '6px 14px', fontSize: '11px', fontWeight: 700 } }, a.centerPillText || ''),
+            {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '10px 12px',
+                background: '#f6f7f7',
+                borderBottom: editorCollapsed ? 'none' : '1px solid #e5e7eb',
+                cursor: 'pointer',
+              },
+              onClick: toggleCollapsed,
+              role: 'button',
+              tabIndex: 0,
+              'aria-expanded': !editorCollapsed,
+              onKeyDown: function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleCollapsed();
+                }
+              },
+            },
             el(
               'div',
-              { style: { marginTop: '12px', background: a.boxBg || '#fff', color: '#222', borderRadius: '12px', padding: '12px' } },
-              el('div', { style: { fontWeight: 800, fontSize: '13px', color: a.boxTitleColor || '#3b4e6b' } }, a.boxTitle || ''),
-              el('div', { style: { fontSize: '11px', marginTop: '4px', color: a.boxSubtitleColor || '#3b4e6b' } }, a.boxSubtitle || ''),
-              el('div', { style: { marginTop: '8px', fontSize: '10px', color: '#666' } }, __('Dropdown: ', 'headless-core') + dropdownItems.length + __(' · Pills: ', 'headless-core') + productButtons.length)
+              { style: { display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: '1 1 auto' } },
+              el(
+                'span',
+                {
+                  'aria-hidden': true,
+                  style: {
+                    display: 'inline-flex',
+                    width: '22px',
+                    height: '22px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '4px',
+                    background: '#e2e8f0',
+                    color: '#334155',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    flex: '0 0 auto',
+                    transform: editorCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.15s ease',
+                  },
+                },
+                '▾'
+              ),
+              el('strong', { style: { fontSize: '14px', color: '#1e1e1e' } }, BLOCK_TITLE)
+            ),
+            el(
+              Button,
+              {
+                variant: 'tertiary',
+                isSmall: true,
+                onClick: function (e) {
+                  e.stopPropagation();
+                  toggleCollapsed();
+                },
+              },
+              editorCollapsed ? __('Expand', 'headless-core') : __('Collapse', 'headless-core')
             )
           ),
-          el('p', { style: { marginTop: '10px', fontSize: '11px', opacity: 0.9, textAlign: 'center' } }, __('Full layout and navigation render on the React frontend.', 'headless-core'))
-        ),
-        el(
-          'div',
-          {
-            style: {
-              marginTop: '12px',
-              padding: '12px',
-              borderRadius: '10px',
-              border: '1px dashed #cbd5e1',
-              background: '#fff',
-            },
-          },
-          el('div', { style: { fontWeight: 800, marginBottom: '8px' } }, __('Edit content (inline)', 'headless-core')),
+          editorCollapsed
+            ? null
+            : el(
+                'div',
+                null,
+                el(
+                  'div',
+                  {
+                    style: {
+                      padding: '16px',
+                      background: grad,
+                      color: '#fff',
+                    },
+                  },
+                  el(
+                    'div',
+                    { style: { maxWidth: '960px', margin: '0 auto', background: 'rgba(255,255,255,0.12)', borderRadius: '8px', padding: '12px' } },
+                    el('p', { style: { fontSize: '11px', marginBottom: '8px', opacity: 0.95 } }, a.kickerText || ''),
+                    el('div', { style: { display: 'inline-block', background: a.centerPillBg || '#EE6E2A', color: a.centerPillTextColor || '#fff', borderRadius: '999px', padding: '6px 14px', fontSize: '11px', fontWeight: 700 } }, a.centerPillText || ''),
+                    el(
+                      'div',
+                      { style: { marginTop: '12px', background: a.boxBg || '#fff', color: '#222', borderRadius: '12px', padding: '12px' } },
+                      el('div', { style: { fontWeight: 800, fontSize: '13px', color: a.boxTitleColor || '#3b4e6b' } }, a.boxTitle || ''),
+                      el('div', { style: { fontSize: '11px', marginTop: '4px', color: a.boxSubtitleColor || '#3b4e6b' } }, a.boxSubtitle || ''),
+                      el('div', { style: { marginTop: '8px', fontSize: '10px', color: '#666' } }, __('Dropdown: ', 'headless-core') + dropdownItems.length + __(' · Pills: ', 'headless-core') + productButtons.length)
+                    )
+                  ),
+                  el('p', { style: { marginTop: '10px', fontSize: '11px', opacity: 0.9, textAlign: 'center' } }, __('Full layout and navigation render on the React frontend.', 'headless-core'))
+                ),
+                el(
+                  'div',
+                  {
+                    style: {
+                      padding: '12px 16px 16px',
+                      background: '#fff',
+                    },
+                  },
+                  el('div', { style: { fontWeight: 800, marginBottom: '8px' } }, __('Edit content (inline)', 'headless-core')),
 
-          el(TextControl, {
-            label: __('Kicker text', 'headless-core'),
-            value: a.kickerText || '',
-            onChange: function (v) {
-              props.setAttributes({ kickerText: v });
-            },
-          }),
-          el(TextControl, {
-            label: __('Center pill text', 'headless-core'),
-            value: a.centerPillText || '',
-            onChange: function (v) {
-              props.setAttributes({ centerPillText: v });
-            },
-          }),
-          el(TextControl, {
-            label: __('Title', 'headless-core'),
-            value: a.boxTitle || '',
-            onChange: function (v) {
-              props.setAttributes({ boxTitle: v });
-            },
-          }),
-          el(TextareaControl, {
-            label: __('Subtitle', 'headless-core'),
-            value: a.boxSubtitle || '',
-            onChange: function (v) {
-              props.setAttributes({ boxSubtitle: v });
-            },
-          }),
+                  el(TextControl, {
+                    label: __('Kicker text', 'headless-core'),
+                    value: a.kickerText || '',
+                    onChange: function (v) {
+                      props.setAttributes({ kickerText: v });
+                    },
+                  }),
+                  el(TextControl, {
+                    label: __('Center pill text', 'headless-core'),
+                    value: a.centerPillText || '',
+                    onChange: function (v) {
+                      props.setAttributes({ centerPillText: v });
+                    },
+                  }),
+                  el(TextControl, {
+                    label: __('Title', 'headless-core'),
+                    value: a.boxTitle || '',
+                    onChange: function (v) {
+                      props.setAttributes({ boxTitle: v });
+                    },
+                  }),
+                  el(TextareaControl, {
+                    label: __('Subtitle', 'headless-core'),
+                    value: a.boxSubtitle || '',
+                    onChange: function (v) {
+                      props.setAttributes({ boxSubtitle: v });
+                    },
+                  }),
 
-          el('hr', { style: { margin: '12px 0' } }),
-          el(TextControl, {
-            label: __('Dropdown placeholder', 'headless-core'),
-            value: a.dropdownPlaceholder || '',
-            onChange: function (v) {
-              props.setAttributes({ dropdownPlaceholder: v });
-            },
-          }),
-          el('p', { style: { fontWeight: 700, marginBottom: '6px' } }, __('Dropdown options (label + URL)', 'headless-core')),
-          dropdownItems.map(function (row, i) {
-            return el(
-              'div',
-              { key: 'dd-inline-' + i, style: { marginBottom: '10px', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px' } },
-              el(TextControl, {
-                label: __('Label', 'headless-core'),
-                value: row.label,
-                onChange: function (v) {
-                  setDropdown(i, { label: v });
-                },
-              }),
-              renderUrlField(__('URL', 'headless-core'), row, 'url', function (patch) { setDropdown(i, patch); }),
-              el(
-                Button,
-                { isDestructive: true, variant: 'secondary', onClick: function () { removeDropdown(i); } },
-                __('Remove', 'headless-core')
+                  el('hr', { style: { margin: '12px 0' } }),
+                  el(TextControl, {
+                    label: __('Dropdown placeholder', 'headless-core'),
+                    value: a.dropdownPlaceholder || '',
+                    onChange: function (v) {
+                      props.setAttributes({ dropdownPlaceholder: v });
+                    },
+                  }),
+                  el('p', { style: { fontWeight: 700, marginBottom: '6px' } }, __('Dropdown options (label + URL)', 'headless-core')),
+                  dropdownItems.map(function (row, i) {
+                    return el(
+                      'div',
+                      { key: 'dd-inline-' + i, style: { marginBottom: '10px', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px' } },
+                      el(TextControl, {
+                        label: __('Label', 'headless-core'),
+                        value: row.label,
+                        onChange: function (v) {
+                          setDropdown(i, { label: v });
+                        },
+                      }),
+                      renderUrlField(__('URL', 'headless-core'), row, 'url', function (patch) { setDropdown(i, patch); }),
+                      el(
+                        Button,
+                        { isDestructive: true, variant: 'secondary', onClick: function () { removeDropdown(i); } },
+                        __('Remove', 'headless-core')
+                      )
+                    );
+                  }),
+                  el(Button, { variant: 'primary', onClick: addDropdown }, __('Add dropdown option', 'headless-core')),
+
+                  el('hr', { style: { margin: '12px 0' } }),
+                  el('p', { style: { fontWeight: 700, marginBottom: '6px' } }, __('Pill buttons (text + URL)', 'headless-core')),
+                  productButtons.map(function (row, i) {
+                    return el(
+                      'div',
+                      { key: 'pill-inline-' + i, style: { marginBottom: '10px', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px' } },
+                      el(TextControl, {
+                        label: __('Button text', 'headless-core'),
+                        value: row.label,
+                        onChange: function (v) {
+                          setPill(i, { label: v });
+                        },
+                      }),
+                      renderUrlField(__('URL', 'headless-core'), row, 'url', function (patch) { setPill(i, patch); }),
+                      el(
+                        Button,
+                        { isDestructive: true, variant: 'secondary', onClick: function () { removePill(i); } },
+                        __('Remove', 'headless-core')
+                      )
+                    );
+                  }),
+                  el(Button, { variant: 'primary', onClick: addPill }, __('Add pill button', 'headless-core'))
+                )
               )
-            );
-          }),
-          el(Button, { variant: 'primary', onClick: addDropdown }, __('Add dropdown option', 'headless-core')),
-
-          el('hr', { style: { margin: '12px 0' } }),
-          el('p', { style: { fontWeight: 700, marginBottom: '6px' } }, __('Pill buttons (text + URL)', 'headless-core')),
-          productButtons.map(function (row, i) {
-            return el(
-              'div',
-              { key: 'pill-inline-' + i, style: { marginBottom: '10px', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px' } },
-              el(TextControl, {
-                label: __('Button text', 'headless-core'),
-                value: row.label,
-                onChange: function (v) {
-                  setPill(i, { label: v });
-                },
-              }),
-              renderUrlField(__('URL', 'headless-core'), row, 'url', function (patch) { setPill(i, patch); }),
-              el(
-                Button,
-                { isDestructive: true, variant: 'secondary', onClick: function () { removePill(i); } },
-                __('Remove', 'headless-core')
-              )
-            );
-          }),
-          el(Button, { variant: 'primary', onClick: addPill }, __('Add pill button', 'headless-core'))
         )
       );
     },

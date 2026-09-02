@@ -49,10 +49,7 @@
       googlePlayLinkUrl: { type: 'string', default: '' },
       googlePlayLinks: {
         type: 'array',
-        default: [
-          { label: 'M-Port Cash', url: '' },
-          { label: 'Sacco Account', url: '' },
-        ],
+        default: [],
       },
       appStoreImageId: { type: 'number', default: 0 },
       appStoreImageUrl: { type: 'string', default: '' },
@@ -79,43 +76,18 @@
       var gv = String(a.gradientVia || '#00AFBB');
       var gt = String(a.gradientTo || '#00AB81');
 
-      var googlePlayLinks = Array.isArray(a.googlePlayLinks) && a.googlePlayLinks.length
-        ? a.googlePlayLinks.map(function (x) {
-            return {
-              label: String((x && x.label) || ''),
-              url: String((x && x.url) || ''),
-            };
-          })
-        : String(a.googlePlayLinkUrl || '').trim()
-          ? [
-              { label: 'M-Port Cash', url: String(a.googlePlayLinkUrl || '') },
-              { label: 'Sacco Account', url: '' },
-            ]
-          : [
-              { label: 'M-Port Cash', url: '' },
-              { label: 'Sacco Account', url: '' },
-            ];
+      var playStoreUrl = String(a.googlePlayLinkUrl || '');
+      if (!playStoreUrl.trim() && Array.isArray(a.googlePlayLinks) && a.googlePlayLinks[0]) {
+        playStoreUrl = String(a.googlePlayLinks[0].url || '');
+      }
 
-      function setPlayLink(i, patch) {
-        var next = googlePlayLinks.map(function (row, idx) {
-          return idx === i ? Object.assign({}, row, patch) : row;
-        });
+      function setPlayStoreUrl(v) {
+        var url = String(v || '');
         props.setAttributes({
-          googlePlayLinks: next,
-          googlePlayLinkUrl: next[0] && next[0].url ? next[0].url : '',
-        });
-      }
-      function addPlayLink() {
-        props.setAttributes({
-          googlePlayLinks: googlePlayLinks.concat([{ label: 'New app', url: '' }]),
-        });
-      }
-      function removePlayLink(i) {
-        if (!window.confirm(__('Remove this Play Store link?', 'headless-core'))) return;
-        var next = googlePlayLinks.filter(function (_, idx) { return idx !== i; });
-        props.setAttributes({
-          googlePlayLinks: next,
-          googlePlayLinkUrl: next[0] && next[0].url ? next[0].url : '',
+          googlePlayLinkUrl: url,
+          googlePlayLinks: url.trim()
+            ? [{ label: 'Google Play', url: url }]
+            : [],
         });
       }
 
@@ -307,39 +279,11 @@
                     ? el(Button, { variant: 'tertiary', isDestructive: true, onClick: function () { props.setAttributes({ googlePlayImageId: 0, googlePlayImageUrl: '' }); } }, __('Clear', 'headless-core'))
                     : null
                 ),
-                el('p', { style: { fontSize: '11px', margin: '12px 0 6px', fontWeight: 600 } }, __('Google Play links (labeled buttons when 2+)', 'headless-core')),
-                googlePlayLinks.map(function (row, i) {
-                  return el(
-                    'div',
-                    {
-                      key: 'gp-link-' + i,
-                      style: {
-                        marginBottom: '10px',
-                        padding: '8px',
-                        border: '1px solid rgba(255,255,255,0.35)',
-                        borderRadius: '4px',
-                      },
-                    },
-                    el(TextControl, {
-                      label: __('Label', 'headless-core'),
-                      value: row.label || '',
-                      onChange: function (v) { setPlayLink(i, { label: v }); },
-                    }),
-                    el(TextControl, {
-                      label: __('Play Store URL', 'headless-core'),
-                      value: row.url || '',
-                      onChange: function (v) { setPlayLink(i, { url: v }); },
-                    }),
-                    googlePlayLinks.length > 1
-                      ? el(Button, {
-                          variant: 'tertiary',
-                          isDestructive: true,
-                          onClick: function () { removePlayLink(i); },
-                        }, __('Remove link', 'headless-core'))
-                      : null
-                  );
-                }),
-                el(Button, { variant: 'secondary', onClick: addPlayLink }, __('Add Play Store link', 'headless-core'))
+                el(TextControl, {
+                  label: __('Play Store URL', 'headless-core'),
+                  value: playStoreUrl,
+                  onChange: setPlayStoreUrl,
+                })
               ),
               el('div', null,
                 el('p', { style: { fontSize: '11px', margin: '0 0 6px', fontWeight: 600 } }, __('App Store badge (Media Library)', 'headless-core')),

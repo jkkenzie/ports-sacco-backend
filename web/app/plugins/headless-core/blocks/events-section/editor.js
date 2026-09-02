@@ -14,6 +14,7 @@
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var __ = i18n.__;
+  var headlessLink = window.headlessCoreEditor || {};
 
   var palette = ['#FF8C00', '#FF6347', '#800080', '#ff6346', '#ff7bac', '#ffffff', '#000000', '#22ACB6', '#F5F4EE'];
 
@@ -25,16 +26,6 @@
     var g2 = gv || gf || gt || '#FF6347';
     var g3 = gt || gv || gf || '#800080';
     return { background: 'linear-gradient(to right,' + g1 + ',' + g2 + ',' + g3 + ')' };
-  }
-
-  function curvePreviewBg(a) {
-    if (a.topBarUseGradient) {
-      var f = String(a.topBarGradientFrom || '#ff6346');
-      var v = String(a.topBarGradientVia || '#FF6347');
-      var t = String(a.topBarGradientTo || '#ff6346');
-      return 'linear-gradient(to right,' + f + ',' + v + ',' + t + ')';
-    }
-    return String(a.topBarBg || a.topCurveFillColor || '#ff6346');
   }
 
   function richText(props, a, key, tagName, placeholder, style) {
@@ -93,6 +84,7 @@
       venueTitle: { type: 'string', default: 'Venue' },
       timeLine: { type: 'string', default: '09.00 HOURS' },
       bannerTextColor: { type: 'string', default: '#ffffff' },
+      linkUrl: { type: 'string', default: '' },
     },
     edit: function (props) {
       var a = props.attributes;
@@ -143,7 +135,26 @@
               label: __('Section id (anchor)', 'headless-core'),
               value: a.sectionId != null ? a.sectionId : 'events',
               onChange: function (v) { props.setAttributes({ sectionId: v != null ? String(v) : 'events' }); },
-            })
+            }),
+            headlessLink.renderLinkControlAttribute
+              ? headlessLink.renderLinkControlAttribute(
+                  el,
+                  blockEditor,
+                  components,
+                  i18n,
+                  __('Content link (optional)', 'headless-core'),
+                  a,
+                  'linkUrl',
+                  props.setAttributes
+                )
+              : el(TextControl, {
+                  label: __('Content link (optional)', 'headless-core'),
+                  value: a.linkUrl || '',
+                  onChange: function (v) {
+                    props.setAttributes({ linkUrl: v || '' });
+                  },
+                  help: __('Wraps the banner content. Leave empty for no link.', 'headless-core'),
+                })
           ),
           el(
             PanelBody,
@@ -199,7 +210,12 @@
               label: __('Scroll — inner (empty = transparent)', 'headless-core'),
               value: a.scrollButtonInner || '',
               onChange: function (v) { props.setAttributes({ scrollButtonInner: v || '' }); },
-            })
+            }),
+            el(
+              'div',
+              { style: { marginTop: '10px', fontSize: '12px', color: '#666' } },
+              __('Top curve and scroll button render on the frontend only.', 'headless-core')
+            )
           ),
           el(
             PanelBody,
@@ -280,55 +296,20 @@
         el(
           'div',
           blockProps,
-          el(
-            'div',
-            {
-              style: {
-                position: 'relative',
-                padding: '0 12px 20px',
-                ...bg,
-                color: tc,
-                minHeight: '300px',
-                boxSizing: 'border-box',
-                overflow: 'hidden',
-              },
-            },
             el(
               'div',
-              { style: { position: 'relative', marginTop: '0', marginBottom: '8px' } },
-              el('div', {
+              {
                 style: {
-                  minHeight: '28px',
-                  marginTop: '-8px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'flex-end',
+                  position: 'relative',
+                  padding: '20px 12px 20px',
+                  ...bg,
+                  color: tc,
+                  minHeight: '300px',
+                  boxSizing: 'border-box',
+                  overflow: 'hidden',
                 },
               },
-              el('div', {
-                style: {
-                  width: '72px',
-                  height: '22px',
-                  borderRadius: '2px',
-                  background: curvePreviewBg(a),
-                },
-              })
-              ),
-              el(
-                'div',
-                { style: { display: 'flex', justifyContent: 'center', marginTop: '-36px', marginBottom: '8px', position: 'relative', zIndex: 2 } },
-                el('div', {
-                  style: {
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: a.topBarScrollIconOuterColor || a.scrollButtonOuter || '#ffffff',
-                    opacity: 0.9,
-                  },
-                })
-              )
-            ),
-            a.patternImageUrl
+              a.patternImageUrl
               ? el('img', {
                 src: a.patternImageUrl,
                 alt: '',

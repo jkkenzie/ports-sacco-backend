@@ -115,27 +115,34 @@
       return renderTextUrlControl(el, TextControl, label, item, urlKey, onChange);
     }
 
-    var storedUrl = readUrlFromItem(item, urlKey);
+    // Optional: always-editable search field (no LinkControl preview chrome).
+    if (opts.preferUrlSearch) {
+      return renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, options);
+    }
+
     var linkValue = linkValueFromItem(item, urlKey);
-    var controlKey = urlKey + ':' + String(storedUrl || 'new') + ':' + String((item && item.linkId) || 0);
+    var linkId = item && item.linkId ? Number(item.linkId) : 0;
+    var controlKey = String(opts.instanceKey || urlKey) + '-link-' + String(linkId || 'x');
 
     return el(
-      BaseControl,
-      { label: label },
-      el(LinkControl, {
-        key: controlKey,
-        value: linkValue,
-        onChange: function (link) {
-          onChange(patchFromLink(link, urlKey));
-        },
-        settings: [
-          {
-            id: 'opensInNewTab',
-            title: __('Open in new tab', 'headless-core'),
+      'div',
+      { className: 'headless-link-control-wrap' },
+      el(BaseControl, { label: label },
+        el(LinkControl, {
+          key: controlKey,
+          value: linkValue,
+          onChange: function (link) {
+            onChange(patchFromLink(link, urlKey));
           },
-        ],
-        hasRichPreviews: false,
-      })
+          settings: [
+            {
+              id: 'opensInNewTab',
+              title: __('Open in new tab', 'headless-core'),
+            },
+          ],
+          hasRichPreviews: false,
+        })
+      )
     );
   }
 
@@ -261,6 +268,7 @@
   function renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, options) {
     var URLInput = blockEditor.URLInput || blockEditor.__experimentalURLInput;
     var TextControl = components.TextControl;
+    var BaseControl = components.BaseControl;
     var __ = i18n.__;
     var opts = options && typeof options === 'object' ? options : {};
     var instanceKey = String(opts.instanceKey || urlKey || 'url-field');
@@ -285,25 +293,28 @@
     }
 
     var fields = [
-      el(URLInput, {
-        key: instanceKey,
-        className: 'headless-url-search-control',
-        label: label,
-        value: showHash ? parts.base : currentUrl,
-        isFullWidth: true,
-        placeholder: __('Search pages or paste URL…', 'headless-core'),
-        onChange: function (nextUrl, post) {
-          var url = typeof nextUrl === 'string' ? nextUrl : coerceUrl(nextUrl);
-          if (showHash) {
-            var split = splitUrlHash(url);
-            emitUrl(split.base, split.hash || parts.hash, post);
-            return;
-          }
-          var selected = post && typeof post === 'object' ? post : null;
-          onChange(patchFromUrlInput(url, selected, urlKey, item));
-        },
-        __nextHasNoMarginBottom: true,
-      }),
+      el(
+        BaseControl,
+        { key: instanceKey + '-url', label: label },
+        el(URLInput, {
+          key: instanceKey,
+          className: 'headless-url-search-control',
+          value: showHash ? parts.base : currentUrl,
+          isFullWidth: true,
+          placeholder: __('Search or paste URL…', 'headless-core'),
+          onChange: function (nextUrl, post) {
+            var url = typeof nextUrl === 'string' ? nextUrl : coerceUrl(nextUrl);
+            if (showHash) {
+              var split = splitUrlHash(url);
+              emitUrl(split.base, split.hash || parts.hash, post);
+              return;
+            }
+            var selected = post && typeof post === 'object' ? post : null;
+            onChange(patchFromUrlInput(url, selected, urlKey, item));
+          },
+          __nextHasNoMarginBottom: true,
+        })
+      ),
     ];
 
     if (showHash) {
@@ -335,7 +346,7 @@
   function renderLinkControlAttribute(el, blockEditor, components, i18n, label, attributes, urlKey, setAttributes) {
     return renderLinkControl(el, blockEditor, components, i18n, label, attributes, urlKey, function (patch) {
       setAttributes(patch);
-    });
+    }, { instanceKey: 'attr-' + String(urlKey || 'url') });
   }
 
   window.headlessCoreEditor = {

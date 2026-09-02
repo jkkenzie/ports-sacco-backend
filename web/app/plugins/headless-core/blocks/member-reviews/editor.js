@@ -1,6 +1,7 @@
 (function (blocks, blockEditor, components, element, i18n) {
   var el = element.createElement;
   var Fragment = element.Fragment;
+  var useState = element.useState;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
   var InspectorControls = blockEditor.InspectorControls;
@@ -16,6 +17,8 @@
   var MediaUpload = blockEditor.MediaUpload;
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var __ = i18n.__;
+
+  var BLOCK_TITLE = __('Member reviews', 'headless-core');
 
   var palette = [
     '#FF8C00',
@@ -154,9 +157,16 @@
       },
     },
     edit: function (props) {
+      var collapsedState = useState(false);
+      var editorCollapsed = collapsedState[0];
+      var setEditorCollapsed = collapsedState[1];
       var a = props.attributes;
       var reviews = Array.isArray(a.reviews) ? a.reviews : [];
       var blockProps = useBlockProps({ className: 'headless-member-reviews-block' });
+
+      function toggleCollapsed() {
+        setEditorCollapsed(!editorCollapsed);
+      }
 
       return el(
         Fragment,
@@ -423,11 +433,84 @@
               style: {
                 border: '1px solid #e5e7eb',
                 borderRadius: '8px',
-                padding: '16px',
-                background: '#fafafa',
+                overflow: 'hidden',
+                background: '#fff',
               },
             },
-            el('p', { style: { marginTop: 0, fontWeight: 600 } }, __('Member reviews', 'headless-core')),
+            el(
+              'div',
+              {
+                style: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  padding: '10px 12px',
+                  background: '#f6f7f7',
+                  borderBottom: editorCollapsed ? 'none' : '1px solid #e5e7eb',
+                  cursor: 'pointer',
+                },
+                onClick: toggleCollapsed,
+                role: 'button',
+                tabIndex: 0,
+                'aria-expanded': !editorCollapsed,
+                onKeyDown: function (e) {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleCollapsed();
+                  }
+                },
+              },
+              el(
+                'div',
+                { style: { display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: '1 1 auto' } },
+                el(
+                  'span',
+                  {
+                    'aria-hidden': true,
+                    style: {
+                      display: 'inline-flex',
+                      width: '22px',
+                      height: '22px',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '4px',
+                      background: '#e2e8f0',
+                      color: '#334155',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      flex: '0 0 auto',
+                      transform: editorCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.15s ease',
+                    },
+                  },
+                  '▾'
+                ),
+                el('strong', { style: { fontSize: '14px', color: '#1e1e1e' } }, BLOCK_TITLE)
+              ),
+              el(
+                Button,
+                {
+                  variant: 'tertiary',
+                  isSmall: true,
+                  onClick: function (e) {
+                    e.stopPropagation();
+                    toggleCollapsed();
+                  },
+                },
+                editorCollapsed ? __('Expand', 'headless-core') : __('Collapse', 'headless-core')
+              )
+            ),
+            editorCollapsed
+              ? null
+              : el(
+                  'div',
+                  {
+                    style: {
+                      padding: '16px',
+                      background: '#fafafa',
+                    },
+                  },
             el(RichText, {
               tagName: 'div',
               label: __('Badge label', 'headless-core'),
@@ -535,6 +618,7 @@
                 });
               },
             }, __('Add review', 'headless-core'))
+                  )
           )
         )
       );

@@ -1,5 +1,6 @@
 (function (blocks, blockEditor, components, element, i18n) {
   var el = element.createElement;
+  var useState = element.useState;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
   var InspectorControls = blockEditor.InspectorControls;
@@ -14,6 +15,8 @@
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
+
+  var BLOCK_TITLE = __('Home Product Cards', 'headless-core');
 
   function renderUrlField(label, item, urlKey, onChange) {
     if (headlessLink.renderLinkControl) {
@@ -78,6 +81,9 @@
       cards: { type: 'array', default: [] },
     },
     edit: function (props) {
+      var collapsedState = useState(false);
+      var editorCollapsed = collapsedState[0];
+      var setEditorCollapsed = collapsedState[1];
       var blockProps = useBlockProps({ className: 'headless-home-product-cards-block' });
       var a = props.attributes;
       var cards = normalizeCards(a.cards);
@@ -87,6 +93,10 @@
           { imageId: 0, imageUrl: '', title: 'SecureYour Future', description: 'Maximize your savings with attractive interest rates and peace of mind.', tag: 'SAVE & INVEST WITH US', href: '#' },
           { imageId: 0, imageUrl: '', title: 'Flexible Loan Options', description: 'Get flexible loan options tailored to your needs and goals.', tag: 'GET A LOAN FROM US', href: '#' },
         ];
+      }
+
+      function toggleCollapsed() {
+        setEditorCollapsed(!editorCollapsed);
       }
 
       function setCard(i, patch) {
@@ -144,9 +154,9 @@
             el(ColorPalette, { value: a.cardBorderColor, colors: palette(), onChange: function (c) { props.setAttributes({ cardBorderColor: c || '#e8e8e8' }); } }),
             el(BaseControl, { label: __('Card hover border', 'headless-core') }),
             el(ColorPalette, { value: a.cardHoverBorderColor, colors: palette(), onChange: function (c) { props.setAttributes({ cardHoverBorderColor: c || '#cfeeed' }); } }),
-            el(BaseControl, { label: __('Tag bar', 'headless-core') }),
+            el(BaseControl, { label: __('Tag line bar', 'headless-core') }),
             el(ColorPalette, { value: a.cardTagBarColor, colors: palette(), onChange: function (c) { props.setAttributes({ cardTagBarColor: c || '#F06E2A' }); } }),
-            el(BaseControl, { label: __('Tag text', 'headless-core') }),
+            el(BaseControl, { label: __('Tag line text', 'headless-core') }),
             el(ColorPalette, { value: a.cardTagTextColor, colors: palette(), onChange: function (c) { props.setAttributes({ cardTagTextColor: c || '#3b4e6b' }); } }),
             el(BaseControl, { label: __('Arrow bg', 'headless-core') }),
             el(ColorPalette, { value: a.arrowBgColor, colors: palette(), onChange: function (c) { props.setAttributes({ arrowBgColor: c || '#82cdcb' }); } }),
@@ -175,54 +185,136 @@
         ),
         el(
           'div',
-          { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', background: a.sectionBgColor || '#F5F4EE' } },
-          el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
-            el('div', { style: { textAlign: 'center' } },
-              el('div', { style: { color: a.kickerColor || '#22ACB6', fontSize: '12px', marginBottom: '8px' } }, a.kickerText || ''),
-              el('span', { style: { display: 'inline-block', background: a.badgeBgColor || '#EE6E2A', color: a.badgeTextColor || '#fff', borderRadius: '999px', padding: '6px 16px', fontSize: '12px', fontWeight: 700 } }, a.badgeText || 'EXPLORE')
+          {
+            style: {
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              background: '#fff',
+            },
+          },
+          el(
+            'div',
+            {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '10px 12px',
+                background: '#f6f7f7',
+                borderBottom: editorCollapsed ? 'none' : '1px solid #e5e7eb',
+                cursor: 'pointer',
+              },
+              onClick: toggleCollapsed,
+              role: 'button',
+              tabIndex: 0,
+              'aria-expanded': !editorCollapsed,
+              onKeyDown: function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleCollapsed();
+                }
+              },
+            },
+            el(
+              'div',
+              { style: { display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: '1 1 auto' } },
+              el(
+                'span',
+                {
+                  'aria-hidden': true,
+                  style: {
+                    display: 'inline-flex',
+                    width: '22px',
+                    height: '22px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '4px',
+                    background: '#e2e8f0',
+                    color: '#334155',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    flex: '0 0 auto',
+                    transform: editorCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.15s ease',
+                  },
+                },
+                '▾'
+              ),
+              el('strong', { style: { fontSize: '14px', color: '#1e1e1e' } }, BLOCK_TITLE)
             ),
-            el('div', { style: { marginTop: '16px' } },
-              cards.map(function (card, i) {
-                return el(
-                  'div',
-                  { key: i, style: { padding: '12px', border: '1px solid #eee', borderRadius: '8px', marginTop: '10px', background: '#fff' } },
-                  el('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center' } },
-                    el('strong', null, __('Card', 'headless-core') + ' ' + (i + 1)),
-                    el(Button, { variant: 'tertiary', isDestructive: true, onClick: function () { removeCard(i); } }, __('Remove', 'headless-core'))
-                  ),
-                  el(MediaUploadCheck, null,
-                    el(MediaUpload, {
-                      allowedTypes: ['image'],
-                      value: card.imageId || 0,
-                      onSelect: function (media) {
-                        setCard(i, { imageId: media && media.id ? media.id : 0, imageUrl: media && media.url ? media.url : '' });
-                      },
-                      render: function (obj) {
-                        return el(Button, { variant: 'secondary', onClick: obj.open }, card.imageId ? __('Replace image', 'headless-core') : __('Select image', 'headless-core'));
-                      }
-                    })
-                  ),
-                  card.imageUrl
-                    ? el('div', { style: { marginTop: '10px' } },
-                      el('img', { src: card.imageUrl, alt: '', style: { width: '180px', height: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' } })
-                    )
-                    : null,
-                  el(ToggleControl, {
-                    label: __('Image above content (may overlap text)', 'headless-core'),
-                    checked: Boolean(card.imageAboveContent),
-                    onChange: function (v) { setCard(i, { imageAboveContent: !!v }); },
-                  }),
-                  el(TextControl, { label: __('Title', 'headless-core'), value: card.title, onChange: function (v) { setCard(i, { title: v }); } }),
-                  el(TextareaControl, { label: __('Description', 'headless-core'), value: card.description, onChange: function (v) { setCard(i, { description: v }); } }),
-                  el(TextControl, { label: __('Tag', 'headless-core'), value: card.tag, onChange: function (v) { setCard(i, { tag: v }); } }),
-                  renderUrlField(__('Link (href)', 'headless-core'), card, 'href', function (patch) { setCard(i, patch); })
-                );
-              }),
-              el('div', { style: { marginTop: '12px' } },
-                el(Button, { variant: 'primary', onClick: addCard }, '+ ', __('Add card', 'headless-core'))
-              )
+            el(
+              Button,
+              {
+                variant: 'tertiary',
+                isSmall: true,
+                onClick: function (e) {
+                  e.stopPropagation();
+                  toggleCollapsed();
+                },
+              },
+              editorCollapsed ? __('Expand', 'headless-core') : __('Collapse', 'headless-core')
             )
-          )
+          ),
+          editorCollapsed
+            ? null
+            : el(
+                'div',
+                { style: { padding: '16px', background: a.sectionBgColor || '#F5F4EE' } },
+                el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
+                  el('div', { style: { textAlign: 'center' } },
+                    el('div', { style: { color: a.kickerColor || '#22ACB6', fontSize: '12px', marginBottom: '8px' } }, a.kickerText || ''),
+                    el('span', { style: { display: 'inline-block', background: a.badgeBgColor || '#EE6E2A', color: a.badgeTextColor || '#fff', borderRadius: '999px', padding: '6px 16px', fontSize: '12px', fontWeight: 700 } }, a.badgeText || 'EXPLORE')
+                  ),
+                  el('div', { style: { marginTop: '16px' } },
+                    cards.map(function (card, i) {
+                      return el(
+                        'div',
+                        { key: i, style: { padding: '12px', border: '1px solid #eee', borderRadius: '8px', marginTop: '10px', background: '#fff' } },
+                        el('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center' } },
+                          el('strong', null, __('Card', 'headless-core') + ' ' + (i + 1)),
+                          el(Button, { variant: 'tertiary', isDestructive: true, onClick: function () { removeCard(i); } }, __('Remove', 'headless-core'))
+                        ),
+                        el(MediaUploadCheck, null,
+                          el(MediaUpload, {
+                            allowedTypes: ['image'],
+                            value: card.imageId || 0,
+                            onSelect: function (media) {
+                              setCard(i, { imageId: media && media.id ? media.id : 0, imageUrl: media && media.url ? media.url : '' });
+                            },
+                            render: function (obj) {
+                              return el(Button, { variant: 'secondary', onClick: obj.open }, card.imageId ? __('Replace image', 'headless-core') : __('Select image', 'headless-core'));
+                            }
+                          })
+                        ),
+                        card.imageUrl
+                          ? el('div', { style: { marginTop: '10px' } },
+                            el('img', { src: card.imageUrl, alt: '', style: { width: '180px', height: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' } })
+                          )
+                          : null,
+                        el(ToggleControl, {
+                          label: __('Image above content (may overlap text)', 'headless-core'),
+                          checked: Boolean(card.imageAboveContent),
+                          onChange: function (v) { setCard(i, { imageAboveContent: !!v }); },
+                        }),
+                        el(TextControl, { label: __('Title', 'headless-core'), value: card.title, onChange: function (v) { setCard(i, { title: v }); } }),
+                        el(TextareaControl, { label: __('Description', 'headless-core'), value: card.description, onChange: function (v) { setCard(i, { description: v }); } }),
+                        el(TextControl, {
+                          label: __('Tag line', 'headless-core'),
+                          help: __('Short marketing line on the card — not a WordPress tag.', 'headless-core'),
+                          value: card.tag,
+                          onChange: function (v) { setCard(i, { tag: v }); },
+                        }),
+                        renderUrlField(__('Link (href)', 'headless-core'), card, 'href', function (patch) { setCard(i, patch); })
+                      );
+                    }),
+                    el('div', { style: { marginTop: '12px' } },
+                      el(Button, { variant: 'primary', onClick: addCard }, '+ ', __('Add card', 'headless-core'))
+                    )
+                  )
+                )
+              )
         )
       );
     },

@@ -1,24 +1,124 @@
-/* Ensure every URL search field in block sidebars stays visible (multiple instances). */
-.headless-url-search-control.block-editor-url-input,
-.headless-url-search-control .block-editor-url-input {
+/* Canvas-embedded carousel page/post link picker. */
+.headless-carousel-link-field {
+  margin: 12px auto 0;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  text-align: left;
+}
+
+/* URL search fields in the block sidebar. */
+.block-editor-block-inspector .headless-url-search-wrap,
+.components-panel__body .headless-url-search-wrap,
+.headless-url-search-wrap {
+  position: relative;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  isolation: isolate;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.headless-url-search-wrap .components-base-control,
+.headless-url-search-wrap .components-base-control__field,
+.headless-url-search-wrap .components-base-control__help {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.headless-url-search-control.block-editor-url-input,
+.headless-url-search-control .block-editor-url-input,
+.headless-url-search-wrap .block-editor-url-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   box-sizing: border-box;
 }
 
 .headless-url-search-control input[type="text"],
-.headless-url-search-control input.components-input-control__input {
+.headless-url-search-control input.components-input-control__input,
+.headless-url-search-wrap .block-editor-url-input input[type="text"],
+.headless-url-search-wrap input[type="text"] {
   min-height: 36px;
   width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Keep page/post suggestions inside the sidebar instead of stretching it. */
+.headless-url-search-wrap .block-editor-url-input__suggestions,
+.headless-url-search-control .block-editor-url-input__suggestions {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  word-break: break-word;
+}
+
+.headless-url-search-wrap .block-editor-url-input__suggestion,
+.headless-url-search-control .block-editor-url-input__suggestion {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * LinkControl defaults to min-width: 350px which overflows the ~280px inspector.
+ * Only constrain inside the sidebar — leave canvas / carousel layouts natural.
+ */
+.block-editor-block-inspector .headless-link-control-wrap,
+.components-panel__body .headless-link-control-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.block-editor-block-inspector .headless-link-control-wrap .block-editor-link-control,
+.components-panel__body .headless-link-control-wrap .block-editor-link-control,
+.block-editor-block-inspector .block-editor-link-control,
+.components-panel__body .block-editor-link-control {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
   box-sizing: border-box;
 }
 
-.headless-url-search-wrap {
-  position: relative;
-  width: 100%;
-  margin-top: 8px;
-  margin-bottom: 4px;
-  isolation: isolate;
+.block-editor-block-inspector .headless-link-control-wrap .block-editor-link-control__preview-title,
+.block-editor-block-inspector .headless-link-control-wrap .block-editor-link-control__preview-info,
+.block-editor-block-inspector .headless-link-control-wrap .block-editor-link-control__search-item-info,
+.components-panel__body .headless-link-control-wrap .block-editor-link-control__preview-title,
+.components-panel__body .headless-link-control-wrap .block-editor-link-control__preview-info,
+.components-panel__body .headless-link-control-wrap .block-editor-link-control__search-item-info {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/*
+ * Decorative section curve bars and floating scroll buttons overflow the
+ * Gutenberg canvas (fixed 1089px SVG). Hide them in the editor only.
+ */
+.section-curve-bar,
+.section-scroll-button,
+[data-section-chrome="curve-bar"],
+[data-section-chrome="scroll-button"],
+svg[viewBox="0 0 1088.78 38.01"],
+svg[viewBox="0 0 116.94 34.5"],
+button[aria-label="Scroll section to top"],
+div:has(> svg[viewBox="0 0 1088.78 38.01"]) {
+  display: none !important;
 }
 
 .headless-url-hash-control {
