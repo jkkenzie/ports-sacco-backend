@@ -17,7 +17,10 @@
   var RangeControl = components.RangeControl || components.__experimentalRangeControl;
   var __ = i18n.__;
 
-  var BLOCK_TITLE = __('Home stats', 'headless-core');
+  var collapseApi = window.headlessCoreBlockCollapse || {};
+  var BLOCK_TITLE = collapseApi.getTitle
+    ? collapseApi.getTitle('custom/home-stats', __('Stats section', 'headless-core'))
+    : __('Stats section', 'headless-core');
 
   var trashSvg = el(
     'svg',

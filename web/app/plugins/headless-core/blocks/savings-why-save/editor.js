@@ -234,14 +234,19 @@
                   allowedFormats: [],
                   style: { fontWeight: 800, marginBottom: '6px', color: titleColor }
                 }),
-                el(RichText, {
-                  tagName: 'p',
-                  value: (item && item.paragraph) || '',
-                  onChange: function (v) { setItem(index, { paragraph: v }); },
-                  placeholder: __('Point paragraph…', 'headless-core'),
-                  allowedFormats: ['core/bold', 'core/italic', 'core/text-color'],
-                  style: { color: textColor }
-                }),
+                el('div', { className: 'headless-why-save-point-paragraph' },
+                  el(RichText, {
+                    tagName: 'p',
+                    value: (item && item.paragraph) || '',
+                    onChange: function (v) { setItem(index, { paragraph: v }); },
+                    placeholder: __('Point paragraph…', 'headless-core'),
+                    allowedFormats: ['core/bold', 'core/italic', 'core/text-color'],
+                    style: { color: textColor, margin: 0 }
+                  })
+                ),
+                el('p', {
+                  style: { margin: '4px 0 0', fontSize: '11px', color: '#64748b' }
+                }, __('Tip: use Bold (Ctrl+B) for larger emphasis text (25px on the site).', 'headless-core')),
                 el(ToggleControl, {
                   label: __('Full width (span both columns)', 'headless-core'),
                   checked: Boolean(item && item.fullWidth),

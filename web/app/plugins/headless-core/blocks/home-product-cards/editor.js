@@ -16,7 +16,10 @@
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
 
-  var BLOCK_TITLE = __('Home Product Cards', 'headless-core');
+  var collapseApi = window.headlessCoreBlockCollapse || {};
+  var BLOCK_TITLE = collapseApi.getTitle
+    ? collapseApi.getTitle('custom/home-product-cards', __('Product cards', 'headless-core'))
+    : __('Product cards', 'headless-core');
 
   function renderUrlField(label, item, urlKey, onChange) {
     if (headlessLink.renderLinkControl) {

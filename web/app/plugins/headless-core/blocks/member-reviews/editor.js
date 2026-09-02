@@ -18,7 +18,10 @@
   var MediaUploadCheck = blockEditor.MediaUploadCheck;
   var __ = i18n.__;
 
-  var BLOCK_TITLE = __('Member reviews', 'headless-core');
+  var collapseApi = window.headlessCoreBlockCollapse || {};
+  var BLOCK_TITLE = collapseApi.getTitle
+    ? collapseApi.getTitle('custom/member-reviews', __('Reviews section', 'headless-core'))
+    : __('Reviews section', 'headless-core');
 
   var palette = [
     '#FF8C00',

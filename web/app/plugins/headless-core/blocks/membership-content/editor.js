@@ -356,7 +356,9 @@
                     textOverflow: 'ellipsis',
                   },
                 }, headingLabel),
-                el('span', { style: { fontSize: '12px', color: '#64748b' } }, __('Membership Content', 'headless-core'))
+                el('span', { style: { fontSize: '12px', color: '#64748b' } }, (window.headlessCoreBlockCollapse && window.headlessCoreBlockCollapse.getTitle
+                  ? window.headlessCoreBlockCollapse.getTitle('custom/membership-content', __('Content section', 'headless-core'))
+                  : __('Content section', 'headless-core')))
               )
             ),
             el(
