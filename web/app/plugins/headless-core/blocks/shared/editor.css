@@ -120,3 +120,7 @@ button[aria-label="Scroll section to top"],
 div:has(> svg[viewBox="0 0 1088.78 38.01"]) {
   display: none !important;
 }
+
+.headless-url-hash-control {
+  margin-top: 4px;
+}

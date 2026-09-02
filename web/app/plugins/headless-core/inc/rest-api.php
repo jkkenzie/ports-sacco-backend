@@ -321,10 +321,14 @@ function headless_core_build_page_response(string $slug)
     $previousGlobalPost = $hadGlobalPost ? $GLOBALS['post'] : null;
     $GLOBALS['post'] = $post;
 
+    headless_core_set_normalize_page_path(headless_core_page_path_from_post($post));
+
     try {
         $parsed = parse_blocks((string) $post->post_content);
         $blocks = headless_core_normalize_blocks($parsed);
     } finally {
+        headless_core_clear_normalize_page_path();
+
         if ($hadGlobalPost) {
             $GLOBALS['post'] = $previousGlobalPost;
         } else {
@@ -1153,7 +1157,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                 }
                 $normalizedButtons[] = [
                     'label' => $label,
-                    'url' => $url !== '' ? headless_core_menu_url_to_path($url) : '',
+                    'url' => $url !== '' ? headless_core_resolve_hash_only_url(headless_core_menu_url_to_path($url)) : '',
                     'textColor' => headless_core_sanitize_color_string((string) ($button['textColor'] ?? ''), '#22abb5'),
                     'borderColor' => headless_core_sanitize_color_string((string) ($button['borderColor'] ?? ''), '#22abb5'),
                     'bgColor' => headless_core_sanitize_color_string((string) ($button['bgColor'] ?? ''), '#ffffff'),
@@ -1181,7 +1185,7 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
                 }
                 $normalizedMenuItems[] = [
                     'label' => $label,
-                    'href' => $href !== '' ? headless_core_menu_url_to_path($href) : '',
+                    'href' => $href !== '' ? headless_core_resolve_hash_only_url(headless_core_menu_url_to_path($href)) : '',
                     'target' => ! empty($item['opensInNewTab']) || (($item['target'] ?? '') === '_blank') ? '_blank' : '',
                 ];
             }
@@ -4963,6 +4967,77 @@ function headless_core_menu_url_is_external(string $url): bool
     }
 
     return $homeHost !== $urlHost;
+}
+
+/** @var string|null SPA path for the page currently being normalized (e.g. /membership). */
+$headless_core_normalize_page_path = null;
+
+function headless_core_set_normalize_page_path(string $path): void
+{
+    global $headless_core_normalize_page_path;
+
+    $path = trim($path);
+    if ($path === '' || $path === 'home') {
+        $headless_core_normalize_page_path = '/';
+
+        return;
+    }
+
+    $headless_core_normalize_page_path = '/' . trim($path, '/');
+}
+
+function headless_core_clear_normalize_page_path(): void
+{
+    global $headless_core_normalize_page_path;
+    $headless_core_normalize_page_path = null;
+}
+
+function headless_core_get_normalize_page_path(): string
+{
+    global $headless_core_normalize_page_path;
+
+    return is_string($headless_core_normalize_page_path) ? $headless_core_normalize_page_path : '';
+}
+
+function headless_core_page_path_from_post(WP_Post $post): string
+{
+    $frontPageId = (int) get_option('page_on_front');
+    if ($frontPageId > 0 && (int) $post->ID === $frontPageId) {
+        return '/';
+    }
+
+    $slug = trim((string) get_page_uri($post), '/');
+    if ($slug === '') {
+        return '/';
+    }
+
+    return '/' . $slug;
+}
+
+/**
+ * Prefix hash-only links (#section) with the page path so SPA navigation works cross-page.
+ */
+function headless_core_resolve_hash_only_url(string $url): string
+{
+    $trimmed = trim($url);
+    if ($trimmed === '' || $trimmed === '#') {
+        return $trimmed;
+    }
+
+    if ($trimmed[0] !== '#' || strlen($trimmed) <= 1) {
+        return $url;
+    }
+
+    $pagePath = headless_core_get_normalize_page_path();
+    if ($pagePath === '') {
+        return $url;
+    }
+
+    if ($pagePath === '/') {
+        return '/' . $trimmed;
+    }
+
+    return rtrim($pagePath, '/') . $trimmed;
 }
 
 /**

@@ -116,6 +116,9 @@
   }
 
   function mergeLinkPatch(item, patch, urlKey) {
+    if (headlessLink.mergeLinkPatch) {
+      return headlessLink.mergeLinkPatch(item, patch, urlKey);
+    }
     var next = Object.assign({}, item || {});
     var src = patch && typeof patch === 'object' ? patch : {};
     Object.keys(src).forEach(function (key) {
@@ -222,26 +225,62 @@
     return options;
   }
 
-  function renderUrlField(label, item, urlKey, onChange) {
-    if (headlessLink.renderLinkControl) {
-      return headlessLink.renderLinkControl(el, blockEditor, components, i18n, label, item, urlKey, onChange);
+  function editorPagePath() {
+    try {
+      if (!window.wp || !wp.data) {
+        return '';
+      }
+      var select = wp.data.select('core/editor');
+      if (!select) {
+        return '';
+      }
+      if (headlessLink.pathnameFromUrl && select.getPermalink) {
+        var permalink = select.getPermalink();
+        if (permalink) {
+          return headlessLink.pathnameFromUrl(permalink);
+        }
+      }
+      if (select.getCurrentPostId) {
+        var postId = select.getCurrentPostId();
+        var record = postId ? wp.data.select('core').getEntityRecord('postType', 'page', postId) : null;
+        if (record && record.link && headlessLink.pathnameFromUrl) {
+          return headlessLink.pathnameFromUrl(record.link);
+        }
+      }
+    } catch (e) {
+      return '';
+    }
+    return '';
+  }
+
+  function renderUrlField(label, item, urlKey, onChange, instanceKey) {
+    if (headlessLink.renderUrlSearchInput) {
+      return headlessLink.renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, {
+        instanceKey: instanceKey || urlKey,
+        showHashFragment: true,
+        defaultBaseUrl: editorPagePath(),
+      });
     }
     return el(TextControl, {
       label: label,
       value: String((item && item[urlKey]) || ''),
-      placeholder: __('Search or paste a URL, or pick a section below', 'headless-core'),
+      placeholder: __('Search pages or paste URL…', 'headless-core'),
       onChange: function (v) {
-        var patch = {};
-        patch[urlKey] = String(v || '');
-        if (urlKey === 'href') {
-          patch.url = patch[urlKey];
-        }
-        if (urlKey === 'url') {
-          patch.href = patch[urlKey];
-        }
-        onChange(patch);
+        onChange(mergeLinkPatch(item, patchFromPlainUrl(v, urlKey), urlKey));
       },
     });
+  }
+
+  function patchFromPlainUrl(value, urlKey) {
+    var patch = {};
+    patch[urlKey] = String(value || '');
+    if (urlKey === 'href') {
+      patch.url = patch[urlKey];
+    }
+    if (urlKey === 'url') {
+      patch.href = patch[urlKey];
+    }
+    return patch;
   }
 
   function normalizeButtons(buttons) {
@@ -621,7 +660,7 @@
                   }),
                   renderUrlField(__('Page/Post Link', 'headless-core'), btn, 'url', function (patch) {
                     patchButton(index, patch);
-                  })
+                  }, 'hero-btn-' + index)
                 );
               }),
               el('div', { style: { marginTop: '10px' } },
@@ -643,7 +682,8 @@
                 : null,
               menuItems.map(function (item, index) {
                 var currentHref = String(item.href || '');
-                var sectionValue = currentHref.indexOf('#') === 0 ? currentHref : '';
+                var hashIdx = currentHref.indexOf('#');
+                var sectionValue = hashIdx >= 0 ? '#' + currentHref.slice(hashIdx + 1).replace(/^#/, '') : '';
                 return el(
                   'div',
                   { key: 'menu-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
@@ -662,21 +702,25 @@
                   }),
                   renderUrlField(__('Page/Post Link', 'headless-core'), item, 'href', function (patch) {
                     patchMenuItem(index, patch);
-                  }),
+                  }, 'hero-menu-' + index),
                   sectionOptions.length > 1
                     ? el(SelectControl, {
                         label: __('Or jump to a section on this page', 'headless-core'),
                         value: sectionValue,
                         options: sectionOptions,
                         onChange: function (v) {
-                          var next = String(v || '');
+                          var nextHash = String(v || '').replace(/^#/, '');
+                          var base = hashIdx > 0
+                            ? currentHref.slice(0, hashIdx)
+                            : (hashIdx === -1 ? currentHref : '');
+                          var next = nextHash ? (base ? base + '#' + nextHash : '#' + nextHash) : base;
                           patchMenuItem(index, {
                             href: next,
                             url: next,
-                            linkId: 0,
-                            linkType: next ? 'section' : '',
-                            opensInNewTab: false,
-                            target: '',
+                            linkId: nextHash && !base ? 0 : (item.linkId || 0),
+                            linkType: nextHash && !base ? 'section' : (item.linkType || ''),
+                            opensInNewTab: nextHash && !base ? false : Boolean(item.opensInNewTab),
+                            target: nextHash && !base ? '' : (item.target || ''),
                           });
                         },
                         help: __(
