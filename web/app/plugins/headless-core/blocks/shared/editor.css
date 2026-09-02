@@ -124,3 +124,7 @@ div:has(> svg[viewBox="0 0 1088.78 38.01"]) {
 .headless-url-hash-control {
   margin-top: 4px;
 }
+
+.headless-url-hash-control .components-select-control__input {
+  min-height: 36px;
+}

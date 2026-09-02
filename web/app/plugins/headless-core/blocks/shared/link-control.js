@@ -260,6 +260,196 @@
     return next;
   }
 
+  function slugifySectionId(input) {
+    return String(input || '')
+      .toLowerCase()
+      .trim()
+      .replace(/['"]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function stripHtml(text) {
+    return String(text || '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\uFFF9|\uFFFA|\uFFFB/g, '')
+      .trim();
+  }
+
+  /**
+   * Build SelectControl options from Gutenberg blocks on the current page.
+   * @param {Array} blocks
+   * @param {(key: string, fallback?: string) => string} [translate]
+   * @returns {Array<{ label: string, value: string }>}
+   */
+  function collectSectionAnchorOptions(blocks, translate) {
+    var __ = typeof translate === 'function' ? translate : function (key, fallback) {
+      return fallback || key;
+    };
+    var seen = {};
+    var options = [
+      {
+        label: __('— No section —', 'headless-core'),
+        value: '',
+      },
+    ];
+
+    function pushOption(id, label) {
+      var clean = String(id || '').replace(/^#/, '').trim();
+      if (!clean || seen[clean]) {
+        return;
+      }
+      seen[clean] = true;
+      var display = String(label || clean).trim();
+      options.push({
+        label: display === clean ? '#' + clean : display + ' (#' + clean + ')',
+        value: '#' + clean,
+      });
+    }
+
+    var SECTION_BLOCKS = {
+      'custom/membership-content': true,
+      'custom/asset-finance-whatever': true,
+      'custom/asset-finance-faq': true,
+      'custom/asset-finance-apply': true,
+      'custom/download-app': true,
+      'custom/contact-map': true,
+      'custom/faq-section': true,
+      'custom/events-section': true,
+      'custom/mobile-app-section': true,
+      'custom/home-about': true,
+      'custom/home-stats': true,
+      'custom/help-section': true,
+      'custom/home-product-cards': true,
+      'custom/product-services': true,
+      'custom/member-reviews': true,
+      'custom/newsletter-section': true,
+      'custom/partners-carousel': true,
+      'custom/team-display': true,
+      'custom/new-member-registration': true,
+      'core/heading': true,
+    };
+
+    function walk(list) {
+      if (!Array.isArray(list)) {
+        return;
+      }
+      list.forEach(function (block) {
+        if (!block || typeof block !== 'object') {
+          return;
+        }
+        var a = block.attributes || {};
+        var name = String(block.name || '');
+        var heading = stripHtml(a.heading || a.title || a.badgeText || a.content || '');
+        if (name === 'core/heading' && heading) {
+          heading = heading.replace(/<[^>]+>/g, '').trim();
+        }
+        var anchor = String(a.anchor || '').trim();
+        var sectionId = String(a.sectionId || '').trim();
+
+        if (name === 'custom/savings-why-save') {
+          var whySaveId = anchor || sectionId || slugifySectionId(heading);
+          if (whySaveId) {
+            pushOption(whySaveId, heading || whySaveId);
+          }
+          var whySaveItems = Array.isArray(a.items) ? a.items : [];
+          whySaveItems.forEach(function (item) {
+            if (!item || typeof item !== 'object') {
+              return;
+            }
+            var pointHeading = stripHtml(item.heading || item.label || item.title || '');
+            var pointAnchor = String(item.anchor || '').trim();
+            var pointId = pointAnchor || slugifySectionId(pointHeading);
+            if (pointId) {
+              pushOption(pointId, pointHeading || pointId);
+            }
+          });
+        } else if (SECTION_BLOCKS[name]) {
+          var id = anchor || sectionId || slugifySectionId(heading);
+          if (id) {
+            pushOption(id, heading || anchor || sectionId || id);
+          }
+        } else if (sectionId) {
+          pushOption(sectionId, heading || sectionId);
+        } else if (anchor) {
+          pushOption(anchor, heading || anchor);
+        }
+
+        if (Array.isArray(block.innerBlocks) && block.innerBlocks.length) {
+          walk(block.innerBlocks);
+        }
+      });
+    }
+
+    walk(blocks);
+    return options;
+  }
+
+  function normalizeSectionAnchorOptions(rawOptions, currentHash, translate) {
+    var __ = typeof translate === 'function' ? translate : function (key, fallback) {
+      return fallback || key;
+    };
+    var options = Array.isArray(rawOptions) && rawOptions.length
+      ? rawOptions.slice()
+      : [{ label: __('— No section —', 'headless-core'), value: '' }];
+
+    var current = String(currentHash || '').replace(/^#/, '').trim();
+    if (!current) {
+      return options;
+    }
+
+    var currentValue = '#' + current;
+    var exists = options.some(function (opt) {
+      return String(opt && opt.value ? opt.value : '') === currentValue;
+    });
+    if (!exists) {
+      options.push({
+        label: '#' + current + ' (' + __('custom', 'headless-core') + ')',
+        value: currentValue,
+      });
+    }
+    return options;
+  }
+
+  function renderHashAnchorControl(el, components, i18n, parts, opts, emitUrl, item, urlKey) {
+    var SelectControl = components.SelectControl;
+    var TextControl = components.TextControl;
+    var __ = i18n.__;
+    var rawOptions = opts.sectionAnchorOptions;
+    var hasDropdown = Array.isArray(rawOptions) && rawOptions.length > 1;
+    var currentValue = parts.hash ? '#' + String(parts.hash).replace(/^#/, '') : '';
+
+    if (hasDropdown && SelectControl) {
+      return el(SelectControl, {
+        key: String(opts.instanceKey || 'url-field') + '-hash',
+        className: 'headless-url-hash-control',
+        label: __('Section anchor (optional)', 'headless-core'),
+        value: currentValue,
+        options: normalizeSectionAnchorOptions(rawOptions, parts.hash, __),
+        help: __('Choose a section on this page to scroll to when the link is clicked.', 'headless-core'),
+        onChange: function (hash) {
+          emitUrl(readUrlFromItem(item, urlKey), String(hash || '').replace(/^#/, ''), null);
+        },
+        __nextHasNoMarginBottom: true,
+      });
+    }
+
+    return el(TextControl, {
+      key: String(opts.instanceKey || 'url-field') + '-hash',
+      className: 'headless-url-hash-control',
+      label: __('Section anchor (optional)', 'headless-core'),
+      value: parts.hash,
+      placeholder: __('e.g. individual', 'headless-core'),
+      help: opts.defaultBaseUrl
+        ? __('Jump to a section on the selected page, or on this page if no link is set. Type the anchor id without #.', 'headless-core')
+        : __('Jump to a section on the page. Type the anchor id without #.', 'headless-core'),
+      onChange: function (hash) {
+        emitUrl(readUrlFromItem(item, urlKey), hash, null);
+      },
+      __nextHasNoMarginBottom: true,
+    });
+  }
+
   /**
    * Menu-style URL field: type to search pages/posts or paste a URL (uses core URLInput).
    * @param {object} [options]
@@ -318,22 +508,7 @@
     ];
 
     if (showHash) {
-      fields.push(
-        el(TextControl, {
-          key: instanceKey + '-hash',
-          className: 'headless-url-hash-control',
-          label: __('Section anchor (optional)', 'headless-core'),
-          value: parts.hash,
-          placeholder: __('e.g. individual', 'headless-core'),
-          help: opts.defaultBaseUrl
-            ? __('Jump to a section on the selected page, or on this page if no link is set. Type the anchor id without #.', 'headless-core')
-            : __('Jump to a section on the page. Type the anchor id without #.', 'headless-core'),
-          onChange: function (hash) {
-            emitUrl(readUrlFromItem(item, urlKey), hash, null);
-          },
-          __nextHasNoMarginBottom: true,
-        })
-      );
+      fields.push(renderHashAnchorControl(el, components, i18n, parts, opts, emitUrl, item, urlKey));
     }
 
     return el(
@@ -359,6 +534,8 @@
     joinUrlHash: joinUrlHash,
     pathnameFromUrl: pathnameFromUrl,
     mergeLinkPatch: mergeLinkPatch,
+    slugifySectionId: slugifySectionId,
+    collectSectionAnchorOptions: collectSectionAnchorOptions,
     renderLinkControl: renderLinkControl,
     renderUrlSearchInput: renderUrlSearchInput,
     renderLinkControlAttribute: renderLinkControlAttribute,
