@@ -13,7 +13,6 @@
   var TextControl = components.TextControl;
   var TextareaControl = components.TextareaControl;
   var ToggleControl = components.ToggleControl;
-  var SelectControl = components.SelectControl;
   var useSelect = data.useSelect;
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
@@ -154,75 +153,38 @@
     return next;
   }
 
-  function slugifySectionId(input) {
-    return String(input || '')
-      .toLowerCase()
-      .trim()
-      .replace(/['"]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+  function renderUrlField(label, item, urlKey, onChange, instanceKey, sectionAnchorOptions) {
+    if (headlessLink.renderUrlSearchInput) {
+      return headlessLink.renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, {
+        instanceKey: instanceKey || urlKey,
+        showHashFragment: true,
+        defaultBaseUrl: editorPagePath(),
+        sectionAnchorOptions: sectionAnchorOptions,
+      });
+    }
+    return el(TextControl, {
+      label: label,
+      value: String((item && item[urlKey]) || ''),
+      placeholder: __('Search pages or paste URL…', 'headless-core'),
+      onChange: function (v) {
+        var patch = headlessLink.patchFromUrlInput
+          ? headlessLink.patchFromUrlInput(String(v || ''), null, urlKey, item)
+          : patchFromPlainUrl(v, urlKey);
+        onChange(mergeLinkPatch(item, patch, urlKey));
+      },
+    });
   }
 
-  function collectSectionOptions(blocks) {
-    var seen = {};
-    var options = [{ label: __('— Choose a section on this page —', 'headless-core'), value: '' }];
-
-    function pushOption(id, label) {
-      var clean = String(id || '').replace(/^#/, '').trim();
-      if (!clean || seen[clean]) return;
-      seen[clean] = true;
-      options.push({
-        label: String(label || clean),
-        value: '#' + clean,
-      });
+  function patchFromPlainUrl(value, urlKey) {
+    var patch = {};
+    patch[urlKey] = String(value || '');
+    if (urlKey === 'href') {
+      patch.url = patch[urlKey];
     }
-
-    var SECTION_BLOCKS = {
-      'custom/membership-content': true,
-      'custom/asset-finance-whatever': true,
-      'custom/asset-finance-faq': true,
-      'custom/asset-finance-apply': true,
-      'custom/download-app': true,
-      'custom/contact-map': true,
-      'custom/faq-section': true,
-      'custom/events-section': true,
-      'custom/mobile-app-section': true,
-      'core/heading': true,
-    };
-
-    function walk(list) {
-      if (!Array.isArray(list)) return;
-      list.forEach(function (block) {
-        if (!block || typeof block !== 'object') return;
-        var a = block.attributes || {};
-        var name = String(block.name || '');
-        var heading = String(a.heading || a.title || a.content || '').trim();
-        // core/heading stores plain text / HTML in content — keep it readable.
-        if (name === 'core/heading' && heading) {
-          heading = heading.replace(/<[^>]+>/g, '').trim();
-        }
-        var anchor = String(a.anchor || '').trim();
-        var sectionId = String(a.sectionId || '').trim();
-
-        if (SECTION_BLOCKS[name]) {
-          var id = anchor || sectionId || slugifySectionId(heading);
-          if (id) {
-            pushOption(id, heading || anchor || sectionId || id);
-          }
-        } else if (sectionId) {
-          pushOption(sectionId, heading || sectionId);
-        } else if (anchor) {
-          pushOption(anchor, heading || anchor);
-        }
-
-        if (Array.isArray(block.innerBlocks) && block.innerBlocks.length) {
-          walk(block.innerBlocks);
-        }
-      });
+    if (urlKey === 'url') {
+      patch.href = patch[urlKey];
     }
-
-    walk(blocks);
-    return options;
+    return patch;
   }
 
   function editorPagePath() {
@@ -251,36 +213,6 @@
       return '';
     }
     return '';
-  }
-
-  function renderUrlField(label, item, urlKey, onChange, instanceKey) {
-    if (headlessLink.renderUrlSearchInput) {
-      return headlessLink.renderUrlSearchInput(el, blockEditor, components, i18n, label, item, urlKey, onChange, {
-        instanceKey: instanceKey || urlKey,
-        showHashFragment: true,
-        defaultBaseUrl: editorPagePath(),
-      });
-    }
-    return el(TextControl, {
-      label: label,
-      value: String((item && item[urlKey]) || ''),
-      placeholder: __('Search pages or paste URL…', 'headless-core'),
-      onChange: function (v) {
-        onChange(mergeLinkPatch(item, patchFromPlainUrl(v, urlKey), urlKey));
-      },
-    });
-  }
-
-  function patchFromPlainUrl(value, urlKey) {
-    var patch = {};
-    patch[urlKey] = String(value || '');
-    if (urlKey === 'href') {
-      patch.url = patch[urlKey];
-    }
-    if (urlKey === 'url') {
-      patch.href = patch[urlKey];
-    }
-    return patch;
   }
 
   function normalizeButtons(buttons) {
@@ -446,10 +378,10 @@
       var menuItems = normalizeMenuItems(attrs.menuItems);
       var sectionOptions = useSelect(function (select) {
         var store = select('core/block-editor');
-        if (!store || !store.getBlocks) {
-          return [{ label: __('— Choose a section on this page —', 'headless-core'), value: '' }];
+        if (!store || !store.getBlocks || !headlessLink.collectSectionAnchorOptions) {
+          return [{ label: __('— No section —', 'headless-core'), value: '' }];
         }
-        return collectSectionOptions(store.getBlocks());
+        return headlessLink.collectSectionAnchorOptions(store.getBlocks(), __);
       }, []);
 
       function patchButton(index, patch) {
@@ -660,7 +592,7 @@
                   }),
                   renderUrlField(__('Page/Post Link', 'headless-core'), btn, 'url', function (patch) {
                     patchButton(index, patch);
-                  }, 'hero-btn-' + index)
+                  }, 'hero-btn-' + index, sectionOptions)
                 );
               }),
               el('div', { style: { marginTop: '10px' } },
@@ -681,9 +613,6 @@
                 ? el('p', { style: { color: '#666', marginTop: '8px' } }, __('No menu items yet. Add links for the sub-navigation row.', 'headless-core'))
                 : null,
               menuItems.map(function (item, index) {
-                var currentHref = String(item.href || '');
-                var hashIdx = currentHref.indexOf('#');
-                var sectionValue = hashIdx >= 0 ? '#' + currentHref.slice(hashIdx + 1).replace(/^#/, '') : '';
                 return el(
                   'div',
                   { key: 'menu-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
@@ -702,40 +631,17 @@
                   }),
                   renderUrlField(__('Page/Post Link', 'headless-core'), item, 'href', function (patch) {
                     patchMenuItem(index, patch);
-                  }, 'hero-menu-' + index),
-                  sectionOptions.length > 1
-                    ? el(SelectControl, {
-                        label: __('Or jump to a section on this page', 'headless-core'),
-                        value: sectionValue,
-                        options: sectionOptions,
-                        onChange: function (v) {
-                          var nextHash = String(v || '').replace(/^#/, '');
-                          var base = hashIdx > 0
-                            ? currentHref.slice(0, hashIdx)
-                            : (hashIdx === -1 ? currentHref : '');
-                          var next = nextHash ? (base ? base + '#' + nextHash : '#' + nextHash) : base;
-                          patchMenuItem(index, {
-                            href: next,
-                            url: next,
-                            linkId: nextHash && !base ? 0 : (item.linkId || 0),
-                            linkType: nextHash && !base ? 'section' : (item.linkType || ''),
-                            opensInNewTab: nextHash && !base ? false : Boolean(item.opensInNewTab),
-                            target: nextHash && !base ? '' : (item.target || ''),
-                          });
-                        },
-                        help: __(
-                          'Sections come from content blocks on this page (for example membership section headings).',
-                          'headless-core'
-                        ),
-                      })
-                    : el(
+                  }, 'hero-menu-' + index, sectionOptions),
+                  sectionOptions.length <= 1
+                    ? el(
                         'p',
                         { style: { fontSize: '12px', color: '#666', marginTop: '8px' } },
                         __(
-                          'Add content sections below this hero (with headings) to pick them here for smooth scrolling.',
+                          'Add content sections below this hero (with headings) to pick them in the section anchor dropdown.',
                           'headless-core'
                         )
                       )
+                    : null
                 );
               }),
               el('div', { style: { marginTop: '10px' } },
