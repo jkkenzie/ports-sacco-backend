@@ -16,7 +16,10 @@
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
 
-  var BLOCK_TITLE = __('Help section', 'headless-core');
+  var collapseApi = window.headlessCoreBlockCollapse || {};
+  var BLOCK_TITLE = collapseApi.getTitle
+    ? collapseApi.getTitle('custom/help-section', __('Help section', 'headless-core'))
+    : __('Help section', 'headless-core');
 
   function renderUrlField(label, item, urlKey, onChange) {
     if (headlessLink.renderLinkControl) {

@@ -24,6 +24,14 @@ add_action('init', static function (): void {
     );
 
     wp_register_script(
+        'headless-core-block-collapse',
+        HEADLESS_CORE_URL . 'blocks/shared/block-collapse.js',
+        ['wp-block-editor', 'wp-components', 'wp-element', 'wp-i18n', 'wp-hooks'],
+        HEADLESS_CORE_VERSION,
+        false
+    );
+
+    wp_register_script(
         'headless-custom-hero-editor',
         HEADLESS_CORE_URL . 'blocks/hero/hero-editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
@@ -436,11 +444,11 @@ add_action('init', static function (): void {
 
     register_block_type('custom/home-banner-slider', [
         'api_version' => 3,
-        'title' => __('Home banner slider', 'headless-core'),
+        'title' => __('Hero slider', 'headless-core'),
         'category' => 'widgets',
         'icon' => 'slides',
         'description' => __('Full-width image hero with slides, dots, and arrows.', 'headless-core'),
-        'keywords' => ['banner', 'hero', 'slider', 'carousel', 'home', 'image'],
+        'keywords' => ['banner', 'hero', 'slider', 'carousel', 'image'],
         'editor_script' => 'headless-custom-home-banner-slider-editor',
         'supports' => [
             'anchor' => true,
@@ -562,11 +570,11 @@ add_action('init', static function (): void {
 
     register_block_type('custom/home-stats', [
         'api_version' => 3,
-        'title' => __('Home stats', 'headless-core'),
+        'title' => __('Stats section', 'headless-core'),
         'category' => 'widgets',
         'icon' => 'chart-area',
         'description' => __('Animated stat counters with optional icons (runs when visible).', 'headless-core'),
-        'keywords' => ['stats', 'counter', 'numbers', 'home', 'metrics'],
+        'keywords' => ['stats', 'counter', 'numbers', 'metrics', 'section'],
         'editor_script' => 'headless-custom-home-stats-editor',
         'supports' => [
             'anchor' => true,
@@ -2031,6 +2039,12 @@ add_action('init', static function (): void {
 });
 
 add_action('enqueue_block_editor_assets', static function (): void {
+    wp_enqueue_script('headless-core-block-collapse');
+    wp_localize_script(
+        'headless-core-block-collapse',
+        'headlessCoreBlockLabels',
+        headless_core_block_labels_for_js()
+    );
     wp_enqueue_script('headless-core-rich-text-spacing');
     wp_enqueue_style(
         'headless-core-editor',
@@ -2038,7 +2052,7 @@ add_action('enqueue_block_editor_assets', static function (): void {
         [],
         HEADLESS_CORE_VERSION
     );
-});
+}, 5);
 
 add_filter('block_editor_settings_all', static function (array $settings): array {
     $path = HEADLESS_CORE_PATH . 'blocks/shared/editor.css';

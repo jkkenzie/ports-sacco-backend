@@ -14,7 +14,10 @@
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
 
-  var BLOCK_TITLE = __('Product & Services', 'headless-core');
+  var collapseApi = window.headlessCoreBlockCollapse || {};
+  var BLOCK_TITLE = collapseApi.getTitle
+    ? collapseApi.getTitle('custom/product-services', __('Products & services', 'headless-core'))
+    : __('Products & services', 'headless-core');
 
   function renderUrlField(label, item, urlKey, onChange) {
     if (headlessLink.renderLinkControl) {

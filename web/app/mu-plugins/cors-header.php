@@ -1,23 +1,12 @@
 <?php
-/**
- * Plugin Name: CORS Headers
- * Description: Enable CORS for React frontend
- */
 
-add_action('init', function() {
-    // For development
-    $allowed_origin = '*';
-    
-    // For production, use specific domain:
-    $allowed_origin = 'https://portsacco.iyisolutions.com/';
-    
-    header('Access-Control-Allow-Origin: ' . $allowed_origin);
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization');
-    header('Access-Control-Allow-Credentials: true');
-    
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(200);
-        exit;
-    }
-});
+declare(strict_types=1);
+
+/**
+ * Plugin Name: CORS Headers (legacy)
+ * Description: Deprecated — CORS for the headless API is handled by Headless Core (inc/cors.php).
+ *
+ * An older version of this file sent Access-Control headers on every request and exited early
+ * on OPTIONS preflights, which could break WordPress REST saves with non-JSON responses.
+ * Intentionally left empty.
+ */

@@ -38,7 +38,10 @@
     });
   }
 
-  var BLOCK_TITLE = __('Home banner slider', 'headless-core');
+  var collapseApi = window.headlessCoreBlockCollapse || {};
+  var BLOCK_TITLE = collapseApi.getTitle
+    ? collapseApi.getTitle('custom/home-banner-slider', __('Hero slider', 'headless-core'))
+    : __('Hero slider', 'headless-core');
 
   function HomeBannerEdit(props) {
     var a = props.attributes;
@@ -495,7 +498,7 @@
 
   registerBlockType('custom/home-banner-slider', {
     apiVersion: 3,
-    title: __('Home banner slider', 'headless-core'),
+    title: BLOCK_TITLE,
     icon: 'slides',
     category: 'widgets',
     description: __('Full-width image hero with dots and arrows.', 'headless-core'),

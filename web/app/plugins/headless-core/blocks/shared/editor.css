@@ -128,3 +128,10 @@ div:has(> svg[viewBox="0 0 1088.78 38.01"]) {
 .headless-url-hash-control .components-select-control__input {
   min-height: 36px;
 }
+
+/* Savings Why Save: bold point text renders larger on the frontend — mirror in editor. */
+.headless-savings-why-save-block .headless-why-save-point-paragraph strong,
+.headless-savings-why-save-block .headless-why-save-point-paragraph b {
+  font-size: 25px;
+  line-height: 1.4;
+}

@@ -14,7 +14,10 @@
   var __ = i18n.__;
   var headlessLink = window.headlessCoreEditor || {};
 
-  var BLOCK_TITLE = __('Intro Block V2', 'headless-core');
+  var collapseApi = window.headlessCoreBlockCollapse || {};
+  var BLOCK_TITLE = collapseApi.getTitle
+    ? collapseApi.getTitle('custom/home-about', __('Intro section', 'headless-core'))
+    : __('Intro section', 'headless-core');
 
   function HomeAboutEdit(props) {
     var collapsedState = useState(false);
@@ -270,7 +273,7 @@
     title: BLOCK_TITLE,
     icon: 'info-outline',
     category: 'widgets',
-    description: __('Homepage intro (V2) with badge, body text, and read more link.', 'headless-core'),
+    description: __('Badge, body text, and read-more link for any page.', 'headless-core'),
     keywords: ['intro', 'about', 'home', 'v2', 'badge'],
     supports: { anchor: true },
     attributes: {
