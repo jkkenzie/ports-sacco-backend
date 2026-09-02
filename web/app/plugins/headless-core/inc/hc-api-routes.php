@@ -7,21 +7,62 @@ if (! defined('ABSPATH')) {
 }
 
 /**
+ * Cloudflare-safe REST routes proxied through /hc-api.php (no /wp-json in the URL).
+ *
  * @param string $route REST route beginning with /
  */
-function headless_core_rest_proxy_route_allowed(string $route): bool
+function headless_core_hc_api_route_allowed(string $route): bool
 {
     if ($route === '/' || $route === '') {
         return true;
     }
 
-    return (bool) preg_match('#^/wp/v2/#', $route);
+    // Forms + nonce (original CF workaround).
+    if (preg_match('#^/(custom|portsacco)/v1/(nonce|contact|submit-form|newsletter-subscribe)(/|$)#', $route)) {
+        return true;
+    }
+
+    if (preg_match('#^/(custom|portsacco)/v1/news/[a-z0-9\-_]+/comments$#', $route)) {
+        return true;
+    }
+
+    // Headless v1 — loan / savings / services catalog + product detail pages (public SPA reads).
+    if (preg_match('#^/(custom|portsacco)/v1/(loan-products|savings-products|services)(/|$)#', $route)) {
+        return true;
+    }
+
+    // Archive pages (e.g. /page/loan-products, /page/services) and home.
+    if (preg_match('#^/(custom|portsacco)/v1/page(/|$)#', $route)) {
+        return true;
+    }
+
+    // Menus used on product archive templates.
+    if (preg_match('#^/(custom|portsacco)/v1/menu/[a-z0-9\-_]+$#', $route)) {
+        return true;
+    }
+
+    // wp/v2 — block editor saves for CPT items and archive pages (logged-in only; checked in dispatch).
+    if (preg_match('#^/wp/v2/#', $route)) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Build a hc-api.php URL for a REST route (e.g. /custom/v1/loan-products/foo).
+ */
+function headless_core_hc_api_url(string $rest_route): string
+{
+    $route = '/' . ltrim($rest_route, '/');
+
+    return home_url('/hc-api.php?' . http_build_query(['rest_route' => $route], '', '&', PHP_QUERY_RFC3986));
 }
 
 /**
  * @return never
  */
-function headless_core_rest_proxy_json_exit(int $status, array $payload): void
+function headless_core_hc_api_json_exit(int $status, array $payload): void
 {
     if (! headers_sent()) {
         status_header($status);
@@ -40,7 +81,7 @@ function headless_core_rest_proxy_json_exit(int $status, array $payload): void
     exit;
 }
 
-function headless_core_rest_proxy_request_method(): string
+function headless_core_hc_api_request_method(): string
 {
     $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
@@ -53,15 +94,15 @@ function headless_core_rest_proxy_request_method(): string
 }
 
 /**
- * Execute an allowlisted wp/v2 REST request and emit JSON.
+ * Execute an allowlisted REST request and emit JSON (shared by hc-api.php and editor proxy).
  *
  * @return never
  */
-function headless_core_rest_proxy_run(): void
+function headless_core_hc_api_run(): void
 {
     if (! function_exists('rest_do_request') || ! class_exists('WP_REST_Request')) {
-        headless_core_rest_proxy_json_exit(503, [
-            'code' => 'hc_wp_rest_unavailable',
+        headless_core_hc_api_json_exit(503, [
+            'code' => 'hc_rest_unavailable',
             'message' => 'REST API unavailable.',
             'data' => ['status' => 503],
         ]);
@@ -70,15 +111,15 @@ function headless_core_rest_proxy_run(): void
     $routeRaw = isset($_GET['rest_route']) ? (string) $_GET['rest_route'] : '';
     $route = '/' . ltrim($routeRaw, '/');
 
-    if (! headless_core_rest_proxy_route_allowed($route)) {
-        headless_core_rest_proxy_json_exit(404, [
-            'code' => 'hc_wp_route_not_allowed',
+    if (! headless_core_hc_api_route_allowed($route)) {
+        headless_core_hc_api_json_exit(404, [
+            'code' => 'hc_route_not_allowed',
             'message' => 'Route not available via this endpoint.',
             'data' => ['status' => 404],
         ]);
     }
 
-    $method = headless_core_rest_proxy_request_method();
+    $method = headless_core_hc_api_request_method();
     if ($method === 'OPTIONS') {
         if (! headers_sent()) {
             status_header(204);
@@ -89,9 +130,9 @@ function headless_core_rest_proxy_run(): void
         exit;
     }
 
-    if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && ! is_user_logged_in()) {
-        headless_core_rest_proxy_json_exit(401, [
-            'code' => 'hc_wp_rest_auth_required',
+    if (preg_match('#^/wp/v2/#', $route) && ! is_user_logged_in()) {
+        headless_core_hc_api_json_exit(401, [
+            'code' => 'hc_rest_auth_required',
             'message' => 'Authentication required.',
             'data' => ['status' => 401],
         ]);
@@ -139,10 +180,16 @@ function headless_core_rest_proxy_run(): void
     $data = $server->response_to_data($response, false);
     $status = (int) $response->get_status();
 
-    headless_core_rest_proxy_json_exit($status > 0 ? $status : 200, is_array($data) ? $data : ['data' => $data]);
+    headless_core_hc_api_json_exit($status > 0 ? $status : 200, is_array($data) ? $data : ['data' => $data]);
 }
 
 function headless_core_ajax_rest_proxy_handler(): void
 {
-    headless_core_rest_proxy_run();
+    headless_core_hc_api_run();
+}
+
+/** @deprecated Alias for headless_core_hc_api_run() */
+function headless_core_rest_proxy_run(): void
+{
+    headless_core_hc_api_run();
 }
