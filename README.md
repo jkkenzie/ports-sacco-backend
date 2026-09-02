@@ -102,15 +102,16 @@ Still use **`/wp-json/custom/v1/`** (`WP_CUSTOM_API`) so existing CF rules that 
 
 Cloudflare can also block **`/wp-json/wp/v2/*`** POSTs used when saving pages and CPT items in the block editor. That shows as **“Updating failed. The response is not a valid JSON response.”** with **403 Forbidden** on `POST /wp-json/wp/v2/pages/{id}` (or `/loan-products/`, `/savings-products/`, `/services/`). Product archive pages fail more often because the save payload is larger.
 
-**Workaround (shipped):** In wp-admin, WordPress REST root is rewritten to **`/hc-wp-api.php?rest_route=`** so editor requests become e.g. `/hc-wp-api.php?rest_route=wp/v2/pages/211` — same pattern as form POSTs. Disable with `HEADLESS_ADMIN_REST_PROXY=0` in `.env` after CF allows `/wp-json/wp/v2/*`.
+**Workaround (shipped):** In wp-admin, WordPress REST root is rewritten to **`/wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy&rest_route=`** (default) so editor saves bypass Cloudflare `/wp-json` and root-level `hc-*.php` blocks. Alternate mode: `HEADLESS_ADMIN_REST_PROXY=hc-wp-api` uses `/hc-wp-api.php?rest_route=`. Disable with `HEADLESS_ADMIN_REST_PROXY=0` after CF allows `/wp-json/wp/v2/*`.
 
 | Path | Purpose |
 |------|---------|
-| `web/hc-wp-api.php` | Proxies allowlisted **`/wp/v2/*`** routes for logged-in editor saves |
+| `wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy` | Default proxy for **`/wp/v2/*`** editor saves |
+| `web/hc-wp-api.php` | Optional root proxy (`HEADLESS_ADMIN_REST_PROXY=hc-wp-api`) |
 
-**Deploy checklist:** copy `hc-wp-api.php` to the web root, pull Headless Core, hard-refresh wp-admin (Ctrl+Shift+R). In DevTools → Network, saves should hit **`hc-wp-api.php`**, not **`wp-json`**.
+**Deploy checklist:** pull Headless Core **1.0.114+**, hard-refresh wp-admin (Ctrl+Shift+R). In DevTools → Network, saves should hit **`admin-ajax.php?action=headless_core_rest_proxy`**, not **`wp-json`** or **`hc-wp-api.php`**.
 
-**Cloudflare (durable fix):** Security → Events — find blocked requests to `/wp-json/wp/v2/`. Add a skip rule for authenticated wp-admin REST or bypass cache + WAF for `/wp-json/wp/v2/*` when `Cookie` contains `wordpress_logged_in`.
+**Cloudflare (durable fix):** Security → Events — find blocked editor saves. Add a skip rule when `Cookie` contains `wordpress_logged_in` for `/wp-json/wp/v2/*`, `/wp/wp-admin/admin-ajax.php`, and large POST bodies to loan/savings/service CPT routes.
 
 ---
 
