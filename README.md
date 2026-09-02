@@ -102,16 +102,17 @@ Still use **`/wp-json/custom/v1/`** (`WP_CUSTOM_API`) so existing CF rules that 
 
 Cloudflare can also block **`/wp-json/wp/v2/*`** POSTs used when saving pages and CPT items in the block editor. That shows as **“Updating failed. The response is not a valid JSON response.”** with **403 Forbidden** on `POST /wp-json/wp/v2/pages/{id}` (or `/loan-products/`, `/savings-products/`, `/services/`). Product archive pages fail more often because the save payload is larger.
 
-**Workaround (shipped):** In wp-admin, WordPress REST root is rewritten to **`/wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy&rest_route=`** (default) so editor saves bypass Cloudflare `/wp-json` and root-level `hc-*.php` blocks. Alternate mode: `HEADLESS_ADMIN_REST_PROXY=hc-wp-api` uses `/hc-wp-api.php?rest_route=`. Disable with `HEADLESS_ADMIN_REST_PROXY=0` after CF allows `/wp-json/wp/v2/*`.
+**Workaround (shipped):** In wp-admin, WordPress REST root is rewritten to **`/hc-api.php?rest_route=`** (default) — the same Cloudflare-safe entry point already used for contact/membership forms. It allowlists **`/wp/v2/*`** (logged-in editor saves) plus headless **`/custom/v1/`** and **`/portsacco/v1/`** product catalog routes. Alternates: `HEADLESS_ADMIN_REST_PROXY=admin-ajax` or `hc-wp-api`. Disable with `HEADLESS_ADMIN_REST_PROXY=0` after CF allows `/wp-json/wp/v2/*`.
 
 | Path | Purpose |
 |------|---------|
-| `wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy` | Default proxy for **`/wp/v2/*`** editor saves |
-| `web/hc-wp-api.php` | Optional root proxy (`HEADLESS_ADMIN_REST_PROXY=hc-wp-api`) |
+| `web/hc-api.php?rest_route=` | **Default** — forms, loan/savings/services catalog, Gutenberg **`/wp/v2/*`** saves |
+| `wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy` | Alternate editor proxy |
+| `web/hc-wp-api.php` | Legacy root proxy (`HEADLESS_ADMIN_REST_PROXY=hc-wp-api`) |
 
-**Deploy checklist:** pull Headless Core **1.0.114+**, hard-refresh wp-admin (Ctrl+Shift+R). In DevTools → Network, saves should hit **`admin-ajax.php?action=headless_core_rest_proxy`**, not **`wp-json`** or **`hc-wp-api.php`**.
+**Deploy checklist:** pull Headless Core **1.0.115+**, hard-refresh wp-admin (Ctrl+Shift+R). In DevTools → Network, saves should hit **`hc-api.php?rest_route=/wp/v2/...`**, not raw **`/wp-json/`**. Rebuild and publish the SPA so product pages fetch via **`hc-api.php`** too.
 
-**Cloudflare (durable fix):** Security → Events — find blocked editor saves. Add a skip rule when `Cookie` contains `wordpress_logged_in` for `/wp-json/wp/v2/*`, `/wp/wp-admin/admin-ajax.php`, and large POST bodies to loan/savings/service CPT routes.
+**Cloudflare (durable fix):** Security → Events — find blocked editor saves. Add a skip rule when `Cookie` contains `wordpress_logged_in` for `/wp-json/wp/v2/*`, `/hc-api.php`, `/wp/wp-admin/admin-ajax.php`, and large POST bodies to loan/savings/service CPT routes.
 
 ---
 

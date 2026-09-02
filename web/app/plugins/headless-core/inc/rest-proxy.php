@@ -6,12 +6,11 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-require_once HEADLESS_CORE_PATH . 'inc/rest-proxy-handler.php';
-
 /**
- * Proxy mode for wp-admin Gutenberg REST saves when Cloudflare blocks /wp-json.
+ * Proxy mode for wp-admin Gutenberg REST when Cloudflare blocks /wp-json.
  *
- * - admin-ajax (default): /wp/wp-admin/admin-ajax.php — usually allowed by CF Access / WAF
+ * - hc-api (default): /hc-api.php — same CF-safe path as public forms
+ * - admin-ajax: /wp/wp-admin/admin-ajax.php
  * - hc-wp-api: /hc-wp-api.php at web root
  * - off / 0 / false: disabled
  */
@@ -21,15 +20,18 @@ function headless_core_admin_rest_proxy_mode(): string
     if ($flag === '0' || $flag === 'false' || $flag === 'off') {
         return 'off';
     }
+    if ($flag === 'admin-ajax') {
+        return 'admin-ajax';
+    }
     if ($flag === 'hc-wp-api') {
         return 'hc-wp-api';
     }
 
-    return 'admin-ajax';
+    return 'hc-api';
 }
 
 /**
- * Whether wp-admin should route core REST (wp/v2) through a Cloudflare-safe proxy.
+ * Whether wp-admin should route core REST through a Cloudflare-safe proxy.
  */
 function headless_core_use_admin_rest_proxy(): bool
 {
@@ -41,11 +43,17 @@ function headless_core_use_admin_rest_proxy(): bool
  */
 function headless_core_admin_rest_proxy_root_url(): string
 {
-    if (headless_core_admin_rest_proxy_mode() === 'hc-wp-api') {
+    $mode = headless_core_admin_rest_proxy_mode();
+
+    if ($mode === 'hc-wp-api') {
         return home_url('/hc-wp-api.php?rest_route=');
     }
 
-    return admin_url('admin-ajax.php?action=headless_core_rest_proxy&rest_route=');
+    if ($mode === 'admin-ajax') {
+        return admin_url('admin-ajax.php?action=headless_core_rest_proxy&rest_route=');
+    }
+
+    return home_url('/hc-api.php?rest_route=');
 }
 
 /**
@@ -60,7 +68,6 @@ function headless_core_filter_admin_rest_url(string $url, string $path): string
         return $url;
     }
 
-    // Only rewrite the API root used by wpApiSettings.root (path is "/" or "").
     if ($path !== '/' && $path !== '') {
         return $url;
     }
