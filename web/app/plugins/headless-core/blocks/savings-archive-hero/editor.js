@@ -167,7 +167,10 @@
       value: String((item && item[urlKey]) || ''),
       placeholder: __('Search pages or paste URL…', 'headless-core'),
       onChange: function (v) {
-        onChange(mergeLinkPatch(item, patchFromPlainUrl(v, urlKey), urlKey));
+        var patch = headlessLink.patchFromUrlInput
+          ? headlessLink.patchFromUrlInput(String(v || ''), null, urlKey, item)
+          : patchFromPlainUrl(v, urlKey);
+        onChange(mergeLinkPatch(item, patch, urlKey));
       },
     });
   }

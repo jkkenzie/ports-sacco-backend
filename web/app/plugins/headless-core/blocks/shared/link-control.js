@@ -91,15 +91,7 @@
       label: label,
       value: readUrlFromItem(item, urlKey),
       onChange: function (v) {
-        var patch = {};
-        patch[urlKey] = String(v || '');
-        if (urlKey === 'href') {
-          patch.url = patch[urlKey];
-        }
-        if (urlKey === 'url') {
-          patch.href = patch[urlKey];
-        }
-        onChange(patch);
+        onChange(patchFromUrlInput(String(v || ''), null, urlKey, item));
       },
     });
   }
@@ -210,34 +202,29 @@
     if (split.base) {
       return split.base;
     }
-    var fromPost = urlFromPost(post);
-    if (fromPost) {
-      return splitUrlHash(fromPost).base;
+    if (post && urlFromPost(post)) {
+      return splitUrlHash(urlFromPost(post)).base;
     }
-    var fromItem = splitUrlHash(readUrlFromItem(item, urlKey));
-    if (fromItem.base) {
-      return fromItem.base;
-    }
-    return pathnameFromUrl(defaultBase);
+    return '';
   }
 
   function patchFromUrlInput(nextUrl, post, urlKey, prevItem) {
+    var url = String(nextUrl || '').trim();
     var patch = {
       opensInNewTab: false,
       target: '',
-      linkId: post && post.id ? Number(post.id) : 0,
-      linkType: post && post.type ? String(post.type) : 'custom',
+      linkId: 0,
+      linkType: '',
     };
-    if (!post && prevItem && typeof prevItem === 'object') {
-      if (prevItem.linkId) {
-        patch.linkId = Number(prevItem.linkId) || 0;
-      }
-      if (prevItem.linkType) {
-        patch.linkType = String(prevItem.linkType);
-      }
+
+    if (post && typeof post === 'object') {
+      patch.linkId = post.id ? Number(post.id) : 0;
+      patch.linkType = post.type ? String(post.type) : '';
+    } else if (url && prevItem && typeof prevItem === 'object') {
       patch.opensInNewTab = Boolean(prevItem.opensInNewTab || prevItem.target === '_blank');
       patch.target = patch.opensInNewTab ? '_blank' : String(prevItem.target || '');
     }
+
     patch[urlKey] = String(nextUrl || '');
     if (urlKey === 'href') {
       patch.url = patch[urlKey];
@@ -411,6 +398,42 @@
     return options;
   }
 
+  function dedupeLinkSuggestions(list) {
+    if (!Array.isArray(list)) {
+      return list;
+    }
+    var seen = {};
+    return list.filter(function (entry) {
+      if (!entry || typeof entry !== 'object') {
+        return false;
+      }
+      var id = entry.id != null ? String(entry.type || entry.kind || '') + ':' + String(entry.id) : '';
+      var urlKey = String(entry.url || entry.link || '').replace(/\/+$/, '').toLowerCase();
+      var key = id || ('url:' + urlKey);
+      if (!key || key === 'url:' || seen[key]) {
+        return false;
+      }
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function createDedupedLinkFetch(blockEditor) {
+    var baseFetch =
+      (blockEditor && blockEditor.__experimentalFetchLinkSuggestions) ||
+      (typeof wp !== 'undefined' && wp.blockEditor && wp.blockEditor.__experimentalFetchLinkSuggestions);
+    if (typeof baseFetch !== 'function') {
+      return undefined;
+    }
+    return function () {
+      var result = baseFetch.apply(this, arguments);
+      if (result && typeof result.then === 'function') {
+        return result.then(dedupeLinkSuggestions);
+      }
+      return Promise.resolve(dedupeLinkSuggestions(result));
+    };
+  }
+
   function renderHashAnchorControl(el, components, i18n, parts, opts, emitUrl, item, urlKey) {
     var SelectControl = components.SelectControl;
     var TextControl = components.TextControl;
@@ -428,7 +451,7 @@
         options: normalizeSectionAnchorOptions(rawOptions, parts.hash, __),
         help: __('Choose a section on this page to scroll to when the link is clicked.', 'headless-core'),
         onChange: function (hash) {
-          emitUrl(readUrlFromItem(item, urlKey), String(hash || '').replace(/^#/, ''), null);
+          emitUrl(parts.base, String(hash || '').replace(/^#/, ''), null);
         },
         __nextHasNoMarginBottom: true,
       });
@@ -444,7 +467,7 @@
         ? __('Jump to a section on the selected page, or on this page if no link is set. Type the anchor id without #.', 'headless-core')
         : __('Jump to a section on the page. Type the anchor id without #.', 'headless-core'),
       onChange: function (hash) {
-        emitUrl(readUrlFromItem(item, urlKey), hash, null);
+        emitUrl(parts.base, hash, null);
       },
       __nextHasNoMarginBottom: true,
     });
@@ -465,6 +488,8 @@
     var showHash = Boolean(opts.showHashFragment);
     var currentUrl = readUrlFromItem(item, urlKey);
     var parts = splitUrlHash(currentUrl);
+    var dedupedLinkFetch = createDedupedLinkFetch(blockEditor);
+    var urlInputKey = instanceKey + '-link-' + String(item && item.linkId ? item.linkId : 0) + '-' + (parts.base ? 'set' : 'empty');
 
     if (!URLInput) {
       return renderTextUrlControl(el, TextControl, label, item, urlKey, onChange);
@@ -487,13 +512,17 @@
         BaseControl,
         { key: instanceKey + '-url', label: label },
         el(URLInput, {
-          key: instanceKey,
+          key: urlInputKey,
           className: 'headless-url-search-control',
           value: showHash ? parts.base : currentUrl,
           isFullWidth: true,
           placeholder: __('Search or paste URL…', 'headless-core'),
           onChange: function (nextUrl, post) {
             var url = typeof nextUrl === 'string' ? nextUrl : coerceUrl(nextUrl);
+            if (!String(url || '').trim() && !post) {
+              onChange(patchFromUrlInput('', null, urlKey, item));
+              return;
+            }
             if (showHash) {
               var split = splitUrlHash(url);
               emitUrl(split.base, split.hash || parts.hash, post);
@@ -502,6 +531,9 @@
             var selected = post && typeof post === 'object' ? post : null;
             onChange(patchFromUrlInput(url, selected, urlKey, item));
           },
+          __experimentalFetchLinkSuggestions: dedupedLinkFetch,
+          __experimentalShowInitialSuggestions: false,
+          __experimentalHandleURLSuggestions: false,
           __nextHasNoMarginBottom: true,
         })
       ),
