@@ -240,6 +240,80 @@
     });
   }
 
+  function colorEquals(a, b) {
+    return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+  }
+
+  function compactButton(btn, index) {
+    var defaults = index % 2 === 0 ? ODD_BUTTON_COLORS : EVEN_BUTTON_COLORS;
+    var out = {};
+    var label = btn && btn.label != null ? String(btn.label) : '';
+    var url = '';
+    if (btn && btn.url != null && String(btn.url) !== '') {
+      url = String(btn.url);
+    } else if (btn && btn.href != null && String(btn.href) !== '') {
+      url = String(btn.href);
+    }
+    if (label) {
+      out.label = label;
+    }
+    if (url) {
+      out.url = url;
+    }
+    if (btn && (btn.opensInNewTab || btn.target === '_blank')) {
+      out.opensInNewTab = true;
+      out.target = '_blank';
+    }
+    if (btn && btn.linkId) {
+      out.linkId = Number(btn.linkId);
+    }
+    if (btn && btn.linkType) {
+      out.linkType = String(btn.linkType);
+    }
+    ['textColor', 'borderColor', 'bgColor', 'hoverTextColor', 'hoverBgColor', 'hoverBorderColor'].forEach(function (key) {
+      if (btn && btn[key] && !colorEquals(btn[key], defaults[key])) {
+        out[key] = String(btn[key]);
+      }
+    });
+    return out;
+  }
+
+  function compactButtons(list) {
+    return normalizeButtons(list).map(compactButton);
+  }
+
+  function compactMenuItem(item) {
+    var out = {};
+    var label = item && item.label != null ? String(item.label) : '';
+    var href = '';
+    if (item && item.href != null && String(item.href) !== '') {
+      href = String(item.href);
+    } else if (item && item.url != null && String(item.url) !== '') {
+      href = String(item.url);
+    }
+    if (label) {
+      out.label = label;
+    }
+    if (href) {
+      out.href = href;
+    }
+    if (item && (item.opensInNewTab || item.target === '_blank')) {
+      out.opensInNewTab = true;
+      out.target = '_blank';
+    }
+    if (item && item.linkId) {
+      out.linkId = Number(item.linkId);
+    }
+    if (item && item.linkType) {
+      out.linkType = String(item.linkType);
+    }
+    return out;
+  }
+
+  function compactMenuItems(list) {
+    return normalizeMenuItems(list).map(compactMenuItem);
+  }
+
   function normalizeMenuItems(items) {
     if (!Array.isArray(items)) {
       return [];
@@ -356,42 +430,36 @@
       var current = normalizeButtons(props.buttons);
       var next = current.slice();
       next[index] = mergeLinkPatch(next[index], patch, 'url');
-      setAttributes({ buttons: next });
+      setAttributes({ buttons: compactButtons(next) });
     }
 
     function addButton() {
-      var nextIndex = buttons.length;
-      var template = Object.assign(
-        {},
-        EMPTY_BUTTON,
-        nextIndex % 2 === 0 ? ODD_BUTTON_COLORS : EVEN_BUTTON_COLORS
-      );
       setAttributes({
-        buttons: buttons.concat([template]),
+        buttons: compactButtons(buttons.concat([{}])),
       });
     }
 
     function removeButton(index) {
       var next = buttons.filter(function (_, i) { return i !== index; });
-      setAttributes({ buttons: next });
+      setAttributes({ buttons: compactButtons(next) });
     }
 
     function patchMenuItem(index, patch) {
       var current = normalizeMenuItems(props.menuItems);
       var next = current.slice();
       next[index] = mergeLinkPatch(next[index], patch, 'href');
-      setAttributes({ menuItems: next });
+      setAttributes({ menuItems: compactMenuItems(next) });
     }
 
     function addMenuItem() {
       setAttributes({
-        menuItems: menuItems.concat([Object.assign({}, EMPTY_MENU_ITEM)]),
+        menuItems: compactMenuItems(menuItems.concat([Object.assign({}, EMPTY_MENU_ITEM)])),
       });
     }
 
     function removeMenuItem(index) {
       var next = menuItems.filter(function (_, i) { return i !== index; });
-      setAttributes({ menuItems: next });
+      setAttributes({ menuItems: compactMenuItems(next) });
     }
 
     return el(
@@ -409,8 +477,8 @@
             el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
               el('strong', null, __('Button', 'headless-core') + ' ' + (index + 1)),
               el('div', { style: { display: 'flex', gap: '6px' } },
-                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
-                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
+                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { setAttributes({ buttons: compactButtons(moveRow(buttons, index, -1)) }); } }, '˄'),
+                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { setAttributes({ buttons: compactButtons(moveRow(buttons, index, 1)) }); } }, '˅'),
                 el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
               )
             ),
@@ -448,8 +516,8 @@
             el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
               el('strong', null, __('Menu item', 'headless-core') + ' ' + (index + 1)),
               el('div', { style: { display: 'flex', gap: '6px' } },
-                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
-                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
+                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { setAttributes({ menuItems: compactMenuItems(moveRow(menuItems, index, -1)) }); } }, '˄'),
+                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { setAttributes({ menuItems: compactMenuItems(moveRow(menuItems, index, 1)) }); } }, '˅'),
                 el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)
               )
             ),
@@ -524,7 +592,7 @@
 
       function patchButtonColorsByParity(parity, patch) {
         props.setAttributes({
-          buttons: applyButtonColorsToParity(buttons, parity, patch),
+          buttons: compactButtons(applyButtonColorsToParity(buttons, parity, patch)),
         });
       }
 

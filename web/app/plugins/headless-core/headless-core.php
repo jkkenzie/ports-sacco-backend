@@ -16,7 +16,7 @@ if (! defined('ABSPATH')) {
 
 define('HEADLESS_CORE_PATH', plugin_dir_path(__FILE__));
 define('HEADLESS_CORE_URL', plugin_dir_url(__FILE__));
-define('HEADLESS_CORE_VERSION', '1.0.116');
+define('HEADLESS_CORE_VERSION', '1.0.117');
 define('HEADLESS_CORE_REST_NAMESPACE', 'portsacco/v1');
 /** @deprecated Temporary alias so cached SPA builds keep working during cutover. */
 define('HEADLESS_CORE_REST_NAMESPACE_LEGACY', 'custom/v1');
@@ -28,6 +28,8 @@ require_once HEADLESS_CORE_PATH . 'inc/rest-namespace.php';
 require_once HEADLESS_CORE_PATH . 'inc/turnstile.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-nonce.php';
 require_once HEADLESS_CORE_PATH . 'inc/rest-api.php';
+require_once HEADLESS_CORE_PATH . 'inc/rest-proxy-handler.php';
+require_once HEADLESS_CORE_PATH . 'inc/rest-proxy.php';
 require_once HEADLESS_CORE_PATH . 'inc/newsletter-subscribe.php';
 require_once HEADLESS_CORE_PATH . 'inc/news-comments.php';
 require_once HEADLESS_CORE_PATH . 'inc/youtube.php';
