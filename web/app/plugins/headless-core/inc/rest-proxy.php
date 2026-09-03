@@ -9,8 +9,8 @@ if (! defined('ABSPATH')) {
 /**
  * Proxy mode for wp-admin Gutenberg REST when Cloudflare blocks /wp-json.
  *
- * - hc-wp-api (default): /hc-wp-api.php/wp/v2/... — path-style, Gutenberg-compatible
- * - admin-ajax: /wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy&rest_route=
+ * - admin-ajax (default): /wp/wp-admin/admin-ajax.php — under /wp/, skips SPA catch-all
+ * - hc-wp-api: /hc-wp-api.php?rest_route=/wp/v2/... — same pattern as public forms
  * - off / 0 / false: disabled
  */
 function headless_core_admin_rest_proxy_mode(): string
@@ -30,11 +30,11 @@ function headless_core_admin_rest_proxy_mode(): string
     if ($flag === '0' || $flag === 'false' || $flag === 'off') {
         return 'off';
     }
-    if ($flag === 'admin-ajax') {
-        return 'admin-ajax';
+    if ($flag === 'hc-wp-api') {
+        return 'hc-wp-api';
     }
 
-    return 'hc-wp-api';
+    return 'admin-ajax';
 }
 
 /**
@@ -54,23 +54,19 @@ function headless_core_use_admin_rest_proxy(): bool
         return false;
     }
 
-    if (function_exists('wp_is_json_request') && wp_is_json_request()) {
-        return false;
-    }
-
     return true;
 }
 
 /**
- * REST root used by wpApiSettings.root in the block editor.
+ * REST root used by wpApiSettings.root and the apiFetch middleware.
  */
 function headless_core_admin_rest_proxy_root_url(): string
 {
-    if (headless_core_admin_rest_proxy_mode() === 'admin-ajax') {
-        return admin_url('admin-ajax.php?action=headless_core_rest_proxy&rest_route=/');
+    if (headless_core_admin_rest_proxy_mode() === 'hc-wp-api') {
+        return home_url('/hc-wp-api.php?rest_route=/');
     }
 
-    return home_url('/hc-wp-api.php/');
+    return admin_url('admin-ajax.php?action=headless_core_rest_proxy&rest_route=/');
 }
 
 /**
@@ -94,5 +90,27 @@ function headless_core_filter_admin_rest_url(string $url, string $path): string
     return headless_core_admin_rest_proxy_root_url();
 }
 
+function headless_core_enqueue_admin_rest_proxy_script(): void
+{
+    if (! headless_core_use_admin_rest_proxy()) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'headless-core-admin-rest-proxy',
+        HEADLESS_CORE_URL . 'blocks/shared/admin-rest-proxy.js',
+        ['wp-api-fetch'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_localize_script('headless-core-admin-rest-proxy', 'headlessCoreAdminRestProxy', [
+        'root' => headless_core_admin_rest_proxy_root_url(),
+        'mode' => headless_core_admin_rest_proxy_mode(),
+        'forcePost' => headless_core_admin_rest_proxy_mode() === 'admin-ajax',
+    ]);
+}
+
 add_filter('rest_url', 'headless_core_filter_admin_rest_url', 10, 2);
 add_action('wp_ajax_headless_core_rest_proxy', 'headless_core_ajax_rest_proxy_handler');
+add_action('enqueue_block_editor_assets', 'headless_core_enqueue_admin_rest_proxy_script', 1);
+add_action('admin_enqueue_scripts', 'headless_core_enqueue_admin_rest_proxy_script', 20);

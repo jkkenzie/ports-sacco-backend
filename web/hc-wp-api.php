@@ -7,8 +7,8 @@
  * /wp-json/wp/v2/pages/{id}. Cloudflare WAF often blocks that URI/body combo
  * ("Sorry, you have been blocked") while still allowing this entry point.
  *
- * Usage (path-style, required for apiFetch query strings):
- *   /hc-wp-api.php/wp/v2/pages/211?context=edit
+ * Usage (query-string, same pattern as /hc-api.php forms):
+ *   /hc-wp-api.php?rest_route=/wp/v2/pages/211&context=edit
  *
  * Logged-in users only. Public SPA traffic stays on /wp-json.
  */
