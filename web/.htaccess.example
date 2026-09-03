@@ -23,6 +23,9 @@ DirectoryIndex app.php frontend/index.html index.php
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
+# Gutenberg REST proxy: /hc-wp-api.php/wp/v2/... → rest_route (Cloudflare bypass for /wp-json)
+RewriteRule ^hc-wp-api\.php(/.*)$ /hc-wp-api.php?rest_route=$1 [QSA,L]
+
 # Redirect /assets/* → /frontend/assets/* (React bundle path fix)
 RewriteCond %{REQUEST_URI} ^/assets/(.+)$ [NC]
 RewriteRule ^assets/(.+)$ /frontend/assets/$1 [L]
@@ -43,9 +46,10 @@ RewriteCond %{REQUEST_URI} !^/wp-api\.php$ [NC]
 RewriteCond %{REQUEST_URI} !^/sitemap[^/]*\.xml$ [NC]
 RewriteCond %{REQUEST_URI} !^/robots\.txt$ [NC]
 RewriteCond %{REQUEST_URI} !^/app\.php$ [NC]
-# Form CF workarounds (physical files; listed for clarity — !-f already passes them through)
-RewriteCond %{REQUEST_URI} !^/hc-api\.php$ [NC]
+# Form + Gutenberg CF workarounds (physical files; listed for clarity — !-f already passes them through)
+RewriteCond %{REQUEST_URI} !^/hc-api\.php [NC]
 RewriteCond %{REQUEST_URI} !^/hc-bootstrap\.php$ [NC]
+RewriteCond %{REQUEST_URI} !^/hc-wp-api\.php [NC]
 # Pass through if the file or directory physically exists
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

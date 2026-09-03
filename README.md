@@ -66,6 +66,14 @@ PHP inject: `headless_core_inject_form_bootstrap_script()` in `web/app/plugins/h
 
 `formApiUrl()` in `web/frontend/src/src/api/wp.js` builds those URLs. `web/hc-api.php` allowlists only those routes (plus `/nonce`) under `custom/v1` or `portsacco/v1` and runs them via `rest_do_request`.
 
+### Gutenberg saves (Services / Page Hero Content)
+
+Cloudflare can block **wp-admin** `POST /wp-json/wp/v2/pages/{id}` when the body is Gutenberg HTML (`<!-- wp:... -->`, `<h2>`, `<p>`) plus block JSON with hex colors. The editor then shows an HTML “Sorry, you have been blocked” page instead of JSON.
+
+Headless Core rewrites `wpApiSettings.root` in wp-admin to **`/hc-wp-api.php/`** (path-style, so `?context=edit` still works). Only logged-in users can call `/wp/v2` and `/batch/v1` through that file. Public SPA reads stay on `/wp-json`.
+
+After deploy: copy the `hc-wp-api.php` rewrite from `web/.htaccess.example` into the live `web/.htaccess`, then hard-refresh wp-admin and save again. Set `HEADLESS_ADMIN_REST_PROXY=off` to go back to `/wp-json`.
+
 ### Read APIs (pages, menus, CPT lists)
 
 Still use **`/wp-json/custom/v1/`** (`WP_CUSTOM_API`) so existing CF rules that already allow the legacy alias keep working. PHP still registers **`portsacco/v1`** as primary.
@@ -77,13 +85,14 @@ Still use **`/wp-json/custom/v1/`** (`WP_CUSTOM_API`) so existing CF rules that 
 | `web/app.php` | SPA shell + SEO + **inline form bootstrap** + `no-store` |
 | `web/hc-bootstrap.php` | Fresh nonce **outside** `/wp-json` |
 | `web/hc-api.php` | Form POSTs **outside** `/wp-json` |
+| `web/hc-wp-api.php` | Gutenberg `/wp/v2` saves **outside** `/wp-json` (logged-in) |
 | `web/app/plugins/headless-core/` (incl. `inc/rest-nonce.php`) | Bootstrap payload, dual namespaces, form REST |
 | Published `web/frontend/` matching that source | SPA must call `formApiUrl` / prefer inline bootstrap |
 | `web/.htaccess` from `.htaccess.example` | Physical `hc-*.php` must not be swallowed by the SPA catch-all (`!-f` + explicit exclusions) |
 
 ### Server / ops checklist
 
-1. After `git pull`, confirm these exist under the web root (e.g. `public_html/`): `app.php`, `hc-api.php`, `hc-bootstrap.php`, `frontend/index.html`.
+1. After `git pull`, confirm these exist under the web root (e.g. `public_html/`): `app.php`, `hc-api.php`, `hc-bootstrap.php`, `hc-wp-api.php`, `frontend/index.html`.
 2. SPA pages must be served through **`app.php`** (not a static `frontend/index.html` only) so `__HC_FORM_BOOTSTRAP__` is present — View Source and search for `__HC_FORM_BOOTSTRAP__`.
 3. Smoke (through Cloudflare, browser or curl to the public hostname):
    - `GET /hc-bootstrap.php` → JSON `{ "nonce": "...", "turnstileEnabled": ... }`
@@ -371,7 +380,7 @@ Then re-run `deploy.sh`. Going forward, always use `composer require` / `compose
 1. `/assets/*` → `/frontend/assets/*`
 2. SEO `/sitemap.xml`, `/robots.txt` → PHP scripts
 3. WordPress admin / `wp/` / `wp-json` paths pass through
-4. Physical files such as `app.php`, `hc-api.php`, `hc-bootstrap.php` are served as files (`!-f`; example also excludes them explicitly)
+4. Physical files such as `app.php`, `hc-api.php`, `hc-bootstrap.php`, `hc-wp-api.php` are served as files (`!-f`; example also excludes them explicitly)
 5. Everything else → `app.php` (SPA shell + SEO `<head>` + form bootstrap)
 
 If the SPA catch-all runs first, sitemaps, the REST API, and `hc-*.php` form endpoints will break.
@@ -382,18 +391,19 @@ If the SPA catch-all runs first, sitemaps, the REST API, and `hc-*.php` form end
 
 Public forms and the WP REST API must keep working behind Cloudflare. Prefer **narrow exception rules** for the specific managed rulesets blocking editor saves / form POSTs (provider option 3), after compensating controls are in place.
 
-**App-level workarounds (already shipped):** see [Forms + Cloudflare workarounds](#forms--cloudflare-workarounds) — keep `app.php` inject, `hc-bootstrap.php`, `hc-api.php`, SPA `formApiUrl` / `custom/v1` reads, and dual REST namespaces until CF allows `portsacco/v1`.
+**App-level workarounds (already shipped):** see [Forms + Cloudflare workarounds](#forms--cloudflare-workarounds) — keep `app.php` inject, `hc-bootstrap.php`, `hc-api.php`, `hc-wp-api.php` (Gutenberg), SPA `formApiUrl` / `custom/v1` reads, and dual REST namespaces until CF allows `portsacco/v1`.
 
 ### Already in application code
 - Form POSTs: WordPress REST nonce + honeypot; optional Cloudflare Turnstile
 - Form traffic prefers `/hc-api.php` and `/hc-bootstrap.php` so WAF rules matching `wp-json` do not block submits
+- Gutenberg in wp-admin uses `/hc-wp-api.php/wp/v2/...` so editor saves (HTML block markup + hex colors) are not posted to `/wp-json`. Disable with `HEADLESS_ADMIN_REST_PROXY=off`. Copy the `hc-wp-api.php` rewrite from `web/.htaccess.example` onto the server.
 - Nonce / form routes: `Cache-Control` / `CDN-Cache-Control: no-store` (never edge-cache auth tokens); SPA shell from `app.php` is also `no-store`
 - Security HTTP headers via Headless Core (`inc/security-headers.php`), SPA `app.php`, and `web/.htaccess.example`
 - Bedrock: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `FORCE_SSL_ADMIN` when `WP_HOME` is HTTPS
 
 ### Cloudflare dashboard (ops)
 1. **Rocket Loader → Off**
-2. **Cache Rule**: Bypass `/wp-json/*`, `/hc-api.php*`, `/hc-bootstrap.php*` (and especially nonce / chat paths)
+2. **Cache Rule**: Bypass `/wp-json/*`, `/hc-api.php*`, `/hc-bootstrap.php*`, `/hc-wp-api.php*` (and especially nonce / chat paths)
 3. **Cloudflare Access** for `/wp-admin` and `/wp-login.php` only (not public forms, not `hc-*.php`)
 4. Exception / skip **only** the managed rulesets blocking legitimate editor/form POSTs and REST GETs — not a blanket WAF bypass
 5. Ideal end state: allow `/wp-json/portsacco/v1/*` and `/wp-json/chat/v1/*`, then optionally retire the SPA workarounds (see cleanup notes in the forms section)
@@ -409,6 +419,7 @@ Public forms and the WP REST API must keep working behind Cloudflare. Prefer **n
 | `web/app.php` | SPA HTML + SEO + form bootstrap inject |
 | `web/hc-bootstrap.php` | Form nonce JSON outside `/wp-json` (CF workaround) |
 | `web/hc-api.php` | Allowlisted form REST proxy outside `/wp-json` (CF workaround) |
+| `web/hc-wp-api.php` | Logged-in Gutenberg `wp/v2` proxy outside `/wp-json` (CF workaround) |
 | `web/frontend/` | Published SPA (Bedrock tracks) |
 | `web/frontend/src/` | Vite project / ports-sacco-frontend (local nested git) |
 | `web/app/plugins/headless-core/` | Headless CMS, blocks, REST (`portsacco/v1`), SEO |
