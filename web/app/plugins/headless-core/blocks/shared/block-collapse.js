@@ -30,7 +30,41 @@
     return name;
   }
 
-  function renderCollapseFrame(title, collapsed, onToggle, canvasChildren) {
+  /**
+   * createElement treats an array passed as the single children argument as a list,
+   * which requires keys. Pass children as extra arguments instead (Gutenberg style).
+   */
+  function stopEditableKeyPropagation(e) {
+    var t = e && e.target;
+    if (!t || typeof t.closest !== 'function') {
+      return;
+    }
+    if (t.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) {
+      e.stopPropagation();
+    }
+  }
+
+  function createWithChildren(type, props, children) {
+    var nextProps = Object.assign({}, props || {});
+    delete nextProps.children;
+    return el.apply(null, [type, nextProps].concat(children || []));
+  }
+
+  function isInspectorControlsNode(child) {
+    if (!child || !child.type) {
+      return false;
+    }
+    if (child.type === InspectorControls) {
+      return true;
+    }
+    if (InspectorControls && child.type.Slot && child.type.Slot === InspectorControls.Slot) {
+      return true;
+    }
+    var typeName = child.type.displayName || child.type.name || '';
+    return typeName === 'InspectorControls' || typeName.indexOf('InspectorControls') === 0;
+  }
+
+  function renderCollapseFrame(title, collapsed, onHeaderActivate, onToggle, canvasChildren) {
     return el(
       'div',
       {
@@ -38,7 +72,7 @@
         style: {
           border: '1px solid #e5e7eb',
           borderRadius: '8px',
-          overflow: 'hidden',
+          overflow: 'visible',
           background: '#fff',
         },
       },
@@ -56,14 +90,13 @@
             borderBottom: collapsed ? 'none' : '1px solid #e5e7eb',
             cursor: 'pointer',
           },
-          onClick: onToggle,
-          role: 'button',
+          onClick: onHeaderActivate,
           tabIndex: 0,
           'aria-expanded': !collapsed,
           onKeyDown: function (e) {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              onToggle();
+              onHeaderActivate();
             }
           },
         },
@@ -100,6 +133,7 @@
             variant: 'tertiary',
             isSmall: true,
             onClick: function (e) {
+              e.preventDefault();
               e.stopPropagation();
               onToggle();
             },
@@ -109,10 +143,14 @@
       ),
       collapsed
         ? null
-        : el(
+        : createWithChildren(
             'div',
-            { className: 'headless-block-collapse-body' },
-            canvasChildren.length === 1 ? canvasChildren[0] : el(Fragment, null, canvasChildren)
+            {
+              className: 'headless-block-collapse-body',
+              onKeyDown: stopEditableKeyPropagation,
+              onKeyPress: stopEditableKeyPropagation,
+            },
+            canvasChildren
           )
     );
   }
@@ -130,7 +168,7 @@
       var inspectorFrag = [];
       var canvasFrag = [];
       children.forEach(function (child) {
-        if (child && child.type === InspectorControls) {
+        if (isInspectorControlsNode(child)) {
           inspectorFrag.push(child);
         } else if (child != null && child !== false) {
           canvasFrag.push(child);
@@ -146,7 +184,7 @@
     var inspector = [];
     var canvas = [];
     children.forEach(function (child) {
-      if (child && child.type === InspectorControls) {
+      if (isInspectorControlsNode(child)) {
         inspector.push(child);
       } else if (child != null && child !== false) {
         canvas.push(child);
@@ -197,8 +235,22 @@
       var setCollapsed = collapsedState[1];
       var title = getBlockTitle(name, settings);
 
+      function selectThisBlock() {
+        if (props.clientId && window.wp && window.wp.data && window.wp.data.dispatch) {
+          window.wp.data.dispatch('core/block-editor').selectBlock(props.clientId);
+        }
+      }
+
       function toggleCollapsed() {
+        selectThisBlock();
         setCollapsed(!collapsed);
+      }
+
+      function onHeaderActivate() {
+        selectThisBlock();
+        if (collapsed) {
+          setCollapsed(false);
+        }
       }
 
       var inner = originalEdit(props);
@@ -208,14 +260,14 @@
         return inner;
       }
 
-      var frame = renderCollapseFrame(title, collapsed, toggleCollapsed, parts.canvas);
+      var frame = renderCollapseFrame(title, collapsed, onHeaderActivate, toggleCollapsed, parts.canvas);
 
       if (parts.rootType && parts.rootProps) {
-        return el(parts.rootType, parts.rootProps, parts.inspector.concat(frame));
+        return createWithChildren(parts.rootType, parts.rootProps, parts.inspector.concat([frame]));
       }
 
       if (parts.inspector.length) {
-        return el(Fragment, null, parts.inspector.concat(frame));
+        return createWithChildren(Fragment, null, parts.inspector.concat([frame]));
       }
 
       return frame;

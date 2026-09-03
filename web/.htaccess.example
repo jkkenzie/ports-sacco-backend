@@ -46,7 +46,6 @@ RewriteCond %{REQUEST_URI} !^/app\.php$ [NC]
 # Form CF workarounds (physical files; listed for clarity — !-f already passes them through)
 RewriteCond %{REQUEST_URI} !^/hc-api\.php$ [NC]
 RewriteCond %{REQUEST_URI} !^/hc-bootstrap\.php$ [NC]
-RewriteCond %{REQUEST_URI} !^/hc-wp-api\.php$ [NC]
 # Pass through if the file or directory physically exists
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

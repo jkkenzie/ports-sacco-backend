@@ -77,7 +77,6 @@ Still use **`/wp-json/custom/v1/`** (`WP_CUSTOM_API`) so existing CF rules that 
 | `web/app.php` | SPA shell + SEO + **inline form bootstrap** + `no-store` |
 | `web/hc-bootstrap.php` | Fresh nonce **outside** `/wp-json` |
 | `web/hc-api.php` | Form POSTs **outside** `/wp-json` |
-| `web/hc-wp-api.php` | Gutenberg **wp/v2** saves **outside** `/wp-json` |
 | `web/app/plugins/headless-core/` (incl. `inc/rest-nonce.php`) | Bootstrap payload, dual namespaces, form REST |
 | Published `web/frontend/` matching that source | SPA must call `formApiUrl` / prefer inline bootstrap |
 | `web/.htaccess` from `.htaccess.example` | Physical `hc-*.php` must not be swallowed by the SPA catch-all (`!-f` + explicit exclusions) |
@@ -97,22 +96,6 @@ Still use **`/wp-json/custom/v1/`** (`WP_CUSTOM_API`) so existing CF rules that 
 1. WAF skip / cache bypass for `/wp-json/portsacco/v1/*` and `/wp-json/chat/v1/*`.
 2. Point SPA `WP_CUSTOM_API` back to `/wp-json/portsacco/v1` and optionally use `customApiUrl` again for form POSTs.
 3. Keep `hc-api.php` / `hc-bootstrap.php` / inline inject until you verify forms under CF; then they can become optional fallbacks.
-
-### Gutenberg editor saves (wp-admin)
-
-Cloudflare can also block **`/wp-json/wp/v2/*`** POSTs used when saving pages and CPT items in the block editor. That shows as **“Updating failed. The response is not a valid JSON response.”** with **403 Forbidden** on `POST /wp-json/wp/v2/pages/{id}` (or `/loan-products/`, `/savings-products/`, `/services/`). Product archive pages fail more often because the save payload is larger.
-
-**Workaround (shipped):** In wp-admin, WordPress REST root is rewritten to **`/hc-api.php?rest_route=`** (default) — the same Cloudflare-safe entry point already used for contact/membership forms. It allowlists **`/wp/v2/*`** (logged-in editor saves) plus headless **`/custom/v1/`** and **`/portsacco/v1/`** product catalog routes. Alternates: `HEADLESS_ADMIN_REST_PROXY=admin-ajax` or `hc-wp-api`. Disable with `HEADLESS_ADMIN_REST_PROXY=0` after CF allows `/wp-json/wp/v2/*`.
-
-| Path | Purpose |
-|------|---------|
-| `web/hc-api.php?rest_route=` | **Default** — forms, loan/savings/services catalog, Gutenberg **`/wp/v2/*`** saves |
-| `wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy` | Alternate editor proxy |
-| `web/hc-wp-api.php` | Legacy root proxy (`HEADLESS_ADMIN_REST_PROXY=hc-wp-api`) |
-
-**Deploy checklist:** pull Headless Core **1.0.115+**, hard-refresh wp-admin (Ctrl+Shift+R). In DevTools → Network, saves should hit **`hc-api.php?rest_route=/wp/v2/...`**, not raw **`/wp-json/`**. Rebuild and publish the SPA so product pages fetch via **`hc-api.php`** too.
-
-**Cloudflare (durable fix):** Security → Events — find blocked editor saves. Add a skip rule when `Cookie` contains `wordpress_logged_in` for `/wp-json/wp/v2/*`, `/hc-api.php`, `/wp/wp-admin/admin-ajax.php`, and large POST bodies to loan/savings/service CPT routes.
 
 ---
 
@@ -426,7 +409,6 @@ Public forms and the WP REST API must keep working behind Cloudflare. Prefer **n
 | `web/app.php` | SPA HTML + SEO + form bootstrap inject |
 | `web/hc-bootstrap.php` | Form nonce JSON outside `/wp-json` (CF workaround) |
 | `web/hc-api.php` | Allowlisted form REST proxy outside `/wp-json` (CF workaround) |
-| `web/hc-wp-api.php` | Allowlisted **wp/v2** REST proxy for Gutenberg editor saves (CF workaround) |
 | `web/frontend/` | Published SPA (Bedrock tracks) |
 | `web/frontend/src/` | Vite project / ports-sacco-frontend (local nested git) |
 | `web/app/plugins/headless-core/` | Headless CMS, blocks, REST (`portsacco/v1`), SEO |
