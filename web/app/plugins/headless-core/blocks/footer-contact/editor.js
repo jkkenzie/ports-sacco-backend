@@ -2,8 +2,6 @@
   var el = element.createElement;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
-  var InspectorControls = blockEditor.InspectorControls;
-  var PanelBody = components.PanelBody;
   var TextControl = components.TextControl;
   var Button = components.Button;
   var ColorPalette = components.ColorPalette;
@@ -104,9 +102,9 @@
       return el(
         'div',
         blockProps,
-        el(InspectorControls, null, el(
-          PanelBody,
-          { title: __('Footer Contact', 'headless-core'), initialOpen: true },
+        el(
+          'div',
+          { style: { padding: '12px 16px 16px' } },
           field('title', __('Section Title', 'headless-core')),
           field('officeName', __('Office Name', 'headless-core')),
           field('officeAddress', __('Address', 'headless-core')),
@@ -129,8 +127,7 @@
             onChange: function (value) {
               setAttributes({ iconColor: value || '#FFFFFF' });
             },
-          })
-          ,
+          }),
           el('div', { style: { marginTop: '12px', marginBottom: '8px', fontWeight: '600' } }, __('Contact Link Hover Color', 'headless-core')),
           el(ColorPalette, {
             value: a.linkHoverColor || '#22ACB6',
@@ -139,8 +136,7 @@
               setAttributes({ linkHoverColor: value || '#22ACB6' });
             },
           })
-        )),
-        el('div', { style: { padding: '12px', border: '1px dashed #ccc' } }, __('Footer Contact block configured in sidebar.', 'headless-core'))
+        )
       );
     },
     save: function () {

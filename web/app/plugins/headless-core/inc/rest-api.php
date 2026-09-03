@@ -1019,6 +1019,144 @@ function headless_core_plain_text_from_parsed_block(array $block, array $attrs):
 }
 
 /**
+ * First matching HTML attribute value, entity-decoded.
+ */
+function headless_core_html_attr_from_markup(string $html, string $tag, string $attr): string
+{
+    if ($html === '' || $tag === '' || $attr === '') {
+        return '';
+    }
+    $pattern = sprintf(
+        '/<%s\b[^>]*\b%s=["\']([^"\']*)["\']/i',
+        preg_quote($tag, '/'),
+        preg_quote($attr, '/')
+    );
+    if (! preg_match($pattern, $html, $m)) {
+        return '';
+    }
+
+    return trim(html_entity_decode((string) $m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+}
+
+/**
+ * Resolve core/image attrs for the headless API (url, alt, caption, link, srcset).
+ *
+ * @param array<string, mixed> $block
+ * @param array<string, mixed> $attrs
+ * @return array<string, mixed>
+ */
+function headless_core_core_image_attrs_for_api(array $block, array $attrs): array
+{
+    $innerHtml = isset($block['innerHTML']) ? (string) $block['innerHTML'] : '';
+    if ($innerHtml === '' && isset($block['innerContent']) && is_array($block['innerContent'])) {
+        $innerHtml = implode('', array_filter(
+            $block['innerContent'],
+            static function ($x): bool {
+                return is_string($x) && $x !== '';
+            }
+        ));
+    }
+
+    $id = isset($attrs['id']) ? (int) $attrs['id'] : 0;
+    if ($id <= 0 && preg_match('/wp-image-(\d+)/', $innerHtml, $m)) {
+        $id = (int) $m[1];
+    }
+
+    $size = isset($attrs['sizeSlug']) ? sanitize_key((string) $attrs['sizeSlug']) : 'large';
+    if ($size === '') {
+        $size = 'large';
+    }
+
+    $url = '';
+    if (isset($attrs['url']) && is_scalar($attrs['url'])) {
+        $url = esc_url_raw(trim((string) $attrs['url']));
+    }
+    if ($url === '' && $id > 0) {
+        $resolved = wp_get_attachment_image_url($id, $size);
+        if (! is_string($resolved) || $resolved === '') {
+            $resolved = wp_get_attachment_image_url($id, 'full');
+        }
+        if (is_string($resolved) && $resolved !== '') {
+            $url = $resolved;
+        }
+    }
+    if ($url === '') {
+        $url = esc_url_raw(headless_core_html_attr_from_markup($innerHtml, 'img', 'src'));
+    }
+
+    $alt = isset($attrs['alt']) ? sanitize_text_field((string) $attrs['alt']) : '';
+    if ($alt === '') {
+        $alt = sanitize_text_field(headless_core_html_attr_from_markup($innerHtml, 'img', 'alt'));
+    }
+    if ($alt === '' && $id > 0) {
+        $alt = sanitize_text_field((string) get_post_meta($id, '_wp_attachment_image_alt', true));
+    }
+
+    $caption = '';
+    if (isset($attrs['caption']) && is_scalar($attrs['caption'])) {
+        $caption = trim(html_entity_decode(wp_strip_all_tags((string) $attrs['caption']), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+    if ($caption === '' && preg_match('#<figcaption\b[^>]*>(.*?)</figcaption>#is', $innerHtml, $cap)) {
+        $caption = trim(html_entity_decode(wp_strip_all_tags((string) $cap[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+
+    $href = '';
+    if (isset($attrs['href']) && is_scalar($attrs['href'])) {
+        $href = esc_url_raw(trim((string) $attrs['href']));
+    }
+    if ($href === '') {
+        $href = esc_url_raw(headless_core_html_attr_from_markup($innerHtml, 'a', 'href'));
+    }
+
+    $linkTarget = isset($attrs['linkTarget']) ? sanitize_text_field((string) $attrs['linkTarget']) : '';
+    if ($linkTarget === '') {
+        $linkTarget = sanitize_text_field(headless_core_html_attr_from_markup($innerHtml, 'a', 'target'));
+    }
+
+    $rel = isset($attrs['rel']) ? sanitize_text_field((string) $attrs['rel']) : '';
+    if ($rel === '') {
+        $rel = sanitize_text_field(headless_core_html_attr_from_markup($innerHtml, 'a', 'rel'));
+    }
+
+    $align = isset($attrs['align']) ? sanitize_text_field((string) $attrs['align']) : '';
+    $width = isset($attrs['width']) ? $attrs['width'] : null;
+    $height = isset($attrs['height']) ? $attrs['height'] : null;
+
+    $srcset = '';
+    $sizes = '';
+    if ($id > 0) {
+        $srcsetRaw = wp_get_attachment_image_srcset($id, $size);
+        if (is_string($srcsetRaw) && $srcsetRaw !== '') {
+            $srcset = $srcsetRaw;
+        }
+        $sizesRaw = wp_get_attachment_image_sizes($id, $size);
+        if (is_string($sizesRaw) && $sizesRaw !== '') {
+            $sizes = $sizesRaw;
+        }
+    }
+
+    $attrs['id'] = $id;
+    $attrs['url'] = $url;
+    $attrs['alt'] = $alt;
+    $attrs['caption'] = $caption;
+    $attrs['href'] = $href;
+    $attrs['linkTarget'] = $linkTarget;
+    $attrs['rel'] = $rel;
+    $attrs['align'] = $align;
+    $attrs['sizeSlug'] = $size;
+    $attrs['srcset'] = $srcset;
+    $attrs['sizes'] = $sizes;
+    if ($width !== null && $width !== '') {
+        $attrs['width'] = $width;
+    }
+    if ($height !== null && $height !== '') {
+        $attrs['height'] = $height;
+    }
+
+    return $attrs;
+}
+
+/**
  * `parse_blocks()` often omits JSON keys that match block registration defaults. Merge missing keys
  * from {@see WP_Block_Type_Registry} so the headless app receives a complete attribute object.
  *
@@ -1886,6 +2024,10 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
         $attrs['content'] = headless_core_plain_text_from_parsed_block($block, $attrs);
 
         return $attrs;
+    }
+
+    if ($name === 'core/image') {
+        return headless_core_core_image_attrs_for_api($block, $attrs);
     }
 
     if ($name === 'custom/mission-vision') {

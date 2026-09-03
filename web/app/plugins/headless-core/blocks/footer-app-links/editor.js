@@ -2,8 +2,6 @@
   var el = element.createElement;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
-  var InspectorControls = blockEditor.InspectorControls;
-  var PanelBody = components.PanelBody;
   var TextControl = components.TextControl;
   var Button = components.Button;
   var ColorPalette = components.ColorPalette;
@@ -80,34 +78,31 @@
         );
       }
       return el('div', blockProps,
-        el(InspectorControls, null,
-          el(PanelBody, { title: __('Footer App Links', 'headless-core'), initialOpen: true },
-            el(TextControl, { label: __('Title', 'headless-core'), value: a.title || '', onChange: function (v) { setAttributes({ title: v }); } }),
-            el(TextControl, { label: __('Google Play URL', 'headless-core'), value: a.googlePlayUrl || '', onChange: function (v) { setAttributes({ googlePlayUrl: v }); } }),
-            el(TextControl, { label: __('App Store URL', 'headless-core'), value: a.appStoreUrl || '', onChange: function (v) { setAttributes({ appStoreUrl: v }); } }),
-            el(TextControl, { label: __('Icon Width (px)', 'headless-core'), type: 'number', value: String(a.iconWidth || 144), onChange: function (v) { setAttributes({ iconWidth: Number(v) || 144 }); } }),
-            el(TextControl, { label: __('Icon Height (px)', 'headless-core'), type: 'number', value: String(a.iconHeight || 48), onChange: function (v) { setAttributes({ iconHeight: Number(v) || 48 }); } }),
-            mediaField('googlePlayIconId', __('Google Play Icon (SVG/Image)', 'headless-core')),
-            mediaField('appStoreIconId', __('App Store Icon (SVG/Image)', 'headless-core')),
-            el('div', { style: { marginBottom: '8px', fontWeight: '600' } }, __('SVG/Icon Color', 'headless-core')),
-            el(ColorPalette, {
-              value: a.iconColor || '#FFFFFF',
-              colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-              onChange: function (value) {
-                setAttributes({ iconColor: value || '#FFFFFF' });
-              },
-            }),
-            el('div', { style: { marginTop: '12px', marginBottom: '8px', fontWeight: '600' } }, __('SVG/Icon Hover Color', 'headless-core')),
-            el(ColorPalette, {
-              value: a.iconHoverColor || '#22ACB6',
-              colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-              onChange: function (value) {
-                setAttributes({ iconHoverColor: value || '#22ACB6' });
-              },
-            })
-          )
-        ),
-        el('div', { style: { padding: '12px', border: '1px dashed #ccc' } }, __('Footer App Links block configured in sidebar.', 'headless-core'))
+        el('div', { style: { padding: '12px 16px 16px' } },
+          el(TextControl, { label: __('Title', 'headless-core'), value: a.title || '', onChange: function (v) { setAttributes({ title: v }); } }),
+          el(TextControl, { label: __('Google Play URL', 'headless-core'), value: a.googlePlayUrl || '', onChange: function (v) { setAttributes({ googlePlayUrl: v }); } }),
+          el(TextControl, { label: __('App Store URL', 'headless-core'), value: a.appStoreUrl || '', onChange: function (v) { setAttributes({ appStoreUrl: v }); } }),
+          el(TextControl, { label: __('Icon Width (px)', 'headless-core'), type: 'number', value: String(a.iconWidth || 144), onChange: function (v) { setAttributes({ iconWidth: Number(v) || 144 }); } }),
+          el(TextControl, { label: __('Icon Height (px)', 'headless-core'), type: 'number', value: String(a.iconHeight || 48), onChange: function (v) { setAttributes({ iconHeight: Number(v) || 48 }); } }),
+          mediaField('googlePlayIconId', __('Google Play Icon (SVG/Image)', 'headless-core')),
+          mediaField('appStoreIconId', __('App Store Icon (SVG/Image)', 'headless-core')),
+          el('div', { style: { marginBottom: '8px', fontWeight: '600' } }, __('SVG/Icon Color', 'headless-core')),
+          el(ColorPalette, {
+            value: a.iconColor || '#FFFFFF',
+            colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
+            onChange: function (value) {
+              setAttributes({ iconColor: value || '#FFFFFF' });
+            },
+          }),
+          el('div', { style: { marginTop: '12px', marginBottom: '8px', fontWeight: '600' } }, __('SVG/Icon Hover Color', 'headless-core')),
+          el(ColorPalette, {
+            value: a.iconHoverColor || '#22ACB6',
+            colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
+            onChange: function (value) {
+              setAttributes({ iconHoverColor: value || '#22ACB6' });
+            },
+          })
+        )
       );
     },
     save: function () {

@@ -2,8 +2,6 @@
   var el = element.createElement;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
-  var InspectorControls = blockEditor.InspectorControls;
-  var PanelBody = components.PanelBody;
   var TextControl = components.TextControl;
   var Button = components.Button;
   var ColorPalette = components.ColorPalette;
@@ -84,45 +82,42 @@
         );
       }
       return el('div', blockProps,
-        el(InspectorControls, null,
-          el(PanelBody, { title: __('Footer Social Links', 'headless-core'), initialOpen: true },
-            el(TextControl, { label: __('Facebook URL', 'headless-core'), value: a.facebook || '', onChange: function (v) { setAttributes({ facebook: v }); } }),
-            el(TextControl, { label: __('X/Twitter URL', 'headless-core'), value: a.twitter || '', onChange: function (v) { setAttributes({ twitter: v }); } }),
-            el(TextControl, { label: __('Instagram URL', 'headless-core'), value: a.instagram || '', onChange: function (v) { setAttributes({ instagram: v }); } }),
-            el(TextControl, { label: __('LinkedIn URL', 'headless-core'), value: a.linkedin || '', onChange: function (v) { setAttributes({ linkedin: v }); } }),
-            el(TextControl, { label: __('YouTube URL', 'headless-core'), value: a.youtube || '', onChange: function (v) { setAttributes({ youtube: v }); } }),
-            mediaField('facebookIconId', __('Facebook Icon (SVG/Image)', 'headless-core')),
-            mediaField('twitterIconId', __('X/Twitter Icon (SVG/Image)', 'headless-core')),
-            mediaField('instagramIconId', __('Instagram Icon (SVG/Image)', 'headless-core')),
-            mediaField('linkedinIconId', __('LinkedIn Icon (SVG/Image)', 'headless-core')),
-            mediaField('youtubeIconId', __('YouTube Icon (SVG/Image)', 'headless-core')),
-            el('div', { style: { marginBottom: '8px', fontWeight: '600' } }, __('SVG/Icon Color', 'headless-core')),
-            el(ColorPalette, {
-              value: a.iconColor || '#FFFFFF',
-              colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-              onChange: function (value) {
-                setAttributes({ iconColor: value || '#FFFFFF' });
-              },
-            }),
-            el('div', { style: { marginTop: '12px', marginBottom: '8px', fontWeight: '600' } }, __('Social Icon Hover Color', 'headless-core')),
-            el(ColorPalette, {
-              value: a.iconHoverColor || '#22ACB6',
-              colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-              onChange: function (value) {
-                setAttributes({ iconHoverColor: value || '#22ACB6' });
-              },
-            }),
-            el('div', { style: { marginTop: '12px', marginBottom: '8px', fontWeight: '600' } }, __('YouTube Internal Color', 'headless-core')),
-            el(ColorPalette, {
-              value: a.youtubeInternalColor || '#FFFFFF',
-              colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
-              onChange: function (value) {
-                setAttributes({ youtubeInternalColor: value || '#FFFFFF' });
-              },
-            })
-          )
-        ),
-        el('div', { style: { padding: '12px', border: '1px dashed #ccc' } }, __('Footer Socials block configured in sidebar.', 'headless-core'))
+        el('div', { style: { padding: '12px 16px 16px' } },
+          el(TextControl, { label: __('Facebook URL', 'headless-core'), value: a.facebook || '', onChange: function (v) { setAttributes({ facebook: v }); } }),
+          el(TextControl, { label: __('X/Twitter URL', 'headless-core'), value: a.twitter || '', onChange: function (v) { setAttributes({ twitter: v }); } }),
+          el(TextControl, { label: __('Instagram URL', 'headless-core'), value: a.instagram || '', onChange: function (v) { setAttributes({ instagram: v }); } }),
+          el(TextControl, { label: __('LinkedIn URL', 'headless-core'), value: a.linkedin || '', onChange: function (v) { setAttributes({ linkedin: v }); } }),
+          el(TextControl, { label: __('YouTube URL', 'headless-core'), value: a.youtube || '', onChange: function (v) { setAttributes({ youtube: v }); } }),
+          mediaField('facebookIconId', __('Facebook Icon (SVG/Image)', 'headless-core')),
+          mediaField('twitterIconId', __('X/Twitter Icon (SVG/Image)', 'headless-core')),
+          mediaField('instagramIconId', __('Instagram Icon (SVG/Image)', 'headless-core')),
+          mediaField('linkedinIconId', __('LinkedIn Icon (SVG/Image)', 'headless-core')),
+          mediaField('youtubeIconId', __('YouTube Icon (SVG/Image)', 'headless-core')),
+          el('div', { style: { marginBottom: '8px', fontWeight: '600' } }, __('SVG/Icon Color', 'headless-core')),
+          el(ColorPalette, {
+            value: a.iconColor || '#FFFFFF',
+            colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
+            onChange: function (value) {
+              setAttributes({ iconColor: value || '#FFFFFF' });
+            },
+          }),
+          el('div', { style: { marginTop: '12px', marginBottom: '8px', fontWeight: '600' } }, __('Social Icon Hover Color', 'headless-core')),
+          el(ColorPalette, {
+            value: a.iconHoverColor || '#22ACB6',
+            colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
+            onChange: function (value) {
+              setAttributes({ iconHoverColor: value || '#22ACB6' });
+            },
+          }),
+          el('div', { style: { marginTop: '12px', marginBottom: '8px', fontWeight: '600' } }, __('YouTube Internal Color', 'headless-core')),
+          el(ColorPalette, {
+            value: a.youtubeInternalColor || '#FFFFFF',
+            colors: BRAND_COLOR_CHOICES.map(function (hex) { return { color: hex, name: hex }; }),
+            onChange: function (value) {
+              setAttributes({ youtubeInternalColor: value || '#FFFFFF' });
+            },
+          })
+        )
       );
     },
     save: function () {

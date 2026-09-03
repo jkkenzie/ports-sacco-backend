@@ -2,9 +2,6 @@
   var el = element.createElement;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
-  var InspectorControls = blockEditor.InspectorControls;
-  var LinkControl = blockEditor.LinkControl || blockEditor.__experimentalLinkControl;
-  var PanelBody = components.PanelBody;
   var TextControl = components.TextControl;
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
@@ -133,37 +130,34 @@
       }
 
       return el('div', blockProps,
-        el(InspectorControls, null,
-          el(PanelBody, { title: __('Footer Bottom Row', 'headless-core'), initialOpen: true },
-            field('copyright', __('Copyright', 'headless-core')),
-            field('rights', __('Rights Label', 'headless-core')),
-            field('privacyLabel', __('Privacy Label', 'headless-core')),
-            pageAutocompleteField('privacyUrl', __('Privacy Page URL', 'headless-core'), privacyQuery, setPrivacyQuery, privacyPages),
-            field('termsLabel', __('Terms Label', 'headless-core')),
-            pageAutocompleteField('termsUrl', __('Terms Page URL', 'headless-core'), termsQuery, setTermsQuery, termsPages),
-            field('credit', __('Credit', 'headless-core')),
-            field('creditUrl', __('Credit URL', 'headless-core')),
-            el(BaseControl, { label: __('Links Color', 'headless-core') },
-              el(ColorPalette, {
-                value: a.linkColor || '#22ACB6',
-                colors: brandColors,
-                onChange: function (v) {
-                  setAttributes({ linkColor: v || '#22ACB6' });
-                },
-              })
-            ),
-            el(BaseControl, { label: __('Links Hover Color', 'headless-core') },
-              el(ColorPalette, {
-                value: a.linkHoverColor || '#FFFFFF',
-                colors: brandColors,
-                onChange: function (v) {
-                  setAttributes({ linkHoverColor: v || '#FFFFFF' });
-                },
-              })
-            )
+        el('div', { style: { padding: '12px 16px 16px' } },
+          field('copyright', __('Copyright', 'headless-core')),
+          field('rights', __('Rights Label', 'headless-core')),
+          field('privacyLabel', __('Privacy Label', 'headless-core')),
+          pageAutocompleteField('privacyUrl', __('Privacy Page URL', 'headless-core'), privacyQuery, setPrivacyQuery, privacyPages),
+          field('termsLabel', __('Terms Label', 'headless-core')),
+          pageAutocompleteField('termsUrl', __('Terms Page URL', 'headless-core'), termsQuery, setTermsQuery, termsPages),
+          field('credit', __('Credit', 'headless-core')),
+          field('creditUrl', __('Credit URL', 'headless-core')),
+          el(BaseControl, { label: __('Links Color', 'headless-core') },
+            el(ColorPalette, {
+              value: a.linkColor || '#22ACB6',
+              colors: brandColors,
+              onChange: function (v) {
+                setAttributes({ linkColor: v || '#22ACB6' });
+              },
+            })
+          ),
+          el(BaseControl, { label: __('Links Hover Color', 'headless-core') },
+            el(ColorPalette, {
+              value: a.linkHoverColor || '#FFFFFF',
+              colors: brandColors,
+              onChange: function (v) {
+                setAttributes({ linkHoverColor: v || '#FFFFFF' });
+              },
+            })
           )
-        ),
-        el('div', { style: { padding: '12px', border: '1px dashed #ccc' } }, __('Footer Bottom block configured in sidebar.', 'headless-core'))
+        )
       );
     },
     save: function () {

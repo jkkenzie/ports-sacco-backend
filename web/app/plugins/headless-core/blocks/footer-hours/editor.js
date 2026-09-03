@@ -2,8 +2,6 @@
   var el = element.createElement;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
-  var InspectorControls = blockEditor.InspectorControls;
-  var PanelBody = components.PanelBody;
   var TextControl = components.TextControl;
   var __ = i18n.__;
 
@@ -39,18 +37,15 @@
       }
 
       return el('div', blockProps,
-        el(InspectorControls, null,
-          el(PanelBody, { title: __('Footer Hours', 'headless-core'), initialOpen: true },
-            field('title', __('Title', 'headless-core')),
-            field('weekdaysLabel', __('Weekdays Label', 'headless-core')),
-            field('weekdaysTime', __('Weekdays Time', 'headless-core')),
-            field('saturdayLabel', __('Saturday Label', 'headless-core')),
-            field('saturdayTime', __('Saturday Time', 'headless-core')),
-            field('sundayLabel', __('Sunday Label', 'headless-core')),
-            field('sundayTime', __('Sunday Time', 'headless-core'))
-          )
-        ),
-        el('div', { style: { padding: '12px', border: '1px dashed #ccc' } }, __('Footer Hours block configured in sidebar.', 'headless-core'))
+        el('div', { style: { padding: '12px 16px 16px' } },
+          field('title', __('Title', 'headless-core')),
+          field('weekdaysLabel', __('Weekdays Label', 'headless-core')),
+          field('weekdaysTime', __('Weekdays Time', 'headless-core')),
+          field('saturdayLabel', __('Saturday Label', 'headless-core')),
+          field('saturdayTime', __('Saturday Time', 'headless-core')),
+          field('sundayLabel', __('Sunday Label', 'headless-core')),
+          field('sundayTime', __('Sunday Time', 'headless-core'))
+        )
       );
     },
     save: function () {

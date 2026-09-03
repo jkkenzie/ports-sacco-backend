@@ -263,6 +263,11 @@
       .trim();
   }
 
+  var lastSectionOptsFingerprint = '';
+  var lastSectionOpts = null;
+  var cachedDedupedFetch = null;
+  var cachedDedupedFetchEditor = null;
+
   /**
    * Build SelectControl options from Gutenberg blocks on the current page.
    * @param {Array} blocks
@@ -369,6 +374,16 @@
     }
 
     walk(blocks);
+
+    var fingerprint = '';
+    for (var i = 0; i < options.length; i++) {
+      fingerprint += String(options[i].value) + '\t' + String(options[i].label) + '\n';
+    }
+    if (fingerprint === lastSectionOptsFingerprint && lastSectionOpts) {
+      return lastSectionOpts;
+    }
+    lastSectionOptsFingerprint = fingerprint;
+    lastSectionOpts = options;
     return options;
   }
 
@@ -419,19 +434,24 @@
   }
 
   function createDedupedLinkFetch(blockEditor) {
+    if (cachedDedupedFetch && cachedDedupedFetchEditor === blockEditor) {
+      return cachedDedupedFetch;
+    }
     var baseFetch =
       (blockEditor && blockEditor.__experimentalFetchLinkSuggestions) ||
       (typeof wp !== 'undefined' && wp.blockEditor && wp.blockEditor.__experimentalFetchLinkSuggestions);
     if (typeof baseFetch !== 'function') {
       return undefined;
     }
-    return function () {
+    cachedDedupedFetchEditor = blockEditor;
+    cachedDedupedFetch = function () {
       var result = baseFetch.apply(this, arguments);
       if (result && typeof result.then === 'function') {
         return result.then(dedupeLinkSuggestions);
       }
       return Promise.resolve(dedupeLinkSuggestions(result));
     };
+    return cachedDedupedFetch;
   }
 
   function renderHashAnchorControl(el, components, i18n, parts, opts, emitUrl, item, urlKey) {
@@ -489,7 +509,7 @@
     var currentUrl = readUrlFromItem(item, urlKey);
     var parts = splitUrlHash(currentUrl);
     var dedupedLinkFetch = createDedupedLinkFetch(blockEditor);
-    var urlInputKey = instanceKey + '-link-' + String(item && item.linkId ? item.linkId : 0) + '-' + (parts.base ? 'set' : 'empty');
+    var urlInputKey = instanceKey + '-url-input';
 
     if (!URLInput) {
       return renderTextUrlControl(el, TextControl, label, item, urlKey, onChange);

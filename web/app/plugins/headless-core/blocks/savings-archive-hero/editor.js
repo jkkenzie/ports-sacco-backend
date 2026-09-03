@@ -337,6 +337,151 @@
     );
   }
 
+  var EMPTY_SECTION_OPTIONS = [{ label: __('— No section —', 'headless-core'), value: '' }];
+  var memo = element.memo || function (comp) { return comp; };
+
+  function HeroCtaEditor(props) {
+    var setAttributes = props.setAttributes;
+    var buttons = normalizeButtons(props.buttons);
+    var menuItems = normalizeMenuItems(props.menuItems);
+    var sectionOptions = useSelect(function (select) {
+      var store = select('core/block-editor');
+      if (!store || !store.getBlocks || !headlessLink.collectSectionAnchorOptions) {
+        return EMPTY_SECTION_OPTIONS;
+      }
+      return headlessLink.collectSectionAnchorOptions(store.getBlocks(), __);
+    }, []);
+
+    function patchButton(index, patch) {
+      var current = normalizeButtons(props.buttons);
+      var next = current.slice();
+      next[index] = mergeLinkPatch(next[index], patch, 'url');
+      setAttributes({ buttons: next });
+    }
+
+    function addButton() {
+      var nextIndex = buttons.length;
+      var template = Object.assign(
+        {},
+        EMPTY_BUTTON,
+        nextIndex % 2 === 0 ? ODD_BUTTON_COLORS : EVEN_BUTTON_COLORS
+      );
+      setAttributes({
+        buttons: buttons.concat([template]),
+      });
+    }
+
+    function removeButton(index) {
+      var next = buttons.filter(function (_, i) { return i !== index; });
+      setAttributes({ buttons: next });
+    }
+
+    function patchMenuItem(index, patch) {
+      var current = normalizeMenuItems(props.menuItems);
+      var next = current.slice();
+      next[index] = mergeLinkPatch(next[index], patch, 'href');
+      setAttributes({ menuItems: next });
+    }
+
+    function addMenuItem() {
+      setAttributes({
+        menuItems: menuItems.concat([Object.assign({}, EMPTY_MENU_ITEM)]),
+      });
+    }
+
+    function removeMenuItem(index) {
+      var next = menuItems.filter(function (_, i) { return i !== index; });
+      setAttributes({ menuItems: next });
+    }
+
+    return el(
+      'div',
+      { onKeyDown: function (e) { e.stopPropagation(); }, onKeyPress: function (e) { e.stopPropagation(); } },
+      el('div', { style: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' } },
+        el('strong', null, __('Buttons', 'headless-core')),
+        buttons.length === 0
+          ? el('p', { style: { color: '#666', marginTop: '8px' } }, __('No buttons yet. Add CTA buttons with custom links.', 'headless-core'))
+          : null,
+        buttons.map(function (btn, index) {
+          return el(
+            'div',
+            { key: 'btn-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
+            el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
+              el('strong', null, __('Button', 'headless-core') + ' ' + (index + 1)),
+              el('div', { style: { display: 'flex', gap: '6px' } },
+                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
+                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
+                el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
+              )
+            ),
+            el(TextControl, {
+              label: __('Label', 'headless-core'),
+              value: btn.label,
+              onChange: function (v) { patchButton(index, { label: v }); },
+            }),
+            renderUrlField(__('Page/Post Link', 'headless-core'), btn, 'url', function (patch) {
+              patchButton(index, patch);
+            }, 'hero-btn-' + index, sectionOptions)
+          );
+        }),
+        el('div', { style: { marginTop: '10px' } },
+          el(Button, { variant: 'secondary', onClick: addButton }, '+ ', __('Add button', 'headless-core'))
+        )
+      ),
+      el('div', { style: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' } },
+        el('strong', null, __('Menu items', 'headless-core')),
+        el(
+          'p',
+          { style: { color: '#666', fontSize: '12px', marginTop: '6px' } },
+          __(
+            'Link to a page/post, or choose a section on this page to smooth-scroll there.',
+            'headless-core'
+          )
+        ),
+        menuItems.length === 0
+          ? el('p', { style: { color: '#666', marginTop: '8px' } }, __('No menu items yet. Add links for the sub-navigation row.', 'headless-core'))
+          : null,
+        menuItems.map(function (item, index) {
+          return el(
+            'div',
+            { key: 'menu-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
+            el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
+              el('strong', null, __('Menu item', 'headless-core') + ' ' + (index + 1)),
+              el('div', { style: { display: 'flex', gap: '6px' } },
+                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
+                el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
+                el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)
+              )
+            ),
+            el(TextControl, {
+              label: __('Label', 'headless-core'),
+              value: item.label,
+              onChange: function (v) { patchMenuItem(index, { label: v }); },
+            }),
+            renderUrlField(__('Page/Post Link', 'headless-core'), item, 'href', function (patch) {
+              patchMenuItem(index, patch);
+            }, 'hero-menu-' + index, sectionOptions),
+            sectionOptions.length <= 1
+              ? el(
+                  'p',
+                  { style: { fontSize: '12px', color: '#666', marginTop: '8px' } },
+                  __(
+                    'Add content sections below this hero (with headings) to pick them in the section anchor dropdown.',
+                    'headless-core'
+                  )
+                )
+              : null
+          );
+        }),
+        el('div', { style: { marginTop: '10px' } },
+          el(Button, { variant: 'secondary', onClick: addMenuItem }, '+ ', __('Add menu item', 'headless-core'))
+        )
+      )
+    );
+  }
+
+  var MemoHeroCtaEditor = memo(HeroCtaEditor);
+
   function moveRow(list, index, dir) {
     var to = index + dir;
     if (to < 0 || to >= list.length) return list;
@@ -376,32 +521,6 @@
       var attrs = props.attributes || {};
       var buttons = normalizeButtons(attrs.buttons);
       var menuItems = normalizeMenuItems(attrs.menuItems);
-      var sectionOptions = useSelect(function (select) {
-        var store = select('core/block-editor');
-        if (!store || !store.getBlocks || !headlessLink.collectSectionAnchorOptions) {
-          return [{ label: __('— No section —', 'headless-core'), value: '' }];
-        }
-        return headlessLink.collectSectionAnchorOptions(store.getBlocks(), __);
-      }, []);
-
-      function patchButton(index, patch) {
-        var current = normalizeButtons(props.attributes.buttons);
-        var next = current.slice();
-        next[index] = mergeLinkPatch(next[index], patch, 'url');
-        props.setAttributes({ buttons: next });
-      }
-
-      function addButton() {
-        var nextIndex = buttons.length;
-        var template = Object.assign(
-          {},
-          EMPTY_BUTTON,
-          nextIndex % 2 === 0 ? ODD_BUTTON_COLORS : EVEN_BUTTON_COLORS
-        );
-        props.setAttributes({
-          buttons: buttons.concat([template]),
-        });
-      }
 
       function patchButtonColorsByParity(parity, patch) {
         props.setAttributes({
@@ -411,29 +530,6 @@
 
       var oddButtonColors = buttonColorsFromList(buttons, 0);
       var evenButtonColors = buttonColorsFromList(buttons, 1);
-
-      function removeButton(index) {
-        var next = buttons.filter(function (_, i) { return i !== index; });
-        props.setAttributes({ buttons: next });
-      }
-
-      function patchMenuItem(index, patch) {
-        var current = normalizeMenuItems(props.attributes.menuItems);
-        var next = current.slice();
-        next[index] = mergeLinkPatch(next[index], patch, 'href');
-        props.setAttributes({ menuItems: next });
-      }
-
-      function addMenuItem() {
-        props.setAttributes({
-          menuItems: menuItems.concat([Object.assign({}, EMPTY_MENU_ITEM)]),
-        });
-      }
-
-      function removeMenuItem(index) {
-        var next = menuItems.filter(function (_, i) { return i !== index; });
-        props.setAttributes({ menuItems: next });
-      }
 
       return el(
         'div',
@@ -522,7 +618,11 @@
         ),
         el(
           'div',
-          { style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' } },
+          {
+            style: { padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' },
+            onKeyDown: function (e) { e.stopPropagation(); },
+            onKeyPress: function (e) { e.stopPropagation(); },
+          },
           el('div', { style: { maxWidth: '1100px', margin: '0 auto' } },
             el('h3', { style: { margin: 0, marginBottom: '10px' } }, __('Page Hero Content', 'headless-core')),
             el(TextControl, { label: __('Title', 'headless-core'), value: attrs.title || '', onChange: function (v) { props.setAttributes({ title: v }); } }),
@@ -568,86 +668,11 @@
                   : null
               )
             ),
-            el('div', { style: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' } },
-              el('strong', null, __('Buttons', 'headless-core')),
-              buttons.length === 0
-                ? el('p', { style: { color: '#666', marginTop: '8px' } }, __('No buttons yet. Add CTA buttons with custom links.', 'headless-core'))
-                : null,
-              buttons.map(function (btn, index) {
-                return el(
-                  'div',
-                  { key: 'btn-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
-                  el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
-                    el('strong', null, __('Button', 'headless-core') + ' ' + (index + 1)),
-                    el('div', { style: { display: 'flex', gap: '6px' } },
-                      el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, -1) }); } }, '˄'),
-                      el(Button, { variant: 'tertiary', isSmall: true, disabled: index === buttons.length - 1, onClick: function () { props.setAttributes({ buttons: moveRow(buttons, index, 1) }); } }, '˅'),
-                      el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeButton(index); } }, trashSvg)
-                    )
-                  ),
-                  el(TextControl, {
-                    label: __('Label', 'headless-core'),
-                    value: btn.label,
-                    onChange: function (v) { patchButton(index, { label: v }); },
-                  }),
-                  renderUrlField(__('Page/Post Link', 'headless-core'), btn, 'url', function (patch) {
-                    patchButton(index, patch);
-                  }, 'hero-btn-' + index, sectionOptions)
-                );
-              }),
-              el('div', { style: { marginTop: '10px' } },
-                el(Button, { variant: 'secondary', onClick: addButton }, '+ ', __('Add button', 'headless-core'))
-              )
-            ),
-            el('div', { style: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' } },
-              el('strong', null, __('Menu items', 'headless-core')),
-              el(
-                'p',
-                { style: { color: '#666', fontSize: '12px', marginTop: '6px' } },
-                __(
-                  'Link to a page/post, or choose a section on this page to smooth-scroll there.',
-                  'headless-core'
-                )
-              ),
-              menuItems.length === 0
-                ? el('p', { style: { color: '#666', marginTop: '8px' } }, __('No menu items yet. Add links for the sub-navigation row.', 'headless-core'))
-                : null,
-              menuItems.map(function (item, index) {
-                return el(
-                  'div',
-                  { key: 'menu-inline-' + index, style: { border: '1px solid #eee', padding: '10px', marginTop: '10px', borderRadius: '8px' } },
-                  el('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' } },
-                    el('strong', null, __('Menu item', 'headless-core') + ' ' + (index + 1)),
-                    el('div', { style: { display: 'flex', gap: '6px' } },
-                      el(Button, { variant: 'tertiary', isSmall: true, disabled: index === 0, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, -1) }); } }, '˄'),
-                      el(Button, { variant: 'tertiary', isSmall: true, disabled: index === menuItems.length - 1, onClick: function () { props.setAttributes({ menuItems: moveRow(menuItems, index, 1) }); } }, '˅'),
-                      el(Button, { variant: 'tertiary', isSmall: true, isDestructive: true, onClick: function () { removeMenuItem(index); } }, trashSvg)
-                    )
-                  ),
-                  el(TextControl, {
-                    label: __('Label', 'headless-core'),
-                    value: item.label,
-                    onChange: function (v) { patchMenuItem(index, { label: v }); },
-                  }),
-                  renderUrlField(__('Page/Post Link', 'headless-core'), item, 'href', function (patch) {
-                    patchMenuItem(index, patch);
-                  }, 'hero-menu-' + index, sectionOptions),
-                  sectionOptions.length <= 1
-                    ? el(
-                        'p',
-                        { style: { fontSize: '12px', color: '#666', marginTop: '8px' } },
-                        __(
-                          'Add content sections below this hero (with headings) to pick them in the section anchor dropdown.',
-                          'headless-core'
-                        )
-                      )
-                    : null
-                );
-              }),
-              el('div', { style: { marginTop: '10px' } },
-                el(Button, { variant: 'secondary', onClick: addMenuItem }, '+ ', __('Add menu item', 'headless-core'))
-              )
-            )
+            el(MemoHeroCtaEditor, {
+              buttons: attrs.buttons,
+              menuItems: attrs.menuItems,
+              setAttributes: props.setAttributes,
+            })
           )
         ),
         el(

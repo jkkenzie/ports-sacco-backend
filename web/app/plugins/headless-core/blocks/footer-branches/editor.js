@@ -2,8 +2,6 @@
   var el = element.createElement;
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
-  var InspectorControls = blockEditor.InspectorControls;
-  var PanelBody = components.PanelBody;
   var TextControl = components.TextControl;
   var Button = components.Button;
   var __ = i18n.__;
@@ -48,13 +46,10 @@
       });
 
       return el('div', blockProps,
-        el(InspectorControls, null,
-          el(PanelBody, { title: __('Footer Branches', 'headless-core'), initialOpen: true },
-            items,
-            el(Button, { isPrimary: true, onClick: addBranch }, __('Add Branch', 'headless-core'))
-          )
-        ),
-        el('div', { style: { padding: '12px', border: '1px dashed #ccc' } }, __('Footer Branches block configured in sidebar.', 'headless-core'))
+        el('div', { style: { padding: '12px 16px 16px' } },
+          items,
+          el(Button, { isPrimary: true, onClick: addBranch }, __('Add Branch', 'headless-core'))
+        )
       );
     },
     save: function () {

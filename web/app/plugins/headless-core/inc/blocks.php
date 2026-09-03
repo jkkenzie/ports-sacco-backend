@@ -26,7 +26,7 @@ add_action('init', static function (): void {
     wp_register_script(
         'headless-core-block-collapse',
         HEADLESS_CORE_URL . 'blocks/shared/block-collapse.js',
-        ['wp-block-editor', 'wp-components', 'wp-element', 'wp-i18n', 'wp-hooks'],
+        ['wp-block-editor', 'wp-components', 'wp-element', 'wp-i18n', 'wp-hooks', 'wp-data'],
         HEADLESS_CORE_VERSION,
         false
     );
