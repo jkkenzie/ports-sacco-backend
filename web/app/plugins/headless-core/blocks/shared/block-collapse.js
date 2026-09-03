@@ -30,6 +30,16 @@
     return name;
   }
 
+  /**
+   * createElement treats an array passed as the single children argument as a list,
+   * which requires keys. Pass children as extra arguments instead (Gutenberg style).
+   */
+  function createWithChildren(type, props, children) {
+    var nextProps = Object.assign({}, props || {});
+    delete nextProps.children;
+    return el.apply(null, [type, nextProps].concat(children || []));
+  }
+
   function renderCollapseFrame(title, collapsed, onToggle, canvasChildren) {
     return el(
       'div',
@@ -107,13 +117,7 @@
           collapsed ? __('Expand', 'headless-core') : __('Collapse', 'headless-core')
         )
       ),
-      collapsed
-        ? null
-        : el(
-            'div',
-            { className: 'headless-block-collapse-body' },
-            canvasChildren.length === 1 ? canvasChildren[0] : el(Fragment, null, canvasChildren)
-          )
+      collapsed ? null : createWithChildren('div', { className: 'headless-block-collapse-body' }, canvasChildren)
     );
   }
 
@@ -211,11 +215,11 @@
       var frame = renderCollapseFrame(title, collapsed, toggleCollapsed, parts.canvas);
 
       if (parts.rootType && parts.rootProps) {
-        return el(parts.rootType, parts.rootProps, parts.inspector.concat(frame));
+        return createWithChildren(parts.rootType, parts.rootProps, parts.inspector.concat([frame]));
       }
 
       if (parts.inspector.length) {
-        return el(Fragment, null, parts.inspector.concat(frame));
+        return createWithChildren(Fragment, null, parts.inspector.concat([frame]));
       }
 
       return frame;
