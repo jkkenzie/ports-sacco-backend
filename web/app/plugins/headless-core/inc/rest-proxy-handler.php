@@ -68,6 +68,35 @@ function headless_core_rest_proxy_json_exit(int $status, array $payload): void
     exit;
 }
 
+/**
+ * Gutenberg POSTs HTML + hex colors; Cloudflare WAF inspects that body even on admin-ajax.
+ * The editor wraps JSON as { "hc_wp_rest_b64": "<base64>" }.
+ */
+function headless_core_rest_proxy_unwrap_raw_body(string $rawBody): string
+{
+    $decoded = json_decode($rawBody, true);
+    if (! is_array($decoded)) {
+        return $rawBody;
+    }
+
+    $b64 = $decoded['hc_wp_rest_b64'] ?? null;
+    if (! is_string($b64) || $b64 === '') {
+        return $rawBody;
+    }
+
+    $inner = base64_decode($b64, true);
+    if (! is_string($inner) || $inner === '') {
+        return $rawBody;
+    }
+
+    json_decode($inner);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return $rawBody;
+    }
+
+    return $inner;
+}
+
 function headless_core_rest_proxy_request_method(): string
 {
     $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
@@ -139,8 +168,9 @@ function headless_core_rest_proxy_run(): void
     $contentType = (string) ($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '');
     $rawBody = file_get_contents('php://input');
     if (is_string($rawBody) && $rawBody !== '') {
+        $rawBody = headless_core_rest_proxy_unwrap_raw_body($rawBody);
         $request->set_body($rawBody);
-        if (stripos($contentType, 'application/json') !== false) {
+        if (stripos($contentType, 'application/json') !== false || str_starts_with(ltrim($rawBody), '{')) {
             $decoded = json_decode($rawBody, true);
             if (is_array($decoded)) {
                 $request->set_body_params($decoded);

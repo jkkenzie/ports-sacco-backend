@@ -54,6 +54,46 @@
     return url.replace(/([?&]rest_route=\/[^?#]*)\?/, '$1&');
   }
 
+  function utf8ToB64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  function isFormData(value) {
+    return typeof FormData !== 'undefined' && value instanceof FormData;
+  }
+
+  function wrapJsonBody(options) {
+    var method = String((options.method || '')).toUpperCase();
+    if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+      return options;
+    }
+    if (isFormData(options.data) || isFormData(options.body)) {
+      return options;
+    }
+    if (options.data != null && typeof options.data === 'object') {
+      if (options.data.hc_wp_rest_b64) {
+        return options;
+      }
+      return Object.assign({}, options, {
+        data: { hc_wp_rest_b64: utf8ToB64(JSON.stringify(options.data)) },
+      });
+    }
+    if (typeof options.body === 'string' && options.body !== '') {
+      try {
+        var parsed = JSON.parse(options.body);
+        if (parsed && parsed.hc_wp_rest_b64) {
+          return options;
+        }
+      } catch (e) {
+        return options;
+      }
+      return Object.assign({}, options, {
+        body: JSON.stringify({ hc_wp_rest_b64: utf8ToB64(options.body) }),
+      });
+    }
+    return options;
+  }
+
   function shouldRewrite(url) {
     if (!url) {
       return false;
@@ -87,6 +127,8 @@
         path: undefined,
       });
     }
+
+    nextOptions = wrapJsonBody(nextOptions);
 
     var method = String((nextOptions.method || 'GET')).toUpperCase();
     if (cfg.forcePost === true && ['PUT', 'PATCH', 'DELETE'].indexOf(method) !== -1) {

@@ -72,7 +72,7 @@ Cloudflare can block **wp-admin** `POST /wp-json/wp/v2/pages/{id}` when the body
 
 Headless Core rewrites Gutenberg REST in wp-admin to **`/wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy&rest_route=/wp/v2/...`** (under `/wp/`, so the React SPA catch-all cannot swallow it). Only logged-in users can use that proxy. Public SPA reads stay on `/wp-json`.
 
-After deploy: hard-refresh wp-admin (Ctrl+F5) and save again. In DevTools → Network the page save should be `admin-ajax.php?action=headless_core_rest_proxy`, not `/wp-json` and not `/hc-wp-api.php/wp/v2/...`. Set `HEADLESS_ADMIN_REST_PROXY=off` to go back to `/wp-json`.
+After deploy: hard-refresh wp-admin (Ctrl+F5) and save again. In DevTools → Network the page save should be `admin-ajax.php?action=headless_core_rest_proxy`, not `/wp-json`. The JSON body is base64-wrapped (`hc_wp_rest_b64`) so Cloudflare does not see Gutenberg HTML / `#` hex colors. Set `HEADLESS_ADMIN_REST_PROXY=off` to go back to `/wp-json`.
 
 ### Read APIs (pages, menus, CPT lists)
 
