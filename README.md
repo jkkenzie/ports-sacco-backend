@@ -70,9 +70,9 @@ PHP inject: `headless_core_inject_form_bootstrap_script()` in `web/app/plugins/h
 
 Cloudflare can block **wp-admin** `POST /wp-json/wp/v2/pages/{id}` when the body is Gutenberg HTML (`<!-- wp:... -->`, `<h2>`, `<p>`) plus block JSON with hex colors. The editor then shows an HTML “Sorry, you have been blocked” page instead of JSON.
 
-Headless Core rewrites `wpApiSettings.root` in wp-admin to **`/hc-wp-api.php/`** (path-style, so `?context=edit` still works). Only logged-in users can call `/wp/v2` and `/batch/v1` through that file. Public SPA reads stay on `/wp-json`.
+Headless Core rewrites Gutenberg REST in wp-admin to **`/wp/wp-admin/admin-ajax.php?action=headless_core_rest_proxy&rest_route=/wp/v2/...`** (under `/wp/`, so the React SPA catch-all cannot swallow it). Only logged-in users can use that proxy. Public SPA reads stay on `/wp-json`.
 
-After deploy: copy the `hc-wp-api.php` rewrite from `web/.htaccess.example` into the live `web/.htaccess`, then hard-refresh wp-admin and save again. Set `HEADLESS_ADMIN_REST_PROXY=off` to go back to `/wp-json`.
+After deploy: hard-refresh wp-admin (Ctrl+F5) and save again. In DevTools → Network the page save should be `admin-ajax.php?action=headless_core_rest_proxy`, not `/wp-json` and not `/hc-wp-api.php/wp/v2/...`. Set `HEADLESS_ADMIN_REST_PROXY=off` to go back to `/wp-json`.
 
 ### Read APIs (pages, menus, CPT lists)
 
@@ -396,7 +396,7 @@ Public forms and the WP REST API must keep working behind Cloudflare. Prefer **n
 ### Already in application code
 - Form POSTs: WordPress REST nonce + honeypot; optional Cloudflare Turnstile
 - Form traffic prefers `/hc-api.php` and `/hc-bootstrap.php` so WAF rules matching `wp-json` do not block submits
-- Gutenberg in wp-admin uses `/hc-wp-api.php/wp/v2/...` so editor saves (HTML block markup + hex colors) are not posted to `/wp-json`. Disable with `HEADLESS_ADMIN_REST_PROXY=off`. Copy the `hc-wp-api.php` rewrite from `web/.htaccess.example` onto the server.
+- Gutenberg in wp-admin uses `admin-ajax.php?action=headless_core_rest_proxy` (under `/wp/`) so editor saves are not posted to `/wp-json` and are not swallowed by the SPA catch-all. Disable with `HEADLESS_ADMIN_REST_PROXY=off`.
 - Nonce / form routes: `Cache-Control` / `CDN-Cache-Control: no-store` (never edge-cache auth tokens); SPA shell from `app.php` is also `no-store`
 - Security HTTP headers via Headless Core (`inc/security-headers.php`), SPA `app.php`, and `web/.htaccess.example`
 - Bedrock: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `FORCE_SSL_ADMIN` when `WP_HOME` is HTTPS
