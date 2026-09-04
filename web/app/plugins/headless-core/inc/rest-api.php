@@ -5636,7 +5636,7 @@ function headless_core_rest_news_post(WP_REST_Request $request)
     $cacheVersion = (string) get_option('headless_news_cache_ver', '1');
     $cacheKey = 'single_' . $slug . '_' . $cacheVersion;
     $cached = headless_core_cache_get('news', $cacheKey);
-    if (is_array($cached)) {
+    if (is_array($cached) && isset($cached['slug']) && is_string($cached['slug']) && $cached['slug'] !== '') {
         return new WP_REST_Response($cached, 200);
     }
 
