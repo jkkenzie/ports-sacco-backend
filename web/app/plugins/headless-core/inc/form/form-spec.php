@@ -381,8 +381,8 @@ function ports_form_validate_submission(string $slug, array $values): array
 
         if ((string) ($field['id'] ?? '') === PORTS_FORM_ACCOUNT_TYPE_FIELD_ID
             && $value !== ''
-            && function_exists('ports_form_is_account_type_enabled')
-            && ! ports_form_is_account_type_enabled($value)
+            && function_exists('ports_form_is_account_type_selectable')
+            && ! ports_form_is_account_type_selectable($value)
         ) {
             $errors[$keys[0]] = function_exists('ports_form_get_account_type_unavailable_message')
                 ? ports_form_get_account_type_unavailable_message()

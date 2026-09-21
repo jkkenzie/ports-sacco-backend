@@ -33,6 +33,7 @@ if (! function_exists('headless_core_form_bootstrap_payload')) {
         'turnstileEnabled' => false,
         'turnstileSiteKey' => '',
         'enabledAccountTypes' => ['1', '2', '3'],
+        'hiddenAccountTypes' => [],
         'accountTypeUnavailableMessage' => 'This account type is not currently available.',
         'code' => 'hc_bootstrap_unavailable',
         'message' => 'Form bootstrap unavailable.',

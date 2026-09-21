@@ -16,6 +16,9 @@ const PORTS_FORM_OPTION_CLIENT_FROM_NAME = 'ports_form_client_from_name';
 const PORTS_FORM_OPTION_ACCOUNT_TYPE_INDIVIDUAL = 'ports_form_account_type_individual_enabled';
 const PORTS_FORM_OPTION_ACCOUNT_TYPE_JOINT = 'ports_form_account_type_joint_enabled';
 const PORTS_FORM_OPTION_ACCOUNT_TYPE_GROUP = 'ports_form_account_type_group_enabled';
+const PORTS_FORM_OPTION_ACCOUNT_TYPE_INDIVIDUAL_HIDDEN = 'ports_form_account_type_individual_hidden';
+const PORTS_FORM_OPTION_ACCOUNT_TYPE_JOINT_HIDDEN = 'ports_form_account_type_joint_hidden';
+const PORTS_FORM_OPTION_ACCOUNT_TYPE_GROUP_HIDDEN = 'ports_form_account_type_group_hidden';
 const PORTS_FORM_OPTION_ACCOUNT_TYPE_UNAVAILABLE_MESSAGE = 'ports_form_account_type_unavailable_message';
 
 require_once HEADLESS_CORE_PATH . 'inc/form/email-template.php';
@@ -84,11 +87,16 @@ add_action('admin_init', static function (): void {
         'default' => '',
     ]);
 
-    foreach (ports_form_account_type_option_keys() as $optionKey) {
-        register_setting(PORTS_FORM_REGISTRATION_OPTION_GROUP, $optionKey, [
+    foreach (ports_form_account_type_definitions() as $def) {
+        register_setting(PORTS_FORM_REGISTRATION_OPTION_GROUP, $def['option'], [
             'type' => 'string',
             'sanitize_callback' => 'ports_form_sanitize_enabled_flag',
             'default' => '1',
+        ]);
+        register_setting(PORTS_FORM_REGISTRATION_OPTION_GROUP, $def['hiddenOption'], [
+            'type' => 'string',
+            'sanitize_callback' => 'ports_form_sanitize_enabled_flag',
+            'default' => '0',
         ]);
     }
 
@@ -137,40 +145,30 @@ function ports_form_sanitize_enabled_flag($value): string
 /**
  * Account type tabs on the public registration form (field 28).
  *
- * @return array<string, array{option: string, label: string, hint: string}>
+ * @return array<string, array{option: string, hiddenOption: string, label: string, hint: string}>
  */
 function ports_form_account_type_definitions(): array
 {
     return [
         '1' => [
             'option' => PORTS_FORM_OPTION_ACCOUNT_TYPE_INDIVIDUAL,
+            'hiddenOption' => PORTS_FORM_OPTION_ACCOUNT_TYPE_INDIVIDUAL_HIDDEN,
             'label' => __('Individual Account', 'headless-core'),
             'hint' => __('For a single member', 'headless-core'),
         ],
         '2' => [
             'option' => PORTS_FORM_OPTION_ACCOUNT_TYPE_JOINT,
+            'hiddenOption' => PORTS_FORM_OPTION_ACCOUNT_TYPE_JOINT_HIDDEN,
             'label' => __('Joint Account', 'headless-core'),
             'hint' => __('For two or more signatories', 'headless-core'),
         ],
         '3' => [
             'option' => PORTS_FORM_OPTION_ACCOUNT_TYPE_GROUP,
+            'hiddenOption' => PORTS_FORM_OPTION_ACCOUNT_TYPE_GROUP_HIDDEN,
             'label' => __('Group/Company Account', 'headless-core'),
             'hint' => __('For a registered group or company', 'headless-core'),
         ],
     ];
-}
-
-/**
- * @return list<string>
- */
-function ports_form_account_type_option_keys(): array
-{
-    $keys = [];
-    foreach (ports_form_account_type_definitions() as $def) {
-        $keys[] = $def['option'];
-    }
-
-    return $keys;
 }
 
 function ports_form_is_account_type_enabled(string $value): bool
@@ -181,6 +179,21 @@ function ports_form_is_account_type_enabled(string $value): bool
     }
 
     return (string) get_option($defs[$value]['option'], '1') === '1';
+}
+
+function ports_form_is_account_type_hidden(string $value): bool
+{
+    $defs = ports_form_account_type_definitions();
+    if (! isset($defs[$value])) {
+        return false;
+    }
+
+    return (string) get_option($defs[$value]['hiddenOption'], '0') === '1';
+}
+
+function ports_form_is_account_type_selectable(string $value): bool
+{
+    return ports_form_is_account_type_enabled($value) && ! ports_form_is_account_type_hidden($value);
 }
 
 /**
@@ -196,6 +209,21 @@ function ports_form_get_enabled_account_types(): array
     }
 
     return $enabled;
+}
+
+/**
+ * @return list<string>
+ */
+function ports_form_get_hidden_account_types(): array
+{
+    $hidden = [];
+    foreach (array_keys(ports_form_account_type_definitions()) as $value) {
+        if (ports_form_is_account_type_hidden((string) $value)) {
+            $hidden[] = (string) $value;
+        }
+    }
+
+    return $hidden;
 }
 
 function ports_form_get_account_type_unavailable_message(): string
@@ -307,30 +335,44 @@ function ports_form_render_settings_page(): void
                 <input type="hidden" name="_wp_http_referer" value="<?php echo esc_url(admin_url('edit.php?post_type=form_submission&page=ports-form-submission-settings&tab=registration')); ?>" />
                 <h2><?php echo esc_html__('Account type tabs', 'headless-core'); ?></h2>
                 <p class="description">
-                    <?php echo esc_html__('Uncheck a type to disable that tab on the public New Member Registration form. Disabled types stay visible but cannot be selected, and submissions for them are rejected.', 'headless-core'); ?>
+                    <?php echo esc_html__('Uncheck Available to leave the tab visible but unusable. Check Hide completely to remove that tab from the public form. Hidden or unavailable types cannot be submitted.', 'headless-core'); ?>
                 </p>
 
                 <table class="form-table" role="presentation">
                     <tbody>
                     <tr>
-                        <th scope="row"><?php echo esc_html__('Available account types', 'headless-core'); ?></th>
+                        <th scope="row"><?php echo esc_html__('Account type tabs', 'headless-core'); ?></th>
                         <td>
                             <fieldset>
-                                <legend class="screen-reader-text"><?php echo esc_html__('Available account types', 'headless-core'); ?></legend>
+                                <legend class="screen-reader-text"><?php echo esc_html__('Account type tabs', 'headless-core'); ?></legend>
                                 <?php foreach (ports_form_account_type_definitions() as $value => $def) : ?>
-                                    <?php $optionKey = $def['option']; ?>
-                                    <label class="ports-form-account-type-option" for="<?php echo esc_attr($optionKey); ?>">
-                                        <input type="hidden" name="<?php echo esc_attr($optionKey); ?>" value="0" />
-                                        <input type="checkbox"
-                                               id="<?php echo esc_attr($optionKey); ?>"
-                                               name="<?php echo esc_attr($optionKey); ?>"
-                                               value="1"
-                                            <?php checked(ports_form_is_account_type_enabled((string) $value)); ?> />
-                                        <span>
-                                            <strong><?php echo esc_html($def['label']); ?></strong>
-                                            <span class="description"><?php echo esc_html($def['hint']); ?></span>
-                                        </span>
-                                    </label>
+                                    <?php
+                                    $optionKey = $def['option'];
+                                    $hiddenKey = $def['hiddenOption'];
+                                    $typeId = (string) $value;
+                                    ?>
+                                    <div class="ports-form-account-type-row">
+                                        <strong><?php echo esc_html($def['label']); ?></strong>
+                                        <span class="description"><?php echo esc_html($def['hint']); ?></span>
+                                        <label class="ports-form-account-type-option" for="<?php echo esc_attr($optionKey); ?>">
+                                            <input type="hidden" name="<?php echo esc_attr($optionKey); ?>" value="0" />
+                                            <input type="checkbox"
+                                                   id="<?php echo esc_attr($optionKey); ?>"
+                                                   name="<?php echo esc_attr($optionKey); ?>"
+                                                   value="1"
+                                                <?php checked(ports_form_is_account_type_enabled($typeId)); ?> />
+                                            <?php echo esc_html__('Available (can be selected)', 'headless-core'); ?>
+                                        </label>
+                                        <label class="ports-form-account-type-option" for="<?php echo esc_attr($hiddenKey); ?>">
+                                            <input type="hidden" name="<?php echo esc_attr($hiddenKey); ?>" value="0" />
+                                            <input type="checkbox"
+                                                   id="<?php echo esc_attr($hiddenKey); ?>"
+                                                   name="<?php echo esc_attr($hiddenKey); ?>"
+                                                   value="1"
+                                                <?php checked(ports_form_is_account_type_hidden($typeId)); ?> />
+                                            <?php echo esc_html__('Hide completely from the public form', 'headless-core'); ?>
+                                        </label>
+                                    </div>
                                 <?php endforeach; ?>
                             </fieldset>
                         </td>
@@ -558,16 +600,26 @@ function ports_form_render_settings_page(): void
             font-size: 12px;
             line-height: 1.45;
         }
-        .ports-form-settings-wrap .ports-form-account-type-option {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            margin: 0 0 12px;
+        .ports-form-settings-wrap .ports-form-account-type-row {
+            margin: 0 0 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f0f0f1;
             max-width: 520px;
         }
-        .ports-form-settings-wrap .ports-form-account-type-option .description {
+        .ports-form-settings-wrap .ports-form-account-type-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+        .ports-form-settings-wrap .ports-form-account-type-row .description {
             display: block;
-            margin-top: 2px;
+            margin: 2px 0 8px;
+        }
+        .ports-form-settings-wrap .ports-form-account-type-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 6px;
         }
     </style>
     <?php
