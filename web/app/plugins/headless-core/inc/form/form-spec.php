@@ -6,6 +6,9 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+/** Onboarding form "Select account type" field (Individual / Joint / Group). */
+const PORTS_FORM_ACCOUNT_TYPE_FIELD_ID = '28';
+
 /**
  * Load a registered form export by slug.
  *
@@ -375,6 +378,17 @@ function ports_form_validate_submission(string $slug, array $values): array
         }
 
         $value = trim((string) ($values[$keys[0]] ?? ''));
+
+        if ((string) ($field['id'] ?? '') === PORTS_FORM_ACCOUNT_TYPE_FIELD_ID
+            && $value !== ''
+            && function_exists('ports_form_is_account_type_enabled')
+            && ! ports_form_is_account_type_enabled($value)
+        ) {
+            $errors[$keys[0]] = function_exists('ports_form_get_account_type_unavailable_message')
+                ? ports_form_get_account_type_unavailable_message()
+                : __('This account type is not currently available.', 'headless-core');
+            continue;
+        }
 
         if (ports_form_field_is_required($field, true) && $value === '') {
             $errors[$keys[0]] = sprintf(__('%s is required.', 'headless-core'), $label);

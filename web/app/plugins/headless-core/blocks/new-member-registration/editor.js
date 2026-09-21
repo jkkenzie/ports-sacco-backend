@@ -89,7 +89,7 @@
                   fontSize: '13px',
                 },
               },
-              __('Full onboarding form (account type, personal details, uploads, etc.) renders on the frontend.', 'headless-core')
+              __('Full onboarding form renders on the frontend. To enable or disable Individual, Joint, or Group/Company tabs, go to Form Submissions → Settings → Registration Form.', 'headless-core')
             )
           )
         )
