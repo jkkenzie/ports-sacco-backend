@@ -20,6 +20,7 @@ add_action('rest_api_init', static function (): void {
  *     turnstileEnabled: bool,
  *     turnstileSiteKey: string,
  *     enabledAccountTypes: list<string>,
+ *     hiddenAccountTypes: list<string>,
  *     accountTypeUnavailableMessage: string
  * }
  */
@@ -36,6 +37,9 @@ function headless_core_form_bootstrap_payload(): array
         'enabledAccountTypes' => function_exists('ports_form_get_enabled_account_types')
             ? ports_form_get_enabled_account_types()
             : ['1', '2', '3'],
+        'hiddenAccountTypes' => function_exists('ports_form_get_hidden_account_types')
+            ? ports_form_get_hidden_account_types()
+            : [],
         'accountTypeUnavailableMessage' => function_exists('ports_form_get_account_type_unavailable_message')
             ? ports_form_get_account_type_unavailable_message()
             : __('This account type is not currently available.', 'headless-core'),
