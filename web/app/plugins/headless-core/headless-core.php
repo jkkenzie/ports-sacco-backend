@@ -16,7 +16,7 @@ if (! defined('ABSPATH')) {
 
 define('HEADLESS_CORE_PATH', plugin_dir_path(__FILE__));
 define('HEADLESS_CORE_URL', plugin_dir_url(__FILE__));
-define('HEADLESS_CORE_VERSION', '1.0.122');
+define('HEADLESS_CORE_VERSION', '1.0.123');
 define('HEADLESS_CORE_REST_NAMESPACE', 'portsacco/v1');
 /** @deprecated Temporary alias so cached SPA builds keep working during cutover. */
 define('HEADLESS_CORE_REST_NAMESPACE_LEGACY', 'custom/v1');
@@ -41,6 +41,7 @@ require_once HEADLESS_CORE_PATH . 'inc/sitemap.php';
 require_once HEADLESS_CORE_PATH . 'inc/prerender.php';
 require_once HEADLESS_CORE_PATH . 'inc/footer.php';
 require_once HEADLESS_CORE_PATH . 'inc/header.php';
+require_once HEADLESS_CORE_PATH . 'inc/whatsapp-click-to-chat.php';
 require_once HEADLESS_CORE_PATH . 'inc/team.php';
 require_once HEADLESS_CORE_PATH . 'inc/admin.php';
 require_once HEADLESS_CORE_PATH . 'inc/upload-mimes.php';
