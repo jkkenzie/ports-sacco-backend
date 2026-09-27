@@ -37,6 +37,7 @@ require_once HEADLESS_CORE_PATH . 'inc/migration.php';
 require_once HEADLESS_CORE_PATH . 'inc/block-labels.php';
 require_once HEADLESS_CORE_PATH . 'inc/blocks.php';
 require_once HEADLESS_CORE_PATH . 'inc/seo.php';
+require_once HEADLESS_CORE_PATH . 'inc/seo-export.php';
 require_once HEADLESS_CORE_PATH . 'inc/sitemap.php';
 require_once HEADLESS_CORE_PATH . 'inc/prerender.php';
 require_once HEADLESS_CORE_PATH . 'inc/footer.php';
