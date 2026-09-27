@@ -11,7 +11,7 @@ if (! defined('ABSPATH')) {
 }
 
 add_action('admin_post_headless_core_export_seo', 'headless_core_handle_seo_export');
-add_action('admin_post_headless_core_import_seo', 'headless_core_handle_seo_import');
+add_action('wp_ajax_headless_core_import_seo', 'headless_core_handle_seo_import');
 
 function headless_core_seo_export_url(): string
 {
@@ -299,45 +299,98 @@ function headless_core_seo_xlsx_cell(string $ref, string $value, string $style =
 
 function headless_core_handle_seo_import(): void
 {
+    $payload = headless_core_seo_import_unwrap_request();
+    $nonce = (string) ($payload['_ajax_nonce'] ?? $payload['_wpnonce'] ?? '');
+    if ($nonce !== '') {
+        $_REQUEST['_ajax_nonce'] = $nonce;
+        $_POST['_ajax_nonce'] = $nonce;
+    }
+
     if (! current_user_can('manage_options')) {
-        wp_die(esc_html__('You do not have permission to import SEO data.', 'headless-core'), '', ['response' => 403]);
+        wp_send_json_error([
+            'code' => 'permission',
+            'message' => __('You do not have permission to import SEO data.', 'headless-core'),
+        ], 403);
     }
 
-    check_admin_referer('headless_core_import_seo');
-
-    $redirect = admin_url('admin.php?page=headless-core-settings&tab=seo');
-    $file = $_FILES['hc_seo_xlsx'] ?? null;
-    if (! is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-        wp_safe_redirect(add_query_arg('hc_seo_error', 'upload', $redirect));
-        exit;
+    if (! check_ajax_referer('headless_core_import_seo', '_ajax_nonce', false)) {
+        wp_send_json_error([
+            'code' => 'permission',
+            'message' => __('Security check failed. Please refresh the page and try again.', 'headless-core'),
+        ], 403);
     }
 
-    $tmp = (string) ($file['tmp_name'] ?? '');
-    $name = (string) ($file['name'] ?? '');
-    $size = (int) ($file['size'] ?? 0);
-    if ($tmp === '' || ! is_uploaded_file($tmp) || $size <= 0 || $size > 5 * 1024 * 1024) {
-        wp_safe_redirect(add_query_arg('hc_seo_error', 'upload', $redirect));
-        exit;
+    $b64 = (string) ($payload['hc_seo_xlsx_b64'] ?? '');
+    $b64 = preg_replace('/\s+/', '', $b64) ?? '';
+    $binary = $b64 !== '' ? base64_decode($b64, true) : false;
+    if (! is_string($binary) || $binary === '' || strlen($binary) > 5 * 1024 * 1024 || ! str_starts_with($binary, 'PK')) {
+        wp_send_json_error([
+            'code' => 'format',
+            'message' => __('Import failed: please upload an .xlsx file exported from this page.', 'headless-core'),
+        ], 400);
     }
 
-    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-    if ($ext !== 'xlsx') {
-        wp_safe_redirect(add_query_arg('hc_seo_error', 'format', $redirect));
-        exit;
+    $tmp = wp_tempnam('hc-seo-import.xlsx');
+    if (! is_string($tmp) || $tmp === '' || file_put_contents($tmp, $binary) === false) {
+        wp_send_json_error([
+            'code' => 'upload',
+            'message' => __('Import failed: could not store the uploaded spreadsheet.', 'headless-core'),
+        ], 500);
     }
 
     $result = headless_core_seo_import_from_xlsx_path($tmp);
+    @unlink($tmp);
+
     if (! empty($result['error'])) {
-        wp_safe_redirect(add_query_arg('hc_seo_error', (string) $result['error'], $redirect));
-        exit;
+        wp_send_json_error([
+            'code' => (string) $result['error'],
+            'message' => headless_core_seo_import_error_message((string) $result['error']),
+        ], 400);
     }
 
-    wp_safe_redirect(add_query_arg([
-        'hc_seo_updated' => (string) ($result['updated'] ?? 0),
-        'hc_seo_unchanged' => (string) ($result['unchanged'] ?? 0),
-        'hc_seo_skipped' => (string) ($result['skipped'] ?? 0),
-    ], $redirect));
-    exit;
+    wp_send_json_success($result);
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function headless_core_seo_import_unwrap_request(): array
+{
+    $raw = (string) file_get_contents('php://input');
+    $decoded = json_decode($raw, true);
+    if (! is_array($decoded)) {
+        $decoded = $_POST;
+    }
+    if (! is_array($decoded)) {
+        return [];
+    }
+
+    $wrapped = $decoded['hc_wp_rest_b64'] ?? null;
+    if (is_string($wrapped) && $wrapped !== '') {
+        $innerRaw = base64_decode($wrapped, true);
+        $inner = is_string($innerRaw) ? json_decode($innerRaw, true) : null;
+        if (is_array($inner)) {
+            return $inner;
+        }
+    }
+
+    return $decoded;
+}
+
+function headless_core_seo_import_error_message(string $code): string
+{
+    switch ($code) {
+        case 'columns':
+            return __('Import failed: the spreadsheet must keep the exported columns ID, SEO title, SEO focus keyword, and SEO description.', 'headless-core');
+        case 'empty':
+            return __('Import failed: no data rows were found in the spreadsheet.', 'headless-core');
+        case 'zip':
+            return __('Import failed: Excel import requires the PHP ZipArchive extension.', 'headless-core');
+        case 'format':
+            return __('Import failed: please upload an .xlsx file exported from this page.', 'headless-core');
+        default:
+            return __('Import failed: please choose an .xlsx file and try again.', 'headless-core');
+    }
 }
 
 /**

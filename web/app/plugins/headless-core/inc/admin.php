@@ -378,42 +378,32 @@ function headless_core_render_seo_settings_tab(): void
     $seoExportUrl = function_exists('headless_core_seo_export_url')
         ? headless_core_seo_export_url()
         : '';
-    $importError = isset($_GET['hc_seo_error']) ? sanitize_key((string) $_GET['hc_seo_error']) : '';
-    $importUpdated = isset($_GET['hc_seo_updated']) ? (int) $_GET['hc_seo_updated'] : -1;
-    $importUnchanged = isset($_GET['hc_seo_unchanged']) ? (int) $_GET['hc_seo_unchanged'] : 0;
-    $importSkipped = isset($_GET['hc_seo_skipped']) ? (int) $_GET['hc_seo_skipped'] : 0;
+    $seoImportAjax = admin_url('admin-ajax.php?action=headless_core_import_seo');
+    $seoImportNonce = wp_create_nonce('headless_core_import_seo');
     ?>
-    <?php if ($importError !== '') : ?>
-        <div class="notice notice-error is-dismissible"><p>
-            <?php
-            if ($importError === 'columns') {
-                echo esc_html__('Import failed: the spreadsheet must keep the exported columns ID, SEO title, SEO focus keyword, and SEO description.', 'headless-core');
-            } elseif ($importError === 'empty') {
-                echo esc_html__('Import failed: no data rows were found in the spreadsheet.', 'headless-core');
-            } elseif ($importError === 'zip') {
-                echo esc_html__('Import failed: Excel import requires the PHP ZipArchive extension.', 'headless-core');
-            } elseif ($importError === 'format') {
-                echo esc_html__('Import failed: please upload an .xlsx file exported from this page.', 'headless-core');
-            } else {
-                echo esc_html__('Import failed: please choose an .xlsx file and try again.', 'headless-core');
-            }
-            ?>
-        </p></div>
-    <?php elseif ($importUpdated >= 0) : ?>
-        <div class="notice notice-success is-dismissible"><p>
-            <?php
-            echo esc_html(sprintf(
-                /* translators: 1: updated count, 2: unchanged count, 3: skipped count */
-                __('SEO import finished. Updated %1$d, unchanged %2$d, skipped %3$d.', 'headless-core'),
-                $importUpdated,
-                $importUnchanged,
-                $importSkipped
-            ));
-            ?>
-        </p></div>
-    <?php endif; ?>
+    <div id="hc-seo-import-notice"></div>
     <?php if ($seoExportUrl !== '') : ?>
-        <div style="max-width: 880px; background: #fff; border: 1px solid #dcdcde; border-radius: 10px; padding: 20px; margin: 16px 0;">
+        <style>
+            .hc-seo-inventory-card { position: relative; }
+            .hc-seo-import-overlay {
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.86);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                z-index: 5;
+                border-radius: 10px;
+            }
+            .hc-seo-import-overlay[hidden] { display: none !important; }
+            .hc-seo-import-overlay .spinner { float: none; margin: 0; }
+        </style>
+        <div class="hc-seo-inventory-card" style="max-width: 880px; background: #fff; border: 1px solid #dcdcde; border-radius: 10px; padding: 20px; margin: 16px 0;">
+            <div id="hc-seo-import-overlay" class="hc-seo-import-overlay" hidden>
+                <span class="spinner is-active" aria-hidden="true"></span>
+                <span><?php echo esc_html__('Importing SEO data…', 'headless-core'); ?></span>
+            </div>
             <h2 style="margin-top: 0;"><?php echo esc_html__('SEO inventory', 'headless-core'); ?></h2>
             <p style="color: #50575e; margin-top: 6px;">
                 <?php echo esc_html__('Download an Excel workbook of every page and SEO-enabled post type with the SEO title, focus keyword, and description saved in the editor. Empty cells mean that field has not been filled in. Edit the same columns and import the file to update those fields.', 'headless-core'); ?>
@@ -423,15 +413,15 @@ function headless_core_render_seo_settings_tab(): void
                     <?php echo esc_html__('Download Excel (.xlsx)', 'headless-core'); ?>
                 </a>
             </p>
-            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" style="margin: 0; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-                <input type="hidden" name="action" value="headless_core_import_seo" />
-                <?php wp_nonce_field('headless_core_import_seo'); ?>
+            <form id="hc-seo-import-form" style="margin: 0; padding-top: 8px; border-top: 1px solid #e5e7eb;">
                 <p style="margin: 12px 0 8px; color: #50575e;">
                     <?php echo esc_html__('Import updates SEO title, focus keyword, and description by ID. Post titles, status, completeness, and URLs in the sheet are ignored.', 'headless-core'); ?>
                 </p>
                 <p style="margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
-                    <input type="file" name="hc_seo_xlsx" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
-                    <?php submit_button(__('Import Excel', 'headless-core'), 'primary', 'submit', false); ?>
+                    <input type="file" id="hc-seo-xlsx" name="hc_seo_xlsx" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
+                    <button type="submit" id="hc-seo-import-submit" class="button button-primary">
+                        <?php echo esc_html__('Import Excel', 'headless-core'); ?>
+                    </button>
                 </p>
             </form>
         </div>
@@ -575,6 +565,132 @@ function headless_core_render_seo_settings_tab(): void
                     preview.src = '';
                     preview.style.display = 'none';
                     clearBtn.style.display = 'none';
+                });
+            });
+        })();
+        (function () {
+            var form = document.getElementById('hc-seo-import-form');
+            if (!form) return;
+            var fileInput = document.getElementById('hc-seo-xlsx');
+            var submitBtn = document.getElementById('hc-seo-import-submit');
+            var overlay = document.getElementById('hc-seo-import-overlay');
+            var notice = document.getElementById('hc-seo-import-notice');
+            var ajaxUrl = <?php echo wp_json_encode($seoImportAjax); ?>;
+            var nonce = <?php echo wp_json_encode($seoImportNonce); ?>;
+            var maxBytes = 5 * 1024 * 1024;
+            var cfMessage = <?php echo wp_json_encode(__('Import was blocked before WordPress received the file. Refresh this page and try again. If it still fails, the request did not use the Cloudflare-safe path.', 'headless-core')); ?>;
+            var successTpl = <?php echo wp_json_encode(__('SEO import finished. Updated %1$d, unchanged %2$d, skipped %3$d.', 'headless-core')); ?>;
+
+            function utf8ToB64(str) {
+                return btoa(unescape(encodeURIComponent(str)));
+            }
+            function bytesToB64(bytes) {
+                var binary = '';
+                var chunk = 0x8000;
+                for (var i = 0; i < bytes.length; i += chunk) {
+                    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+                }
+                return btoa(binary);
+            }
+            function escapeHtml(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+            function showNotice(type, message) {
+                if (!notice) return;
+                notice.innerHTML = '<div class="notice notice-' + type + ' is-dismissible"><p>' + escapeHtml(message) + '</p></div>';
+                notice.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            function looksBlocked(text, contentType) {
+                var body = String(text || '');
+                var type = String(contentType || '').toLowerCase();
+                if (type.indexOf('application/json') !== -1) return false;
+                return /sorry, you have been blocked/i.test(body)
+                    || /attention required/i.test(body)
+                    || /__HC_FORM_BOOTSTRAP__/i.test(body)
+                    || (/cloudflare/i.test(body) && /ray id/i.test(body))
+                    || (type.indexOf('text/html') !== -1 && body.charAt(0) !== '{');
+            }
+            function setBusy(busy) {
+                if (overlay) overlay.hidden = !busy;
+                if (submitBtn) submitBtn.disabled = !!busy;
+                if (fileInput) fileInput.disabled = !!busy;
+            }
+            function readFile(file) {
+                return new Promise(function (resolve, reject) {
+                    var reader = new FileReader();
+                    reader.onload = function () { resolve(reader.result); };
+                    reader.onerror = function () { reject(new Error(<?php echo wp_json_encode(__('Could not read the selected file.', 'headless-core')); ?>)); };
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var file = fileInput && fileInput.files && fileInput.files[0];
+                if (!file) {
+                    showNotice('error', <?php echo wp_json_encode(__('Please choose an .xlsx file exported from this page.', 'headless-core')); ?>);
+                    return;
+                }
+                var name = String(file.name || '').toLowerCase();
+                if (name.slice(-5) !== '.xlsx') {
+                    showNotice('error', <?php echo wp_json_encode(__('Import failed: please upload an .xlsx file exported from this page.', 'headless-core')); ?>);
+                    return;
+                }
+                if (file.size > maxBytes) {
+                    showNotice('error', <?php echo wp_json_encode(__('Import failed: the spreadsheet is larger than 5 MB.', 'headless-core')); ?>);
+                    return;
+                }
+
+                setBusy(true);
+                readFile(file).then(function (buffer) {
+                    var bytes = new Uint8Array(buffer);
+                    var inner = JSON.stringify({
+                        _ajax_nonce: nonce,
+                        hc_seo_xlsx_b64: bytesToB64(bytes)
+                    });
+                    var body = JSON.stringify({ hc_wp_rest_b64: utf8ToB64(inner) });
+                    return fetch(ajaxUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: body
+                    }).then(function (res) {
+                        return res.text().then(function (text) {
+                            return { res: res, text: text };
+                        });
+                    });
+                }).then(function (pack) {
+                    var type = pack.res.headers.get('content-type') || '';
+                    if (looksBlocked(pack.text, type)) {
+                        throw new Error(cfMessage);
+                    }
+                    var json;
+                    try {
+                        json = JSON.parse(pack.text);
+                    } catch (err) {
+                        throw new Error(cfMessage);
+                    }
+                    if (!json || json.success !== true) {
+                        var data = json && json.data ? json.data : {};
+                        throw new Error(data.message || cfMessage);
+                    }
+                    var updated = Number(json.data.updated || 0);
+                    var unchanged = Number(json.data.unchanged || 0);
+                    var skipped = Number(json.data.skipped || 0);
+                    showNotice('success', successTpl.replace('%1$d', String(updated)).replace('%2$d', String(unchanged)).replace('%3$d', String(skipped)));
+                    if (fileInput) fileInput.value = '';
+                }).catch(function (err) {
+                    showNotice('error', err && err.message ? err.message : cfMessage);
+                }).then(function () {
+                    setBusy(false);
                 });
             });
         })();
