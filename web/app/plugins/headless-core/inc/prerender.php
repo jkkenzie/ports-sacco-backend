@@ -264,8 +264,20 @@ function headless_core_seo_render_shell(string $path, string $shell): string
 {
     try {
         $head = headless_core_seo_head_for_path($path);
+        $tracking = function_exists('headless_core_tracking_head_html')
+            ? headless_core_tracking_head_html()
+            : '';
+        $combined = trim($head);
+        if ($tracking !== '') {
+            $combined = ($combined === '' ? '' : $combined . "\n    ") . $tracking;
+        }
 
-        return headless_core_seo_inject_head($shell, $head);
+        $html = $combined !== '' ? headless_core_seo_inject_head($shell, $combined) : $shell;
+        if (function_exists('headless_core_tracking_inject_body')) {
+            $html = headless_core_tracking_inject_body($html);
+        }
+
+        return $html;
     } catch (\Throwable $e) {
         return $shell;
     }

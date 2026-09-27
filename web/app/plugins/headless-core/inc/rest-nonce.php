@@ -21,7 +21,8 @@ add_action('rest_api_init', static function (): void {
  *     turnstileSiteKey: string,
  *     enabledAccountTypes: list<string>,
  *     hiddenAccountTypes: list<string>,
- *     accountTypeUnavailableMessage: string
+ *     accountTypeUnavailableMessage: string,
+ *     tracking: array<string, mixed>
  * }
  */
 function headless_core_form_bootstrap_payload(): array
@@ -43,6 +44,15 @@ function headless_core_form_bootstrap_payload(): array
         'accountTypeUnavailableMessage' => function_exists('ports_form_get_account_type_unavailable_message')
             ? ports_form_get_account_type_unavailable_message()
             : __('This account type is not currently available.', 'headless-core'),
+        'tracking' => function_exists('headless_core_tracking_public_payload')
+            ? headless_core_tracking_public_payload()
+            : [
+                'useGoogleTag' => false,
+                'gaMeasurementId' => '',
+                'googleTagId' => '',
+                'bingVerify' => '',
+                'bingUet' => '',
+            ],
     ];
 }
 
@@ -76,7 +86,7 @@ function headless_core_inject_form_bootstrap_script(string $html): string
         return $html;
     }
 
-    $script = '<script>window.__HC_FORM_BOOTSTRAP__=' . $json . ';</script>';
+    $script = '<script data-cfasync="false">window.__HC_FORM_BOOTSTRAP__=' . $json . ';</script>';
     if (stripos($html, '</head>') !== false) {
         $replaced = preg_replace('/<\/head>/i', $script . '</head>', $html, 1);
         return is_string($replaced) ? $replaced : ($html . $script);

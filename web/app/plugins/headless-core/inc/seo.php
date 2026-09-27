@@ -75,6 +75,11 @@ const HEADLESS_CORE_SEO_OPT_FRONTEND_URL = 'headless_core_seo_frontend_url';
 const HEADLESS_CORE_SEO_OPT_ORG_NAME = 'headless_core_seo_org_name';
 const HEADLESS_CORE_SEO_OPT_ORG_LOGO = 'headless_core_seo_org_logo';
 const HEADLESS_CORE_SEO_OPT_ORG_SAME_AS = 'headless_core_seo_org_same_as';
+const HEADLESS_CORE_SEO_OPT_GA_MEASUREMENT_ID = 'headless_core_seo_ga_measurement_id';
+const HEADLESS_CORE_SEO_OPT_USE_GOOGLE_TAG = 'headless_core_seo_use_google_tag';
+const HEADLESS_CORE_SEO_OPT_GOOGLE_TAG_ID = 'headless_core_seo_google_tag_id';
+const HEADLESS_CORE_SEO_OPT_BING_VERIFY = 'headless_core_seo_bing_verify';
+const HEADLESS_CORE_SEO_OPT_BING_UET = 'headless_core_seo_bing_uet';
 
 /**
  * Schema.org types offered per post type. First entry is the default.
@@ -227,7 +232,156 @@ add_action('admin_init', static function (): void {
             'default' => 0,
         ]);
     }
+
+    register_setting('headless_core_settings_group', HEADLESS_CORE_SEO_OPT_GA_MEASUREMENT_ID, [
+        'type' => 'string',
+        'sanitize_callback' => 'headless_core_seo_sanitize_ga_measurement_id',
+        'default' => '',
+    ]);
+    register_setting('headless_core_settings_group', HEADLESS_CORE_SEO_OPT_USE_GOOGLE_TAG, [
+        'type' => 'string',
+        'sanitize_callback' => static function ($value): string {
+            return ((string) $value === '1') ? '1' : '0';
+        },
+        'default' => '0',
+    ]);
+    register_setting('headless_core_settings_group', HEADLESS_CORE_SEO_OPT_GOOGLE_TAG_ID, [
+        'type' => 'string',
+        'sanitize_callback' => 'headless_core_seo_sanitize_google_tag_id',
+        'default' => '',
+    ]);
+    register_setting('headless_core_settings_group', HEADLESS_CORE_SEO_OPT_BING_VERIFY, [
+        'type' => 'string',
+        'sanitize_callback' => 'headless_core_seo_sanitize_bing_verify',
+        'default' => '',
+    ]);
+    register_setting('headless_core_settings_group', HEADLESS_CORE_SEO_OPT_BING_UET, [
+        'type' => 'string',
+        'sanitize_callback' => 'headless_core_seo_sanitize_bing_uet',
+        'default' => '',
+    ]);
 });
+
+function headless_core_seo_normalize_tag_id(string $value): string
+{
+    $value = strtoupper(preg_replace('/\s+/', '', trim($value)) ?? '');
+
+    return $value;
+}
+
+function headless_core_seo_sanitize_ga_measurement_id($value): string
+{
+    $value = headless_core_seo_normalize_tag_id((string) $value);
+
+    return preg_match('/^G-[A-Z0-9]+$/', $value) ? $value : '';
+}
+
+function headless_core_seo_sanitize_google_tag_id($value): string
+{
+    $value = headless_core_seo_normalize_tag_id((string) $value);
+
+    return preg_match('/^(GTM|GT|G|AW|DC)-[A-Z0-9]+$/', $value) ? $value : '';
+}
+
+function headless_core_seo_sanitize_bing_verify($value): string
+{
+    $value = preg_replace('/\s+/', '', trim((string) $value)) ?? '';
+
+    return preg_match('/^[A-Za-z0-9_-]{8,64}$/', $value) ? $value : '';
+}
+
+function headless_core_seo_sanitize_bing_uet($value): string
+{
+    $value = preg_replace('/\D+/', '', (string) $value) ?? '';
+
+    return preg_match('/^\d{4,12}$/', $value) ? $value : '';
+}
+
+function headless_core_seo_use_google_tag(): bool
+{
+    return (string) headless_core_seo_option(HEADLESS_CORE_SEO_OPT_USE_GOOGLE_TAG, '0') === '1';
+}
+
+function headless_core_seo_ga_measurement_id(): string
+{
+    return headless_core_seo_sanitize_ga_measurement_id(
+        (string) headless_core_seo_option(HEADLESS_CORE_SEO_OPT_GA_MEASUREMENT_ID, '')
+    );
+}
+
+function headless_core_seo_google_tag_id(): string
+{
+    return headless_core_seo_sanitize_google_tag_id(
+        (string) headless_core_seo_option(HEADLESS_CORE_SEO_OPT_GOOGLE_TAG_ID, '')
+    );
+}
+
+function headless_core_seo_bing_verify(): string
+{
+    return headless_core_seo_sanitize_bing_verify(
+        (string) headless_core_seo_option(HEADLESS_CORE_SEO_OPT_BING_VERIFY, '')
+    );
+}
+
+function headless_core_seo_bing_uet(): string
+{
+    return headless_core_seo_sanitize_bing_uet(
+        (string) headless_core_seo_option(HEADLESS_CORE_SEO_OPT_BING_UET, '')
+    );
+}
+
+function headless_core_tracking_public_payload(): array
+{
+    return [
+        'useGoogleTag' => headless_core_seo_use_google_tag(),
+        'gaMeasurementId' => headless_core_seo_ga_measurement_id(),
+        'googleTagId' => headless_core_seo_google_tag_id(),
+        'bingVerify' => headless_core_seo_bing_verify(),
+        'bingUet' => headless_core_seo_bing_uet(),
+    ];
+}
+
+/**
+ * Verification meta for crawlers. Analytics scripts are loaded by the SPA
+ * from bootstrap JSON so Cloudflare Rocket Loader / WAF do not rewrite them.
+ */
+function headless_core_tracking_head_html(): string
+{
+    $bingVerify = headless_core_seo_bing_verify();
+    if ($bingVerify === '') {
+        return '';
+    }
+
+    return '<meta name="msvalidate.01" content="' . esc_attr($bingVerify) . '" />';
+}
+
+function headless_core_tracking_gtm_body_html(): string
+{
+    if (! headless_core_seo_use_google_tag()) {
+        return '';
+    }
+
+    $id = headless_core_seo_google_tag_id();
+    if ($id === '' || ! str_starts_with($id, 'GTM-')) {
+        return '';
+    }
+
+    $src = 'https://www.googletagmanager.com/ns.html?id=' . rawurlencode($id);
+
+    return '<noscript><iframe src="' . esc_url($src) . '" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>';
+}
+
+function headless_core_tracking_inject_body(string $html): string
+{
+    $snippet = headless_core_tracking_gtm_body_html();
+    if ($snippet === '' || ! preg_match('/<body[^>]*>/i', $html, $match, PREG_OFFSET_CAPTURE)) {
+        return $html;
+    }
+
+    $pos = (int) $match[0][1] + strlen($match[0][0]);
+
+    return substr($html, 0, $pos) . "\n    " . $snippet . substr($html, $pos);
+}
 
 /* -------------------------------------------------------------------------
  * Helpers
