@@ -375,7 +375,23 @@ function headless_core_render_seo_settings_tab(): void
     $orgLogoId = (int) get_option(HEADLESS_CORE_SEO_OPT_ORG_LOGO, 0);
     $defaultImageUrl = $defaultImageId > 0 ? (string) wp_get_attachment_image_url($defaultImageId, 'medium') : '';
     $orgLogoUrl = $orgLogoId > 0 ? (string) wp_get_attachment_image_url($orgLogoId, 'medium') : '';
+    $seoExportUrl = function_exists('headless_core_seo_export_url')
+        ? headless_core_seo_export_url()
+        : '';
     ?>
+    <?php if ($seoExportUrl !== '') : ?>
+        <div style="max-width: 880px; background: #fff; border: 1px solid #dcdcde; border-radius: 10px; padding: 20px; margin: 16px 0;">
+            <h2 style="margin-top: 0;"><?php echo esc_html__('SEO inventory', 'headless-core'); ?></h2>
+            <p style="color: #50575e; margin-top: 6px;">
+                <?php echo esc_html__('Download an Excel workbook of every page and SEO-enabled post type with the SEO title, focus keyword, and description saved in the editor. Empty cells mean that field has not been filled in.', 'headless-core'); ?>
+            </p>
+            <p style="margin-bottom: 0;">
+                <a href="<?php echo esc_url($seoExportUrl); ?>" class="button button-secondary">
+                    <?php echo esc_html__('Download Excel (.xlsx)', 'headless-core'); ?>
+                </a>
+            </p>
+        </div>
+    <?php endif; ?>
     <form method="post" action="options.php">
         <?php settings_fields('headless_core_settings_group'); ?>
         <div style="max-width: 880px; background: #fff; border: 1px solid #dcdcde; border-radius: 10px; padding: 20px;">
