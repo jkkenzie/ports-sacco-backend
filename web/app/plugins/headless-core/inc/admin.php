@@ -378,18 +378,62 @@ function headless_core_render_seo_settings_tab(): void
     $seoExportUrl = function_exists('headless_core_seo_export_url')
         ? headless_core_seo_export_url()
         : '';
+    $importError = isset($_GET['hc_seo_error']) ? sanitize_key((string) $_GET['hc_seo_error']) : '';
+    $importUpdated = isset($_GET['hc_seo_updated']) ? (int) $_GET['hc_seo_updated'] : -1;
+    $importUnchanged = isset($_GET['hc_seo_unchanged']) ? (int) $_GET['hc_seo_unchanged'] : 0;
+    $importSkipped = isset($_GET['hc_seo_skipped']) ? (int) $_GET['hc_seo_skipped'] : 0;
     ?>
+    <?php if ($importError !== '') : ?>
+        <div class="notice notice-error is-dismissible"><p>
+            <?php
+            if ($importError === 'columns') {
+                echo esc_html__('Import failed: the spreadsheet must keep the exported columns ID, SEO title, SEO focus keyword, and SEO description.', 'headless-core');
+            } elseif ($importError === 'empty') {
+                echo esc_html__('Import failed: no data rows were found in the spreadsheet.', 'headless-core');
+            } elseif ($importError === 'zip') {
+                echo esc_html__('Import failed: Excel import requires the PHP ZipArchive extension.', 'headless-core');
+            } elseif ($importError === 'format') {
+                echo esc_html__('Import failed: please upload an .xlsx file exported from this page.', 'headless-core');
+            } else {
+                echo esc_html__('Import failed: please choose an .xlsx file and try again.', 'headless-core');
+            }
+            ?>
+        </p></div>
+    <?php elseif ($importUpdated >= 0) : ?>
+        <div class="notice notice-success is-dismissible"><p>
+            <?php
+            echo esc_html(sprintf(
+                /* translators: 1: updated count, 2: unchanged count, 3: skipped count */
+                __('SEO import finished. Updated %1$d, unchanged %2$d, skipped %3$d.', 'headless-core'),
+                $importUpdated,
+                $importUnchanged,
+                $importSkipped
+            ));
+            ?>
+        </p></div>
+    <?php endif; ?>
     <?php if ($seoExportUrl !== '') : ?>
         <div style="max-width: 880px; background: #fff; border: 1px solid #dcdcde; border-radius: 10px; padding: 20px; margin: 16px 0;">
             <h2 style="margin-top: 0;"><?php echo esc_html__('SEO inventory', 'headless-core'); ?></h2>
             <p style="color: #50575e; margin-top: 6px;">
-                <?php echo esc_html__('Download an Excel workbook of every page and SEO-enabled post type with the SEO title, focus keyword, and description saved in the editor. Empty cells mean that field has not been filled in.', 'headless-core'); ?>
+                <?php echo esc_html__('Download an Excel workbook of every page and SEO-enabled post type with the SEO title, focus keyword, and description saved in the editor. Empty cells mean that field has not been filled in. Edit the same columns and import the file to update those fields.', 'headless-core'); ?>
             </p>
-            <p style="margin-bottom: 0;">
+            <p>
                 <a href="<?php echo esc_url($seoExportUrl); ?>" class="button button-secondary">
                     <?php echo esc_html__('Download Excel (.xlsx)', 'headless-core'); ?>
                 </a>
             </p>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" style="margin: 0; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+                <input type="hidden" name="action" value="headless_core_import_seo" />
+                <?php wp_nonce_field('headless_core_import_seo'); ?>
+                <p style="margin: 12px 0 8px; color: #50575e;">
+                    <?php echo esc_html__('Import updates SEO title, focus keyword, and description by ID. Post titles, status, completeness, and URLs in the sheet are ignored.', 'headless-core'); ?>
+                </p>
+                <p style="margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                    <input type="file" name="hc_seo_xlsx" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
+                    <?php submit_button(__('Import Excel', 'headless-core'), 'primary', 'submit', false); ?>
+                </p>
+            </form>
         </div>
     <?php endif; ?>
     <form method="post" action="options.php">
