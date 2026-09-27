@@ -35,6 +35,13 @@ if (! function_exists('headless_core_form_bootstrap_payload')) {
         'enabledAccountTypes' => ['1', '2', '3'],
         'hiddenAccountTypes' => [],
         'accountTypeUnavailableMessage' => 'This account type is not currently available.',
+        'tracking' => [
+            'useGoogleTag' => false,
+            'gaMeasurementId' => '',
+            'googleTagId' => '',
+            'bingVerify' => '',
+            'bingUet' => '',
+        ],
         'code' => 'hc_bootstrap_unavailable',
         'message' => 'Form bootstrap unavailable.',
     ]);

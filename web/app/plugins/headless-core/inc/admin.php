@@ -375,6 +375,11 @@ function headless_core_render_seo_settings_tab(): void
     $orgLogoId = (int) get_option(HEADLESS_CORE_SEO_OPT_ORG_LOGO, 0);
     $defaultImageUrl = $defaultImageId > 0 ? (string) wp_get_attachment_image_url($defaultImageId, 'medium') : '';
     $orgLogoUrl = $orgLogoId > 0 ? (string) wp_get_attachment_image_url($orgLogoId, 'medium') : '';
+    $gaMeasurementId = (string) get_option(HEADLESS_CORE_SEO_OPT_GA_MEASUREMENT_ID, '');
+    $useGoogleTag = get_option(HEADLESS_CORE_SEO_OPT_USE_GOOGLE_TAG, '0') === '1';
+    $googleTagId = (string) get_option(HEADLESS_CORE_SEO_OPT_GOOGLE_TAG_ID, '');
+    $bingVerify = (string) get_option(HEADLESS_CORE_SEO_OPT_BING_VERIFY, '');
+    $bingUet = (string) get_option(HEADLESS_CORE_SEO_OPT_BING_UET, '');
     $seoExportUrl = function_exists('headless_core_seo_export_url')
         ? headless_core_seo_export_url()
         : '';
@@ -523,6 +528,66 @@ function headless_core_render_seo_settings_tab(): void
                 </tr>
                 </tbody>
             </table>
+
+            <hr style="margin: 22px 0; border: 0; border-top: 1px solid #e5e7eb;" />
+            <h2 style="margin-top: 0;"><?php echo esc_html__('Google Analytics', 'headless-core'); ?></h2>
+            <p style="color: #50575e; margin-top: 6px;">
+                <?php echo esc_html__('IDs are passed to the React site through the same Cloudflare-safe bootstrap as forms (not a raw /wp-json script dump). Analytics load after cookie consent. Bing Webmaster verification is a meta tag and does not wait for cookies.', 'headless-core'); ?>
+            </p>
+            <table class="form-table" role="presentation">
+                <tbody>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_GA_MEASUREMENT_ID); ?>"><?php echo esc_html__('Measurement ID', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_GA_MEASUREMENT_ID); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_GA_MEASUREMENT_ID); ?>" value="<?php echo esc_attr($gaMeasurementId); ?>" placeholder="G-XXXXXXXXXX" autocomplete="off" />
+                        <p class="description"><?php echo esc_html__('Google Analytics 4 measurement ID (starts with G-). Used unless “Use Google tag instead” is enabled.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php echo esc_html__('Use Google tag instead', 'headless-core'); ?></th>
+                    <td>
+                        <label class="headless-core-switch" aria-label="<?php echo esc_attr__('Use Google tag instead of Analytics measurement ID', 'headless-core'); ?>">
+                            <input type="hidden" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_USE_GOOGLE_TAG); ?>" value="0" />
+                            <input type="checkbox" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_USE_GOOGLE_TAG); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_USE_GOOGLE_TAG); ?>" value="1" <?php checked($useGoogleTag); ?> />
+                            <span class="headless-core-switch-track"></span>
+                            <span class="headless-core-switch-thumb"></span>
+                        </label>
+                        <p class="description"><?php echo esc_html__('Load a Google tag (Tag Manager GTM- or Google tag G-/GT-/AW-) instead of the Analytics measurement ID.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                <tr id="hc-seo-google-tag-row">
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_GOOGLE_TAG_ID); ?>"><?php echo esc_html__('Google tag ID', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_GOOGLE_TAG_ID); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_GOOGLE_TAG_ID); ?>" value="<?php echo esc_attr($googleTagId); ?>" placeholder="GTM-XXXXXXX" autocomplete="off" />
+                        <p class="description"><?php echo esc_html__('Tag Manager container (GTM-XXXXXXX) or Google tag ID (G-, GT-, AW-). A GTM container also injects the noscript iframe after the opening body tag.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <hr style="margin: 22px 0; border: 0; border-top: 1px solid #e5e7eb;" />
+            <h2 style="margin-top: 0;"><?php echo esc_html__('Microsoft Bing', 'headless-core'); ?></h2>
+            <p style="color: #50575e; margin-top: 6px;">
+                <?php echo esc_html__('Webmaster verification and optional Bing Ads UET tracking for the public site.', 'headless-core'); ?>
+            </p>
+            <table class="form-table" role="presentation">
+                <tbody>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_BING_VERIFY); ?>"><?php echo esc_html__('Webmaster verification', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_BING_VERIFY); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_BING_VERIFY); ?>" value="<?php echo esc_attr($bingVerify); ?>" placeholder="0123456789ABCDEF0123456789ABCDEF" autocomplete="off" />
+                        <p class="description"><?php echo esc_html__('Bing Webmaster Tools meta tag content (msvalidate.01). Paste the code only, not the full HTML tag.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_BING_UET); ?>"><?php echo esc_html__('UET tag ID', 'headless-core'); ?></label></th>
+                    <td>
+                        <input type="text" class="regular-text" id="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_BING_UET); ?>" name="<?php echo esc_attr(HEADLESS_CORE_SEO_OPT_BING_UET); ?>" value="<?php echo esc_attr($bingUet); ?>" placeholder="12345678" autocomplete="off" />
+                        <p class="description"><?php echo esc_html__('Microsoft Advertising Universal Event Tracking tag ID (numbers only). Leave empty if you do not use Bing Ads.', 'headless-core'); ?></p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
         <p style="margin-top: 16px;">
             <?php submit_button(__('Save Settings', 'headless-core'), 'primary', 'submit', false); ?>
@@ -567,6 +632,20 @@ function headless_core_render_seo_settings_tab(): void
                     clearBtn.style.display = 'none';
                 });
             });
+        })();
+        (function () {
+            var toggle = document.getElementById(<?php echo wp_json_encode(HEADLESS_CORE_SEO_OPT_USE_GOOGLE_TAG); ?>);
+            var gaInput = document.getElementById(<?php echo wp_json_encode(HEADLESS_CORE_SEO_OPT_GA_MEASUREMENT_ID); ?>);
+            var tagRow = document.getElementById('hc-seo-google-tag-row');
+            function syncGoogleTagMode() {
+                var on = !!(toggle && toggle.checked);
+                if (tagRow) tagRow.style.opacity = on ? '1' : '0.55';
+                if (gaInput) gaInput.style.opacity = on ? '0.55' : '1';
+            }
+            if (toggle) {
+                toggle.addEventListener('change', syncGoogleTagMode);
+                syncGoogleTagMode();
+            }
         })();
         (function () {
             var form = document.getElementById('hc-seo-import-form');
