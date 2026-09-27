@@ -11,6 +11,7 @@ if (! defined('ABSPATH')) {
 }
 
 add_action('admin_post_headless_core_export_seo', 'headless_core_handle_seo_export');
+add_action('admin_post_headless_core_import_seo', 'headless_core_handle_seo_import');
 
 function headless_core_seo_export_url(): string
 {
@@ -294,4 +295,352 @@ function headless_core_seo_xlsx_cell(string $ref, string $value, string $style =
     $space = (str_contains($clean, "\n") || str_contains($clean, '  ')) ? ' xml:space="preserve"' : '';
 
     return '<c r="' . $ref . '" t="inlineStr"' . $style . '><is><t' . $space . '>' . $escaped . '</t></is></c>';
+}
+
+function headless_core_handle_seo_import(): void
+{
+    if (! current_user_can('manage_options')) {
+        wp_die(esc_html__('You do not have permission to import SEO data.', 'headless-core'), '', ['response' => 403]);
+    }
+
+    check_admin_referer('headless_core_import_seo');
+
+    $redirect = admin_url('admin.php?page=headless-core-settings&tab=seo');
+    $file = $_FILES['hc_seo_xlsx'] ?? null;
+    if (! is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        wp_safe_redirect(add_query_arg('hc_seo_error', 'upload', $redirect));
+        exit;
+    }
+
+    $tmp = (string) ($file['tmp_name'] ?? '');
+    $name = (string) ($file['name'] ?? '');
+    $size = (int) ($file['size'] ?? 0);
+    if ($tmp === '' || ! is_uploaded_file($tmp) || $size <= 0 || $size > 5 * 1024 * 1024) {
+        wp_safe_redirect(add_query_arg('hc_seo_error', 'upload', $redirect));
+        exit;
+    }
+
+    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+    if ($ext !== 'xlsx') {
+        wp_safe_redirect(add_query_arg('hc_seo_error', 'format', $redirect));
+        exit;
+    }
+
+    $result = headless_core_seo_import_from_xlsx_path($tmp);
+    if (! empty($result['error'])) {
+        wp_safe_redirect(add_query_arg('hc_seo_error', (string) $result['error'], $redirect));
+        exit;
+    }
+
+    wp_safe_redirect(add_query_arg([
+        'hc_seo_updated' => (string) ($result['updated'] ?? 0),
+        'hc_seo_unchanged' => (string) ($result['unchanged'] ?? 0),
+        'hc_seo_skipped' => (string) ($result['skipped'] ?? 0),
+    ], $redirect));
+    exit;
+}
+
+/**
+ * @return array{updated: int, unchanged: int, skipped: int, error?: string}
+ */
+function headless_core_seo_import_from_xlsx_path(string $path): array
+{
+    if (! class_exists(ZipArchive::class)) {
+        return ['updated' => 0, 'unchanged' => 0, 'skipped' => 0, 'error' => 'zip'];
+    }
+
+    $parsed = headless_core_seo_xlsx_parse_file($path);
+    if (! empty($parsed['error'])) {
+        return [
+            'updated' => 0,
+            'unchanged' => 0,
+            'skipped' => 0,
+            'error' => (string) $parsed['error'],
+        ];
+    }
+
+    return headless_core_seo_import_rows($parsed['rows'] ?? []);
+}
+
+/**
+ * @param list<array<string, string>> $rows
+ * @return array{updated: int, unchanged: int, skipped: int}
+ */
+function headless_core_seo_import_rows(array $rows): array
+{
+    $allowedTypes = function_exists('headless_core_seo_post_types')
+        ? headless_core_seo_post_types()
+        : ['page', 'post'];
+
+    $sanitizeTitle = function_exists('headless_core_seo_sanitizer_for')
+        ? headless_core_seo_sanitizer_for('string', '_hc_seo_title')
+        : static fn ($value): string => sanitize_text_field((string) $value);
+    $sanitizeKeyword = function_exists('headless_core_seo_sanitizer_for')
+        ? headless_core_seo_sanitizer_for('string', '_hc_seo_keyphrase')
+        : static fn ($value): string => sanitize_text_field((string) $value);
+    $sanitizeDescription = function_exists('headless_core_seo_sanitizer_for')
+        ? headless_core_seo_sanitizer_for('string', '_hc_seo_description')
+        : static fn ($value): string => trim(wp_strip_all_tags((string) $value));
+
+    $updated = 0;
+    $unchanged = 0;
+    $skipped = 0;
+
+    foreach ($rows as $row) {
+        $id = (int) preg_replace('/\D+/', '', (string) ($row['id'] ?? '0'));
+        if ($id <= 0) {
+            $skipped++;
+            continue;
+        }
+
+        $post = get_post($id);
+        if (! $post instanceof WP_Post || ! in_array($post->post_type, $allowedTypes, true)) {
+            $skipped++;
+            continue;
+        }
+
+        $nextTitle = $sanitizeTitle($row['seo_title'] ?? '');
+        $nextKeyword = $sanitizeKeyword($row['seo_keyword'] ?? '');
+        $nextDescription = $sanitizeDescription($row['seo_description'] ?? '');
+
+        $changed = false;
+        $changed = headless_core_seo_write_meta($id, '_hc_seo_title', $nextTitle) || $changed;
+        $changed = headless_core_seo_write_meta($id, '_hc_seo_keyphrase', $nextKeyword) || $changed;
+        $changed = headless_core_seo_write_meta($id, '_hc_seo_description', $nextDescription) || $changed;
+
+        if ($changed) {
+            $updated++;
+        } else {
+            $unchanged++;
+        }
+    }
+
+    return [
+        'updated' => $updated,
+        'unchanged' => $unchanged,
+        'skipped' => $skipped,
+    ];
+}
+
+function headless_core_seo_write_meta(int $postId, string $key, string $value): bool
+{
+    $current = trim((string) get_post_meta($postId, $key, true));
+    if ($current === $value) {
+        return false;
+    }
+
+    if ($value === '') {
+        delete_post_meta($postId, $key);
+
+        return true;
+    }
+
+    update_post_meta($postId, $key, $value);
+
+    return true;
+}
+
+/**
+ * @return array{rows: list<array<string, string>>, error?: string}
+ */
+function headless_core_seo_xlsx_parse_file(string $path): array
+{
+    $zip = new ZipArchive();
+    if ($zip->open($path) !== true) {
+        return ['rows' => [], 'error' => 'format'];
+    }
+
+    $strings = headless_core_seo_xlsx_shared_strings($zip);
+    $sheetXml = headless_core_seo_xlsx_first_sheet($zip);
+    $zip->close();
+
+    if ($sheetXml === '') {
+        return ['rows' => [], 'error' => 'format'];
+    }
+
+    $grid = headless_core_seo_xlsx_sheet_grid($sheetXml, $strings);
+    if ($grid === []) {
+        return ['rows' => [], 'error' => 'empty'];
+    }
+
+    $headerMap = headless_core_seo_xlsx_header_map($grid[0]);
+    if (! isset($headerMap['id']) || ! isset($headerMap['seo_title']) || ! isset($headerMap['seo_keyword']) || ! isset($headerMap['seo_description'])) {
+        return ['rows' => [], 'error' => 'columns'];
+    }
+
+    $rows = [];
+    foreach (array_slice($grid, 1) as $line) {
+        if (! is_array($line) || $line === []) {
+            continue;
+        }
+        $id = trim((string) ($line[$headerMap['id']] ?? ''));
+        if ($id === '') {
+            continue;
+        }
+        $rows[] = [
+            'id' => $id,
+            'seo_title' => trim((string) ($line[$headerMap['seo_title']] ?? '')),
+            'seo_keyword' => trim((string) ($line[$headerMap['seo_keyword']] ?? '')),
+            'seo_description' => trim((string) ($line[$headerMap['seo_description']] ?? '')),
+        ];
+    }
+
+    if ($rows === []) {
+        return ['rows' => [], 'error' => 'empty'];
+    }
+
+    return ['rows' => $rows];
+}
+
+/**
+ * @return list<string>
+ */
+function headless_core_seo_xlsx_shared_strings(ZipArchive $zip): array
+{
+    $xml = $zip->getFromName('xl/sharedStrings.xml');
+    if (! is_string($xml) || $xml === '') {
+        return [];
+    }
+
+    $root = headless_core_seo_xlsx_simplexml($xml);
+    if (! $root instanceof SimpleXMLElement) {
+        return [];
+    }
+
+    $strings = [];
+    foreach ($root->si as $si) {
+        $buf = '';
+        if (isset($si->t)) {
+            $buf = (string) $si->t;
+        } else {
+            foreach ($si->r as $run) {
+                $buf .= (string) $run->t;
+            }
+        }
+        $strings[] = html_entity_decode($buf, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+    }
+
+    return $strings;
+}
+
+function headless_core_seo_xlsx_first_sheet(ZipArchive $zip): string
+{
+    $rels = $zip->getFromName('xl/_rels/workbook.xml.rels');
+    $target = 'xl/worksheets/sheet1.xml';
+    if (is_string($rels) && $rels !== '') {
+        $root = headless_core_seo_xlsx_simplexml($rels);
+        if ($root instanceof SimpleXMLElement) {
+            foreach ($root->Relationship as $rel) {
+                $type = (string) $rel['Type'];
+                if (! str_contains($type, '/worksheet')) {
+                    continue;
+                }
+                $raw = str_replace('\\', '/', (string) $rel['Target']);
+                $raw = ltrim($raw, '/');
+                $target = str_starts_with($raw, 'xl/') ? $raw : 'xl/' . $raw;
+                break;
+            }
+        }
+    }
+
+    $xml = $zip->getFromName($target);
+
+    return is_string($xml) ? $xml : '';
+}
+
+/**
+ * @param list<string> $strings
+ * @return list<array<int, string>>
+ */
+function headless_core_seo_xlsx_sheet_grid(string $sheetXml, array $strings): array
+{
+    $root = headless_core_seo_xlsx_simplexml($sheetXml);
+    if (! $root instanceof SimpleXMLElement || ! isset($root->sheetData)) {
+        return [];
+    }
+
+    $grid = [];
+    foreach ($root->sheetData->row as $row) {
+        $line = [];
+        foreach ($row->c as $cell) {
+            $ref = (string) $cell['r'];
+            if (! preg_match('/^([A-Z]+)/', $ref, $m)) {
+                continue;
+            }
+            $col = headless_core_seo_xlsx_column_index($m[1]);
+            $type = (string) $cell['t'];
+            $value = '';
+            if ($type === 's') {
+                $idx = (int) (string) $cell->v;
+                $value = $strings[$idx] ?? '';
+            } elseif ($type === 'inlineStr') {
+                if (isset($cell->is->t)) {
+                    $value = (string) $cell->is->t;
+                } else {
+                    foreach ($cell->is->r ?? [] as $run) {
+                        $value .= (string) $run->t;
+                    }
+                }
+            } elseif (isset($cell->v)) {
+                $value = (string) $cell->v;
+            }
+            $line[$col] = html_entity_decode($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        }
+        $grid[] = $line;
+    }
+
+    return $grid;
+}
+
+/**
+ * @param array<int, string> $headerRow
+ * @return array<string, int>
+ */
+function headless_core_seo_xlsx_header_map(array $headerRow): array
+{
+    $aliases = [
+        'id' => 'id',
+        'seotitle' => 'seo_title',
+        'seofocuskeyword' => 'seo_keyword',
+        'seofocuskeyphrase' => 'seo_keyword',
+        'focuskeyword' => 'seo_keyword',
+        'focuskeyphrase' => 'seo_keyword',
+        'seokeyword' => 'seo_keyword',
+        'seokeyphrase' => 'seo_keyword',
+        'seodescription' => 'seo_description',
+        'metadescription' => 'seo_description',
+    ];
+
+    $map = [];
+    foreach ($headerRow as $index => $label) {
+        $key = strtolower(trim((string) $label));
+        $key = preg_replace('/[^a-z0-9]+/', '', $key) ?? $key;
+        if (isset($aliases[$key])) {
+            $map[$aliases[$key]] = (int) $index;
+        }
+    }
+
+    return $map;
+}
+
+function headless_core_seo_xlsx_column_index(string $letters): int
+{
+    $n = 0;
+    $letters = strtoupper($letters);
+    $len = strlen($letters);
+    for ($i = 0; $i < $len; $i++) {
+        $n = ($n * 26) + (ord($letters[$i]) - 64);
+    }
+
+    return $n - 1;
+}
+
+function headless_core_seo_xlsx_simplexml(string $xml): ?SimpleXMLElement
+{
+    $stripped = preg_replace('/xmlns(:[A-Za-z0-9]+)?="[^"]*"/', '', $xml) ?? $xml;
+    libxml_use_internal_errors(true);
+    $el = simplexml_load_string($stripped);
+    libxml_clear_errors();
+
+    return $el instanceof SimpleXMLElement ? $el : null;
 }
