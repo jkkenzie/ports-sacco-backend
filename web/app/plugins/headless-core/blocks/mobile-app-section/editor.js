@@ -12,6 +12,8 @@
   var BaseControl = components.BaseControl;
   var ColorPalette = components.ColorPalette;
   var TextControl = components.TextControl;
+  var TextareaControl = components.TextareaControl;
+  var ToggleControl = components.ToggleControl;
   var __ = i18n.__;
 
   var palette = ['#00B2E0', '#00AFBB', '#00AB81', '#F5F4EE', '#22ACB6', '#EE6E2A', '#ffffff', '#000000'];
@@ -56,6 +58,12 @@
       appStoreLinkUrl: { type: 'string', default: '' },
       ussdImageId: { type: 'number', default: 0 },
       ussdImageUrl: { type: 'string', default: '' },
+      paybillShow: { type: 'boolean', default: true },
+      paybillLabel: { type: 'string', default: 'Official M-PESA Paybill' },
+      paybillNumber: { type: 'string', default: '854845' },
+      paybillAccountHint: { type: 'string', default: 'Account number: your Ports SACCO membership number' },
+      paybillWarning: { type: 'string', default: 'Ports DT Sacco will never ask you to pay a different paybill. Ignore anyone who sends another number — they are not us.' },
+      paybillPageUrl: { type: 'string', default: '/portsacco-paybill' },
     },
     edit: function (props) {
       var a = props.attributes;
@@ -160,6 +168,41 @@
                 onChange: function (c) { props.setAttributes({ scrollButtonInner: c || '#22ACB6' }); },
               })
             )
+          ),
+            el(
+            PanelBody,
+            { title: __('Official paybill', 'headless-core'), initialOpen: true },
+            el(ToggleControl, {
+              label: __('Show paybill below store badges', 'headless-core'),
+              checked: a.paybillShow !== false,
+              onChange: function (v) { props.setAttributes({ paybillShow: !!v }); },
+            }),
+            el(TextControl, {
+              label: __('Paybill number', 'headless-core'),
+              value: a.paybillNumber || '854845',
+              onChange: function (v) { props.setAttributes({ paybillNumber: v }); },
+            }),
+            el(TextControl, {
+              label: __('Label', 'headless-core'),
+              value: a.paybillLabel || '',
+              onChange: function (v) { props.setAttributes({ paybillLabel: v }); },
+            }),
+            el(TextControl, {
+              label: __('Account hint', 'headless-core'),
+              value: a.paybillAccountHint || '',
+              onChange: function (v) { props.setAttributes({ paybillAccountHint: v }); },
+            }),
+            el(TextareaControl, {
+              label: __('Scam warning', 'headless-core'),
+              value: a.paybillWarning || '',
+              onChange: function (v) { props.setAttributes({ paybillWarning: v }); },
+              rows: 3,
+            }),
+            el(TextControl, {
+              label: __('Paybill page URL', 'headless-core'),
+              value: a.paybillPageUrl || '/portsacco-paybill',
+              onChange: function (v) { props.setAttributes({ paybillPageUrl: v }); },
+            })
           ),
           el(
             PanelBody,
@@ -342,7 +385,26 @@
                   ? el(Button, { variant: 'tertiary', isDestructive: true, onClick: function () { props.setAttributes({ ussdImageId: 0, ussdImageUrl: '' }); } }, __('Remove', 'headless-core'))
                   : null
               )
-            )
+            ),
+            a.paybillShow === false
+              ? null
+              : el(
+                'div',
+                {
+                  style: {
+                    marginTop: '18px',
+                    padding: '14px 16px',
+                    background: '#fff',
+                    color: '#1f0026',
+                    borderRadius: '10px',
+                    border: '4px solid #EE6E2A',
+                    textAlign: 'center',
+                  },
+                },
+                el('p', { style: { margin: '0 0 4px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#EE6E2A' } }, a.paybillLabel || __('Official M-PESA Paybill', 'headless-core')),
+                el('p', { style: { margin: '0 0 6px', fontSize: '36px', fontWeight: 900, letterSpacing: '0.12em', lineHeight: 1 } }, a.paybillNumber || '854845'),
+                el('p', { style: { margin: 0, fontSize: '12px', fontWeight: 600 } }, a.paybillAccountHint || '')
+              )
           )
         )
       );

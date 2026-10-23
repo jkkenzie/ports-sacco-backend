@@ -3,6 +3,8 @@
   var registerBlockType = blocks.registerBlockType;
   var useBlockProps = blockEditor.useBlockProps;
   var TextControl = components.TextControl;
+  var TextareaControl = components.TextareaControl;
+  var ToggleControl = components.ToggleControl;
   var Button = components.Button;
   var ColorPalette = components.ColorPalette;
   var MediaUpload = blockEditor.MediaUpload;
@@ -26,6 +28,12 @@
       iconHoverColor: { type: 'string', default: '#22ACB6' },
       iconWidth: { type: 'number', default: 144 },
       iconHeight: { type: 'number', default: 48 },
+      paybillShow: { type: 'boolean', default: true },
+      paybillLabel: { type: 'string', default: 'Official M-PESA Paybill' },
+      paybillNumber: { type: 'string', default: '854845' },
+      paybillAccountHint: { type: 'string', default: 'Account number: your membership number' },
+      paybillWarning: { type: 'string', default: 'Never pay any other paybill. Ports DT Sacco will not send a different number.' },
+      paybillPageUrl: { type: 'string', default: '/portsacco-paybill' },
     },
     edit: function (props) {
       var a = props.attributes;
@@ -82,6 +90,18 @@
           el(TextControl, { label: __('Title', 'headless-core'), value: a.title || '', onChange: function (v) { setAttributes({ title: v }); } }),
           el(TextControl, { label: __('Google Play URL', 'headless-core'), value: a.googlePlayUrl || '', onChange: function (v) { setAttributes({ googlePlayUrl: v }); } }),
           el(TextControl, { label: __('App Store URL', 'headless-core'), value: a.appStoreUrl || '', onChange: function (v) { setAttributes({ appStoreUrl: v }); } }),
+          el('hr', { style: { margin: '16px 0', border: 0, borderTop: '1px solid #e5e7eb' } }),
+          el(ToggleControl, {
+            label: __('Show official paybill below store badges', 'headless-core'),
+            checked: a.paybillShow !== false,
+            onChange: function (v) { setAttributes({ paybillShow: !!v }); },
+          }),
+          el(TextControl, { label: __('Paybill label', 'headless-core'), value: a.paybillLabel || '', onChange: function (v) { setAttributes({ paybillLabel: v }); } }),
+          el(TextControl, { label: __('Paybill number', 'headless-core'), value: a.paybillNumber || '854845', onChange: function (v) { setAttributes({ paybillNumber: v }); } }),
+          el(TextControl, { label: __('Account hint', 'headless-core'), value: a.paybillAccountHint || '', onChange: function (v) { setAttributes({ paybillAccountHint: v }); } }),
+          el(TextareaControl, { label: __('Scam warning', 'headless-core'), value: a.paybillWarning || '', onChange: function (v) { setAttributes({ paybillWarning: v }); }, rows: 3 }),
+          el(TextControl, { label: __('Paybill page URL', 'headless-core'), value: a.paybillPageUrl || '/portsacco-paybill', onChange: function (v) { setAttributes({ paybillPageUrl: v }); } }),
+          el('hr', { style: { margin: '16px 0', border: 0, borderTop: '1px solid #e5e7eb' } }),
           el(TextControl, { label: __('Icon Width (px)', 'headless-core'), type: 'number', value: String(a.iconWidth || 144), onChange: function (v) { setAttributes({ iconWidth: Number(v) || 144 }); } }),
           el(TextControl, { label: __('Icon Height (px)', 'headless-core'), type: 'number', value: String(a.iconHeight || 48), onChange: function (v) { setAttributes({ iconHeight: Number(v) || 48 }); } }),
           mediaField('googlePlayIconId', __('Google Play Icon (SVG/Image)', 'headless-core')),

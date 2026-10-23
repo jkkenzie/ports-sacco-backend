@@ -97,8 +97,13 @@ function headless_core_block_labels(): array
         ],
         'custom/mobile-app-section' => [
             'title' => 'Mobile app section',
-            'description' => 'Mobile app promo with gradient and CTA.',
-            'keywords' => ['mobile', 'app', 'promo', 'section'],
+            'description' => 'Mobile app promo with gradient, store badges, and official paybill.',
+            'keywords' => ['mobile', 'app', 'promo', 'section', 'paybill'],
+        ],
+        'custom/paybill-page' => [
+            'title' => 'Portsacco Paybill page',
+            'description' => 'Official M-PESA paybill landing page. The number is the H1 for Google.',
+            'keywords' => ['paybill', 'mpesa', '854845', 'scam'],
         ],
         'custom/newsletter-section' => [
             'title' => 'Newsletter',
@@ -237,8 +242,8 @@ function headless_core_block_labels(): array
         ],
         'custom/footer-app-links' => [
             'title' => 'Footer app links',
-            'description' => 'Footer mobile app download links.',
-            'keywords' => ['footer', 'app', 'download'],
+            'description' => 'Footer mobile app download links and official paybill.',
+            'keywords' => ['footer', 'app', 'download', 'paybill'],
         ],
         'custom/footer-socials' => [
             'title' => 'Footer social links',
