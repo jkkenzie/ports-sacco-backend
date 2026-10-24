@@ -309,6 +309,7 @@
       'custom/faq-section': true,
       'custom/events-section': true,
       'custom/mobile-app-section': true,
+      'custom/paybill-page': true,
       'custom/home-about': true,
       'custom/home-stats': true,
       'custom/help-section': true,

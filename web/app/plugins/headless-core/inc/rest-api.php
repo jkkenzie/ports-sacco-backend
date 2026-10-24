@@ -3597,7 +3597,37 @@ function headless_core_block_attributes_for_api(string $name, array $block, arra
             }
         }
 
+        if (function_exists('headless_core_sanitize_paybill_fields')) {
+            $paybill = headless_core_sanitize_paybill_fields($attrs);
+            $attrs['paybillShow'] = $paybill['paybillShow'];
+            $attrs['paybillLabel'] = $paybill['paybillLabel'];
+            $attrs['paybillNumber'] = $paybill['paybillNumber'];
+            $attrs['paybillAccountHint'] = $paybill['paybillAccountHint'];
+            $attrs['paybillWarning'] = $paybill['paybillWarning'];
+            $attrs['paybillPageUrl'] = $paybill['paybillPageUrl'];
+        }
+
         return $attrs;
+    }
+
+    if ($name === 'custom/paybill-page') {
+        $paybill = function_exists('headless_core_sanitize_paybill_fields')
+            ? headless_core_sanitize_paybill_fields($attrs)
+            : $attrs;
+
+        return [
+            'kickerText' => $paybill['kickerText'] ?? '',
+            'paybillNumber' => $paybill['paybillNumber'] ?? '854845',
+            'paybillHeadline' => $paybill['paybillHeadline'] ?? '',
+            'paybillAccountHint' => $paybill['paybillAccountHint'] ?? '',
+            'paybillWarning' => $paybill['paybillWarning'] ?? '',
+            'howToHeading' => $paybill['howToHeading'] ?? '',
+            'howToHtml' => $paybill['howToHtml'] ?? '',
+            'sectionBgColor' => $paybill['sectionBgColor'] ?? '#F5F4EE',
+            'cardBgColor' => $paybill['cardBgColor'] ?? '#ffffff',
+            'accentColor' => $paybill['accentColor'] ?? '#EE6E2A',
+            'numberColor' => $paybill['numberColor'] ?? '#1f0026',
+        ];
     }
 
     if ($name === 'custom/newsletter-section') {
