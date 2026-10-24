@@ -397,6 +397,12 @@ function headless_core_footer_defaults(): array
             'iconHoverColor' => '#22ACB6',
             'iconWidth' => 144,
             'iconHeight' => 48,
+            'paybillShow' => true,
+            'paybillLabel' => 'Official M-PESA Paybill',
+            'paybillNumber' => '854845',
+            'paybillAccountHint' => 'Account number: your membership number',
+            'paybillWarning' => 'Never pay any other paybill. Ports DT Sacco will not send a different number.',
+            'paybillPageUrl' => '/portsacco-paybill',
         ],
         'hours' => [
             'title' => 'Banking Hours',
@@ -587,6 +593,9 @@ function headless_core_footer_sanitize_app_links(array $attrs): array
     $iconHoverColor = sanitize_hex_color((string) ($attrs['iconHoverColor'] ?? ''));
     $iconWidth = isset($attrs['iconWidth']) ? (int) $attrs['iconWidth'] : 144;
     $iconHeight = isset($attrs['iconHeight']) ? (int) $attrs['iconHeight'] : 48;
+    $paybill = function_exists('headless_core_sanitize_paybill_fields')
+        ? headless_core_sanitize_paybill_fields($attrs)
+        : [];
     return [
         'title' => sanitize_text_field((string) ($attrs['title'] ?? '')),
         'googlePlayUrl' => esc_url_raw((string) ($attrs['googlePlayUrl'] ?? '')),
@@ -597,6 +606,12 @@ function headless_core_footer_sanitize_app_links(array $attrs): array
         'iconHoverColor' => is_string($iconHoverColor) && $iconHoverColor !== '' ? $iconHoverColor : '#22ACB6',
         'iconWidth' => $iconWidth > 0 ? $iconWidth : 144,
         'iconHeight' => $iconHeight > 0 ? $iconHeight : 48,
+        'paybillShow' => (bool) ($paybill['paybillShow'] ?? true),
+        'paybillLabel' => (string) ($paybill['paybillLabel'] ?? 'Official M-PESA Paybill'),
+        'paybillNumber' => (string) ($paybill['paybillNumber'] ?? '854845'),
+        'paybillAccountHint' => (string) ($paybill['paybillAccountHint'] ?? 'Account number: your membership number'),
+        'paybillWarning' => (string) ($paybill['paybillWarning'] ?? ''),
+        'paybillPageUrl' => (string) ($paybill['paybillPageUrl'] ?? '/portsacco-paybill'),
     ];
 }
 

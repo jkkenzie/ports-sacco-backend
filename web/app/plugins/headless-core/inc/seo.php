@@ -342,8 +342,9 @@ function headless_core_tracking_public_payload(): array
 }
 
 /**
- * Verification meta for crawlers. Analytics scripts are loaded by the SPA
- * from bootstrap JSON so Cloudflare Rocket Loader / WAF do not rewrite them.
+ * Verification meta for crawlers. GTM head/body snippets are injected into the
+ * SPA shell (see headless_core_tracking_inject_head / _inject_body). Skip if the
+ * published index.html already contains the official GTM snippet.
  */
 function headless_core_tracking_head_html(): string
 {
@@ -355,7 +356,7 @@ function headless_core_tracking_head_html(): string
     return '<meta name="msvalidate.01" content="' . esc_attr($bingVerify) . '" />';
 }
 
-function headless_core_tracking_gtm_body_html(): string
+function headless_core_tracking_gtm_id(): string
 {
     if (! headless_core_seo_use_google_tag()) {
         return '';
@@ -366,15 +367,80 @@ function headless_core_tracking_gtm_body_html(): string
         return '';
     }
 
+    return $id;
+}
+
+function headless_core_tracking_gtm_head_html(): string
+{
+    $id = headless_core_tracking_gtm_id();
+    if ($id === '') {
+        return '';
+    }
+
+    $jsId = esc_js($id);
+
+    return "<!-- Google Tag Manager -->\n"
+        . "<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':\n"
+        . "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],\n"
+        . "j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=\n"
+        . "'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);\n"
+        . "})(window,document,'script','dataLayer','{$jsId}');</script>\n"
+        . '<!-- End Google Tag Manager -->';
+}
+
+function headless_core_tracking_gtm_body_html(): string
+{
+    $id = headless_core_tracking_gtm_id();
+    if ($id === '') {
+        return '';
+    }
+
     $src = 'https://www.googletagmanager.com/ns.html?id=' . rawurlencode($id);
 
-    return '<noscript><iframe src="' . esc_url($src) . '" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>';
+    return '<!-- Google Tag Manager (noscript) -->'
+        . '<noscript><iframe src="' . esc_url($src) . '" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>'
+        . '<!-- End Google Tag Manager (noscript) -->';
+}
+
+function headless_core_tracking_html_has_gtm(string $html): bool
+{
+    return stripos($html, 'googletagmanager.com/gtm.js') !== false
+        || stripos($html, 'googletagmanager.com/ns.html') !== false;
+}
+
+/**
+ * Insert GTM as high in <head> as possible (after charset), unless the shell already has it.
+ */
+function headless_core_tracking_inject_head(string $html): string
+{
+    $snippet = headless_core_tracking_gtm_head_html();
+    if ($snippet === '' || headless_core_tracking_html_has_gtm($html)) {
+        return $html;
+    }
+
+    if (preg_match('/<meta[^>]*charset[^>]*>/i', $html, $match, PREG_OFFSET_CAPTURE)) {
+        $pos = (int) $match[0][1] + strlen($match[0][0]);
+
+        return substr($html, 0, $pos) . "\n    " . $snippet . substr($html, $pos);
+    }
+
+    if (preg_match('/<head[^>]*>/i', $html, $match, PREG_OFFSET_CAPTURE)) {
+        $pos = (int) $match[0][1] + strlen($match[0][0]);
+
+        return substr($html, 0, $pos) . "\n    " . $snippet . substr($html, $pos);
+    }
+
+    return $html;
 }
 
 function headless_core_tracking_inject_body(string $html): string
 {
     $snippet = headless_core_tracking_gtm_body_html();
-    if ($snippet === '' || ! preg_match('/<body[^>]*>/i', $html, $match, PREG_OFFSET_CAPTURE)) {
+    if ($snippet === '' || headless_core_tracking_html_has_gtm($html)) {
+        return $html;
+    }
+
+    if (! preg_match('/<body[^>]*>/i', $html, $match, PREG_OFFSET_CAPTURE)) {
         return $html;
     }
 

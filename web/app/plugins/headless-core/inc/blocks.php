@@ -177,6 +177,13 @@ add_action('init', static function (): void {
         true
     );
     wp_register_script(
+        'headless-custom-paybill-page-editor',
+        HEADLESS_CORE_URL . 'blocks/paybill-page/editor.js',
+        ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n'],
+        HEADLESS_CORE_VERSION,
+        true
+    );
+    wp_register_script(
         'headless-custom-newsletter-section-editor',
         HEADLESS_CORE_URL . 'blocks/newsletter-section/editor.js',
         ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'headless-core-link-control'],
@@ -1137,6 +1144,52 @@ add_action('init', static function (): void {
             'appStoreLinkUrl' => ['type' => 'string', 'default' => ''],
             'ussdImageId' => ['type' => 'number', 'default' => 0],
             'ussdImageUrl' => ['type' => 'string', 'default' => ''],
+            'paybillShow' => ['type' => 'boolean', 'default' => true],
+            'paybillLabel' => ['type' => 'string', 'default' => 'Official M-PESA Paybill'],
+            'paybillNumber' => ['type' => 'string', 'default' => '854845'],
+            'paybillAccountHint' => ['type' => 'string', 'default' => 'Account number: your Ports SACCO membership number'],
+            'paybillWarning' => ['type' => 'string', 'default' => 'Ports DT Sacco will never ask you to pay a different paybill. Ignore anyone who sends another number — they are not us.'],
+            'paybillPageUrl' => ['type' => 'string', 'default' => '/portsacco-paybill'],
+        ],
+        'render_callback' => static function (): string {
+            return '';
+        },
+    ]);
+
+    $paybill_defaults = function_exists('headless_core_paybill_defaults')
+        ? headless_core_paybill_defaults()
+        : [
+            'kickerText' => 'Verify before you pay',
+            'paybillNumber' => '854845',
+            'paybillHeadline' => 'Ports DT Sacco official M-PESA Paybill',
+            'paybillAccountHint' => 'Account number: your Ports SACCO membership number',
+            'paybillWarning' => 'Ports DT Sacco will never ask you to pay a different paybill. Ignore anyone who sends another number — they are not us.',
+            'howToHeading' => 'How to pay',
+            'howToHtml' => '',
+            'sectionBgColor' => '#F5F4EE',
+            'cardBgColor' => '#ffffff',
+            'accentColor' => '#EE6E2A',
+            'numberColor' => '#1f0026',
+        ];
+
+    register_block_type('custom/paybill-page', [
+        'api_version' => 3,
+        'editor_script' => 'headless-custom-paybill-page-editor',
+        'supports' => [
+            'anchor' => true,
+        ],
+        'attributes' => [
+            'kickerText' => ['type' => 'string', 'default' => $paybill_defaults['kickerText']],
+            'paybillNumber' => ['type' => 'string', 'default' => $paybill_defaults['paybillNumber']],
+            'paybillHeadline' => ['type' => 'string', 'default' => $paybill_defaults['paybillHeadline']],
+            'paybillAccountHint' => ['type' => 'string', 'default' => $paybill_defaults['paybillAccountHint']],
+            'paybillWarning' => ['type' => 'string', 'default' => $paybill_defaults['paybillWarning']],
+            'howToHeading' => ['type' => 'string', 'default' => $paybill_defaults['howToHeading']],
+            'howToHtml' => ['type' => 'string', 'default' => $paybill_defaults['howToHtml']],
+            'sectionBgColor' => ['type' => 'string', 'default' => $paybill_defaults['sectionBgColor']],
+            'cardBgColor' => ['type' => 'string', 'default' => $paybill_defaults['cardBgColor']],
+            'accentColor' => ['type' => 'string', 'default' => $paybill_defaults['accentColor']],
+            'numberColor' => ['type' => 'string', 'default' => $paybill_defaults['numberColor']],
         ],
         'render_callback' => static function (): string {
             return '';
@@ -1908,6 +1961,12 @@ add_action('init', static function (): void {
             'iconHoverColor' => ['type' => 'string', 'default' => '#22ACB6'],
             'iconWidth' => ['type' => 'number', 'default' => 144],
             'iconHeight' => ['type' => 'number', 'default' => 48],
+            'paybillShow' => ['type' => 'boolean', 'default' => true],
+            'paybillLabel' => ['type' => 'string', 'default' => 'Official M-PESA Paybill'],
+            'paybillNumber' => ['type' => 'string', 'default' => '854845'],
+            'paybillAccountHint' => ['type' => 'string', 'default' => 'Account number: your membership number'],
+            'paybillWarning' => ['type' => 'string', 'default' => 'Never pay any other paybill. Ports DT Sacco will not send a different number.'],
+            'paybillPageUrl' => ['type' => 'string', 'default' => '/portsacco-paybill'],
         ],
         'render_callback' => static function (): string {
             return '';

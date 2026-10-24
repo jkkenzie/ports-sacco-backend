@@ -42,12 +42,14 @@ function headless_core_run_migration(): void
     }
 
     headless_core_ensure_page(__('Events', 'headless-core'), 'events', 0);
+    headless_core_ensure_page(__('Ports Sacco Paybill 854845', 'headless-core'), 'portsacco-paybill', 0);
 
     headless_core_ensure_primary_menu();
     headless_core_seed_page_block_content();
     headless_core_seed_page_block_content_v2();
     headless_core_seed_page_block_content_v3();
     headless_core_seed_page_block_content_v4();
+    headless_core_seed_page_block_content_v5();
 }
 
 /**
@@ -218,7 +220,7 @@ function headless_core_page_should_skip_default_layout(WP_Post $post): bool
         return true;
     }
 
-    return $post->post_name === 'home';
+    return $post->post_name === 'home' || $post->post_name === 'portsacco-paybill';
 }
 
 /**
@@ -353,6 +355,80 @@ function headless_core_seed_page_block_content_v4(): void
     }
 
     update_option('headless_core_page_content_v4', '1', true);
+}
+
+/**
+ * Official paybill landing page (H1 = paybill number) for anti-scam search.
+ */
+function headless_core_seed_page_block_content_v5(): void
+{
+    if (get_option('headless_core_page_content_v5') === '1') {
+        return;
+    }
+
+    $pageId = headless_core_ensure_page(
+        __('Ports Sacco Paybill 854845', 'headless-core'),
+        'portsacco-paybill',
+        0
+    );
+    if ($pageId > 0) {
+        headless_core_restore_paybill_page_blocks($pageId);
+        if ((string) get_post_meta($pageId, '_hc_seo_title', true) === '') {
+            update_post_meta($pageId, '_hc_seo_title', 'Ports Sacco Paybill 854845');
+        }
+        if ((string) get_post_meta($pageId, '_hc_seo_description', true) === '') {
+            update_post_meta(
+                $pageId,
+                '_hc_seo_description',
+                'Official Ports DT Sacco M-PESA paybill is 854845. Use your membership number as the account. Do not pay any other paybill.'
+            );
+        }
+        if ((string) get_post_meta($pageId, '_hc_seo_keyphrase', true) === '') {
+            update_post_meta($pageId, '_hc_seo_keyphrase', 'Ports Sacco paybill 854845');
+        }
+    }
+
+    update_option('headless_core_page_content_v5', '1', true);
+}
+
+function headless_core_restore_paybill_page_blocks(int $pageId): void
+{
+    if ($pageId <= 0 || headless_core_page_has_block($pageId, 'custom/paybill-page')) {
+        return;
+    }
+
+    $post = get_post($pageId);
+    if (! $post instanceof WP_Post) {
+        return;
+    }
+
+    $blocks = parse_blocks((string) $post->post_content);
+    $onlyDefault = true;
+    foreach ($blocks as $block) {
+        $name = (string) ($block['blockName'] ?? '');
+        if ($name === '') {
+            continue;
+        }
+        if (! in_array($name, ['custom/savings-archive-hero', 'custom/hero', 'core/paragraph'], true)) {
+            $onlyDefault = false;
+            break;
+        }
+    }
+
+    if ($onlyDefault || trim((string) $post->post_content) === '') {
+        wp_update_post([
+            'ID' => $pageId,
+            'post_content' => '<!-- wp:custom/paybill-page /-->',
+        ]);
+
+        return;
+    }
+
+    headless_core_append_block_if_missing(
+        $pageId,
+        'custom/paybill-page',
+        '<!-- wp:custom/paybill-page /-->'
+    );
 }
 
 /**

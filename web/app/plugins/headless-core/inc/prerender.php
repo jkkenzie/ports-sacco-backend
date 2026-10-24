@@ -273,8 +273,14 @@ function headless_core_seo_render_shell(string $path, string $shell): string
         }
 
         $html = $combined !== '' ? headless_core_seo_inject_head($shell, $combined) : $shell;
+        if (function_exists('headless_core_tracking_inject_head')) {
+            $html = headless_core_tracking_inject_head($html);
+        }
         if (function_exists('headless_core_tracking_inject_body')) {
             $html = headless_core_tracking_inject_body($html);
+        }
+        if (function_exists('headless_core_paybill_inject_crawler_html')) {
+            $html = headless_core_paybill_inject_crawler_html($html, $path);
         }
 
         return $html;
